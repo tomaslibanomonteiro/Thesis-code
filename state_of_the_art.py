@@ -10,7 +10,14 @@ from pymoo.problems import get_problem
 from matplotlib import pyplot as plt
 from pymoo.util.ref_dirs import get_reference_directions
 from pymoo.core.callback import Callback
-from defines import *
+
+# DEFINES
+N_GEN = 100
+DEBUG_PRINT = True
+VERBOSE = False
+SAVE_HISTORY = False
+PROB_NAMES = ['DTLZ1', 'DTLZ2', 'DTLZ3', 'DTLZ4', 'DTLZ5', 'DTLZ6']
+ALGO_NAMES = ['NSGA2', 'NSGA3', 'MOEAD']
 
 OTHER_MAIN = True
 
