@@ -10,14 +10,15 @@ from pymoo.problems import get_problem
 from matplotlib import pyplot as plt
 from pymoo.util.ref_dirs import get_reference_directions
 from pymoo.core.callback import Callback
+from pymoo.algorithms.soo.nonconvex.pso import PSO
 
 # DEFINES
 N_GEN = 100
 DEBUG_PRINT = True
 VERBOSE = False
 SAVE_HISTORY = False
-PROB_NAMES = ['DTLZ1', 'DTLZ2', 'DTLZ3', 'DTLZ4', 'DTLZ5', 'DTLZ6']
-ALGO_NAMES = ['NSGA2', 'NSGA3', 'MOEAD']
+PROB_NAMES = ['Rastrigin', 'Ackley', 'Griewank']
+ALGO_NAMES = ['PSO']
 
 OTHER_MAIN = True
 
@@ -92,7 +93,7 @@ def plotIND(data, ind = 'IGD', each_plot = 'prob', plotting_mode = 'by_evals', s
     else:
         raise ValueError("each_plot must be 'by_problem', 'by_algo' or 'all_plots'")
 
-def update_data(data, res):
+def update_data(data, res, ind='IGD'):
 
     # get problem and algorithm name
     algo = res.algorithm.__class__.__name__
@@ -104,12 +105,15 @@ def update_data(data, res):
     time = res.algorithm.callback.time
     time = [t - time[0] for t in time]
     true_pf = res.problem.pareto_front()
-    metric = IGD(true_pf, zero_to_one=True)
-    igd = [metric.do(pf) for pf in pareto_hist]
+
+    if ind == 'IGD':
+        # compute IGD
+        metric = IGD(true_pf, zero_to_one=True)
+        igd = [metric.do(pf) for pf in pareto_hist]
 
     # create data frame 
-    prob_algo_data = pd.DataFrame([[prob] * len(igd), [algo] * len(igd), n_evals, time, igd]).transpose()
-    prob_algo_data.columns = ['Problem','Algorithm', 'n_evals', 'time', 'IGD']
+    prob_algo_data = pd.DataFrame([[prob] * len(ind), [algo] * len(ind), n_evals, time, ind]).transpose()
+    prob_algo_data.columns = ['Problem','Algorithm', 'n_evals', 'time', ind ]
     
     return pd.concat([data, prob_algo_data])
 
