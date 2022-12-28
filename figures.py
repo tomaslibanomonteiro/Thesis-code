@@ -85,9 +85,16 @@ def ZDT(zdt=1):
 
     problem = get_problem("zdt" + str(zdt))
     plot(problem.pareto_front(), no_fill=True)
+
+def sphere():
+    problem = get_problem("sphere", n_var=2)
+
+    FitnessLandscape(problem, angle=(45, 45), _type="surface").save(FOLDER + 'sphere_surface.png')
+
+    FitnessLandscape(problem, _type="contour", colorbar=True).save(FOLDER + 'sphere_contour.png')
     
 def main():
-    ZDT(3)
+    sphere()
 
 if __name__ == '__main__':
     main()
