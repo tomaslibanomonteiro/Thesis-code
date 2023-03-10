@@ -2,33 +2,32 @@ import numpy as np
 import pandas as pd
 import time
 from pymoo.optimize import minimize
-from pymoo.algorithms.moo.nsga2 import NSGA2 
-from pymoo.algorithms.moo.nsga3 import NSGA3
-from pymoo.algorithms.moo.moead import MOEAD
-from pymoo.indicators.igd import IGD
 from pymoo.problems import get_problem
 from matplotlib import pyplot as plt
-from pymoo.util.ref_dirs import get_reference_directions
 from pymoo.core.callback import Callback
 from pymoo.algorithms.soo.nonconvex.pso import PSO
 
-# DEFINES
-N_EVALS = 200
-DEBUG_PRINT = True
-VERBOSE = False
-SAVE_HISTORY = False
-PROB_NAMES = ['Rastrigin']
+# DEBUG AND PLOTTING
+JUST_PLOT = False # if True, just plot the data
+DEBUG_PRINT = True # if True, print info about the optimization
+LABEL_HYPERPARAMS = False # if True, label the plot with the hyperparameters
+FIG_NAME = 'pso' # name of the figure
+
+# PROB
+PROB_NAMES = ['Rastrigin', 'Griewank', 'Ackley', 'Rosenbrock']
 
 # PSO
-POP_SIZE_LIST = [5, 10, 20]
-W_LIST = [0.7]
-C1_LIST = [0.7]
-C2_LIST = [0.7]
+POP_SIZE_LIST = [5, 10]
+ADAPTATIVE = False # if True, w, c1, c2 are updated during the optimization
+W_LIST = [0.4, 0.9]
+C1_LIST = [2]
+C2_LIST = [2]
 
-# number of times the algorithm is run for each combination of parameters
-N_SEEDS = 20
-
-JUST_PLOT = False
+# SOLVER
+N_SEEDS = 3 # number of seeds for each problem/algo combination
+N_EVALS = 400 # number of function evaluations until the optimization stops
+VERBOSE = False # print info about the optimization
+SAVE_HISTORY = False # save history of the optimization
 
 ################################### AUX FUNCTIONS ######################################
 def debug_print(msg, debug_print):
@@ -43,60 +42,51 @@ def print_pso(algo, algo_id, seed, debug_print):
     print("     Parameterers:  w=", algo.w, "  c1=", algo.c1, "  c2=", algo.c2, "  pop_size=", algo.pop_size)
 
 ################################### PLOTTING ######################################
+def setLabel(algo, df, label_hyperparams = False, txt_name=None):
+    """ Set label for the plot """
 
-def legendPlot(x, pm_name, prob, figname=None):
+    # write labels to txt file
+    if txt_name is not None:
+        with open(txt_name, 'a') as f:
+            f.write(algo + ' w=' + str(round(df['w'].iloc[0], 2)) + ' c1=' + str(round(df['c1'].iloc[0], 2)) + ' c2=' + str(round(df['c2'].iloc[0], 2)) + ' pop_size=' + str(int(df['pop_size'].iloc[0])) + '\n')
+        
+    if label_hyperparams:
+        return algo + ' w=' + str(round(df['w'].iloc[0], 2)) + ' c1=' + str(round(df['c1'].iloc[0], 2)) + ' c2=' + str(round(df['c2'].iloc[0], 2)) + ' pop_size=' + str(int(df['pop_size'].iloc[0]))
+    else:
+        return str(algo)
+
+def legendPlot(x=None, y=None, title=None, figname=None, save=True):
     plt.legend()
-    plt.xlabel(x)
-    plt.ylabel(pm_name)
-    plt.title(prob)
-    if figname:
+    if x is not None:
+        plt.xlabel(x)
+    if y is not None:
+        plt.ylabel(y)
+    if title is not None:
+        plt.title(title)
+    if save is True and figname is not None:
         plt.savefig(figname)
     plt.clf()
 
-def plotPM(data, each_plot = 'prob', plotting_mode = 'by_evals', save=True, pm_name='best'):
+def plotPM(data, save=True):
     """ Plot performance metric for each problem and algorithm. 
-        each_plot can be 'prob', 'algo' or 'prob_algo' 
-        plotting_mode can be 'by_evals' or 'by_time'
-        pm_name can be 'IGD' or 'best'
         save is a boolean to save the plot or not"""
-
-    if plotting_mode == 'by_evals':
-        x = 'n_evals'
-    elif plotting_mode == 'by_time':
-        x = 'time'
-    else:
-        raise ValueError("plotting_mode must be 'by_evals' or 'by_time'")
 
     # average over runs with different seeds for each problem and algorithm
     data = data.groupby(['prob', 'algo', 'n_evals']).mean().reset_index()
 
-    if each_plot == 'prob':        
-        for prob in data['prob'].unique():
-            for algo in data['algo'].unique():
-                df = data[(data['prob'] == prob) & (data['algo'] == algo)]
-                # set label with algo name and parameters with 2 decimal places each
-                
-                label = algo.split('_')[0] + ' w=' + str(round(df['w'].iloc[0], 2)) + ' c1=' + str(round(df['c1'].iloc[0], 2)) + ' c2=' + str(round(df['c2'].iloc[0], 2)) + ' pop_size=' + str(df['pop_size'].iloc[0])
-                plt.plot(df[x], df[pm_name], label=label)
-            legendPlot(x, pm_name, prob, 'figures/prob_' + prob + '-pm_' + pm_name +'-x=' + x + '.png')
-
-    elif each_plot == 'algo':
+    for prob in data['prob'].unique():
         for algo in data['algo'].unique():
-            for prob in data['prob'].unique():
-                label = algo.split('_')[0] + ' w=' + str(round(df['w'].iloc[0], 2)) + ' c1=' + str(round(df['c1'].iloc[0], 2)) + ' c2=' + str(round(df['c2'].iloc[0], 2)) + ' pop_size=' + str(df['pop_size'].iloc[0])
-                plt.plot(df[x], df[pm_name], label=label)
-            legendPlot(x, pm_name, algo, 'figures/algo_' + algo + '-pm_' + pm_name +'-x=' + x + '.png')
+            
+            # get data for each problem and algorithm and plot it  
+            df = data[(data['prob'] == prob) & (data['algo'] == algo)]
+            plt.plot(df['n_evals'], df['best'], label=setLabel(algo, df, LABEL_HYPERPARAMS, 'figures/'+ FIG_NAME+'.txt' ))
 
-    elif each_plot == 'prob_algo':
-        for prob in data['prob'].unique():
-            for algo in data['algo'].unique():
-                df = data[(data['prob'] == prob) & (data['algo'] == algo)] 
-                label = algo.split('_')[0] + ' w=' + str(round(df['w'].iloc[0], 2)) + ' c1=' + str(round(df['c1'].iloc[0], 2)) + ' c2=' + str(round(df['c2'].iloc[0], 2)) + ' pop_size=' + str(df['pop_size'].iloc[0])
-                plt.plot(df[x], df[pm_name], label=label)
-                legendPlot(x, pm_name, prob, 'figures/prob_' + prob + '-pm_' + pm_name +'-x=' + x + '.png')
-
-    else:
-        raise ValueError("each_plot must be 'by_problem', 'by_algo' or 'all_plots'")
+        # legend and save plot 
+        if LABEL_HYPERPARAMS:
+            figname = 'figures/' + FIG_NAME + '_' + prob + '_hyperparams.png'
+        else:
+            figname = 'figures/' + FIG_NAME + '_' + prob + '.png'
+        legendPlot(x='Function evaluations', y='Best Solution Found' , title=prob, figname=figname, save=save)
 
 ################################### DATA HANDLING ######################################
 
@@ -124,16 +114,7 @@ def update_data(data, res, algo_id, run_id, seed):
     
     return pd.concat([data, run_data])
 
-################################### PROBLEM ######################################
-
-def set_prob_list(prob_names):
-    prob_list = []
-    for prob_name in prob_names:
-        prob_list.append(get_problem(prob_name))
-
-    return prob_list
-
-################################### ALGORITHM ######################################
+################################### GET PROB AND ALGO ######################################
 class MyCallback(Callback):
 
     def __init__(self) -> None:
@@ -148,18 +129,31 @@ class MyCallback(Callback):
         self.n_evals.append(algo.evaluator.n_eval)
         self.time.append(time.perf_counter())
 
+def set_prob_list(prob_names):
+    prob_list = []
+    for prob_name in prob_names:
+        prob_list.append(get_problem(prob_name))
+
+    return prob_list
+
 def set_pso_list():
 
     parameters = [(pop_size, w, c1, c2) for pop_size in POP_SIZE_LIST for w in W_LIST for c1 in C1_LIST for c2 in C2_LIST]
     
     pso_list = []
     for pop_size, w, c1, c2 in parameters:
-        pso = PSO(pop_size=pop_size, w=w, c1=c1, c2=c2, adaptative=False, pertube_best=False)
+        pso = PSO(pop_size=pop_size, w=w, c1=c1, c2=c2, adaptive=ADAPTATIVE, pertube_best=False)
         pso_list.append(pso)
 
     return pso_list
 
+################################### MAIN ######################################
+
 def main():
+    # clear txt file
+    with open('figures/'+ FIG_NAME+'.txt', 'w') as f:
+        f.truncate(0)
+
     data = pd.DataFrame()   
     run_id = 0
     for prob in set_prob_list(PROB_NAMES):
@@ -184,13 +178,11 @@ def main():
     data.to_csv('data.csv', index=False)
 
     # plot data
-    plotPM(data, each_plot = 'prob', plotting_mode = 'by_evals', save=True)
-    plotPM(data, each_plot = 'prob', plotting_mode = 'by_time', save=True)
+    plotPM(data, save=True)
 
 def just_plot():
     data = pd.read_csv('data.csv')
-    plotPM(data, each_plot = 'prob', plotting_mode = 'by_evals', save=True)
-    plotPM(data, each_plot = 'prob', plotting_mode = 'by_time', save=True)
+    plotPM(data, save=True)
 
 if __name__ == '__main__':
     if JUST_PLOT:
