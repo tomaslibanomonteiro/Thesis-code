@@ -65,4 +65,3 @@ class Run():
                     self.data = update_data(self.data, res)
                     print(res.problem.__class__.__name__, res.algorithm.__class__.__name__, seed)
         return        
-    
