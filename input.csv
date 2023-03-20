@@ -1,3 +1,5 @@
-Problem,Algorithm,n_gen,n_seeds
-DTLZ1,NSGA2,2,1
-DTLZ2,NSGA3,,
+Algorithm,Problem,n_gen,n_seeds
+NSGA2,DTLZ1,10,2
+NSGA3,DTLZ2,,
+MOEAD,DTLZ4,,
+,DTLZ5,,
