@@ -5,10 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
+            "name": "main.py",
             "type": "python",
             "request": "launch",
-            "program": "${file}",
+            // run main.py in the current working directory
+            "cwd": "${workspaceFolder}",
+            "program": "main.py",
             "console": "integratedTerminal",
             // "justMyCode": false
         }

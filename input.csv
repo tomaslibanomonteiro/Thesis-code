@@ -1,5 +1,4 @@
-Algorithm,Problem,n_gen,n_seeds
-NSGA2,DTLZ1,10,2
-NSGA3,DTLZ2,,
-MOEAD,DTLZ4,,
-,DTLZ5,,
+N_seeds,PM1,PM2,PM3,Termination_type,Termination_value,Problem,Problem_arg1,Problem_arg1_value,Problem_arg2,Problem_arg2_value,Problem_arg3,Problem_arg3_value,Algorithm,Algorithm_arg1,Algorithm_arg1_value,Algorithm_arg2,Algorithm_arg2_value,Algorithm_arg3,Algorithm_arg3_value
+3,GD,IGD,,n_gen,5,DTLZ1,n_var,15,,,,,NSGA2,,,,,,
+1,IGD,,,n_gen,7,DTLZ2,n_var,16,,,,,NSGA3,ref_dirs,das-dennis,,,,
+2,IGD+,,,n_gen,10,DTLZ4,n_var,17,,,,,MOEAD,ref_dirs,das-dennis,,,,
