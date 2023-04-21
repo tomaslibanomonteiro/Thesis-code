@@ -146,15 +146,15 @@ def get_crossover_options():
     from pymoo.operators.crossover.ox import OrderCrossover
 
     CROSSOVER = [
-        ("real_sbx", SimulatedBinaryCrossover, dict(prob=0.9, eta=30)),
+        ("real_sbx", SimulatedBinaryCrossover(eta=30)),
         #("int_sbx", IntegerFromFloatCrossover, dict(clazz=SimulatedBinaryCrossover, prob=0.9, eta=30)),
         ("real_de", DEX),
         ("real_pcx", PCX),
         ("(real|bin|int)_ux", UniformCrossover),
         ("(bin|int)_hux", HalfUniformCrossover),
         ("(real|bin|int)_exp", ExponentialCrossover),
-        ("(real|bin|int)_one_point", PointCrossover, {'n_points': 1}),
-        ("(real|bin|int)_two_point", PointCrossover, {'n_points': 2}),
+        ("(real|bin|int)_one_point", PointCrossover(n_points=1)),
+        ("(real|bin|int)_two_point", PointCrossover(n_points=2)),
         ("(real|bin|int)_k_point", PointCrossover),
         ("perm_ox", OrderCrossover),
         ("perm_erx", EdgeRecombinationCrossover)
@@ -179,8 +179,8 @@ def get_mutation_options():
     from pymoo.operators.mutation.inversion import InversionMutation
 
     MUTATION = [
-        ("none", NoMutation, {}),
-        ("real_pm", PolynomialMutation, dict(eta=20)),
+        ("none", NoMutation),
+        ("real_pm", PolynomialMutation),
         #("int_pm", IntegerFromFloatMutation, dict(clazz=PolynomialMutation, eta=20)),
         ("bitflip", BitflipMutation),
         ("perm_inv", InversionMutation)

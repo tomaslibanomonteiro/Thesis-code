@@ -1,9 +1,7 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QComboBox, QDialog
+from PyQt5.QtWidgets import QApplication, QMainWindow, QComboBox, QDialog, QTableWidgetItem
 from PyQt5.uic import loadUi
 from PyQt5.QtWidgets import QHeaderView
-
-import inspect
-
+from utils.inpect_classes import Defaults
 class MyComboBox(QComboBox):
     def __init__(self, items = [], initial_index=-1, initial_text="", enabled = True):
         super().__init__()
@@ -18,13 +16,29 @@ class EditWindow(QDialog):
     def __init__(self, window_title="Edit", label="Edit", table=None):
         super().__init__()
         loadUi('frontend/designer_edit_window.ui', self)
-        # set window title
+        
         self.setWindowTitle(window_title)
-        # set big label
         self.label.setText(label)
+
+        # set number of rows and columns
+        self.tableWidget.setRowCount(len(table))
+        # make the table with the number of columns of the biggest row
+        self.tableWidget.setColumnCount(max([len(row) for row in table]))
+        # set the table items from the table, each row is a list of strings
+        self.setTableItems(table)
         
-        # set table data
+        # adjust the size of the table to fit the window
+        self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tableWidget.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
         
+    def setTableItems(self, table):
+        for row in range(self.tableWidget.rowCount()):
+            for col in range(self.tableWidget.columnCount()):
+                if col < len(table[row]):
+                    item = str(table[row][col])
+                else:
+                    item = ""
+                self.tableWidget.setItem(row, col, QTableWidgetItem(item))
         
 class MyMainWindow(QMainWindow):
     def __init__(self):
@@ -39,18 +53,10 @@ class MyMainWindow(QMainWindow):
                 
         buttons = [self.pushButton_edit_pi, self.pushButton_edit_algo, self.pushButton_edit_prob, self.pushButton_edit_term]
         labels = ["Edit Performance Indicators", "Edit Algorithms", "Edit Problems", "Edit Terminations"]
-        default_tables = self.get_default_tables()         
+        defaults = Defaults()
+        default_tables = [defaults.pi, defaults.algo, defaults.prob, defaults.term]         
         self.setEditWindows(buttons, labels, default_tables)
-        
-    def get_default_tables(self):
-        # TODO: get default tables from classes
-        default_tables = []
-        default_tables.append([["Item 1", "Item 2", "Item 3"], ["Item 1", "Item 2", "Item 3"], ["Item 1", "Item 2", "Item 3"]])
-        default_tables.append([["Item 1", "Item 2", "Item 3"], ["Item 1", "Item 2", "Item 3"], ["Item 1", "Item 2", "Item 3"]])
-        default_tables.append([["Item 1", "Item 2", "Item 3"], ["Item 1", "Item 2", "Item 3"], ["Item 1", "Item 2", "Item 3"]])
-        default_tables.append([["Item 1", "Item 2", "Item 3"], ["Item 1", "Item 2", "Item 3"], ["Item 1", "Item 2", "Item 3"]])
-        return default_tables
-                
+    
     def setEditWindows(self, buttons, labels, tables):
         for button, label, table in zip(buttons, labels, tables):
             window = EditWindow(window_title=label, label=label, table=table)

@@ -73,13 +73,13 @@
      <rect>
       <x>60</x>
       <y>60</y>
-      <width>881</width>
+      <width>821</width>
       <height>371</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0">
      <property name="sizeConstraint">
-      <enum>QLayout::SetMinimumSize</enum>
+      <enum>QLayout::SetNoConstraint</enum>
      </property>
      <property name="leftMargin">
       <number>0</number>
@@ -88,10 +88,10 @@
       <number>0</number>
      </property>
      <property name="horizontalSpacing">
-      <number>25</number>
+      <number>40</number>
      </property>
      <property name="verticalSpacing">
-      <number>10</number>
+      <number>15</number>
      </property>
      <item row="0" column="1">
       <widget class="QLabel" name="label_2">
