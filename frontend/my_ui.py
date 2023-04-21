@@ -2,6 +2,10 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QComboBox, QDialog, QTabl
 from PyQt5.uic import loadUi
 from PyQt5.QtWidgets import QHeaderView
 from utils.inpect_classes import Defaults
+
+DESIGNER_MAIN = 'frontend/designer_main.ui'
+DESIGNER_EDIT_WINDOW = 'frontend/designer_edit_window.ui'
+DESIGNER_ALGO_WINDOW = 'frontend/designer_algo_window.ui'
 class MyComboBox(QComboBox):
     def __init__(self, items = [], initial_index=-1, initial_text="", enabled = True):
         super().__init__()
@@ -13,9 +17,9 @@ class MyComboBox(QComboBox):
         self.setEditText(initial_text)
 
 class EditWindow(QDialog):
-    def __init__(self, window_title="Edit", label="Edit", table=None):
+    def __init__(self, window_title: str, label: str, table: list, ui_file):
         super().__init__()
-        loadUi('frontend/designer_edit_window.ui', self)
+        loadUi(ui_file, self)
         
         self.setWindowTitle(window_title)
         self.label.setText(label)
@@ -30,7 +34,7 @@ class EditWindow(QDialog):
         # adjust the size of the table to fit the window
         self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.tableWidget.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        
+    
     def setTableItems(self, table):
         for row in range(self.tableWidget.rowCount()):
             for col in range(self.tableWidget.columnCount()):
@@ -39,27 +43,44 @@ class EditWindow(QDialog):
                 else:
                     item = ""
                 self.tableWidget.setItem(row, col, QTableWidgetItem(item))
-        
 class MyMainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         
-        loadUi('frontend/designer_main.ui', self)
+        loadUi(DESIGNER_MAIN, self)
         self.edit_windows = []
+        self.defaults = Defaults()
         
+        # set windows for pi, prob, term
+        buttons = [self.pushButton_edit_pi, self.pushButton_edit_prob, self.pushButton_edit_term]
+        labels = ["Edit Performance Indicators", "Edit Problems", "Edit Terminations"]
+        ui_files = [DESIGNER_EDIT_WINDOW] * len(buttons)
+        default_tables = [self.defaults.pi, self.defaults.prob, self.defaults.term]         
+        self.setEditWindows(buttons, labels, default_tables, ui_files)
+        
+        # set window for algo (more buttons to connect to operators)
+        self.setEditWindows([self.pushButton_edit_algo], ["Edit Algorithms"], [self.defaults.algo], [DESIGNER_ALGO_WINDOW])
+        algo_window = self.edit_windows[-1]
+        # set windows for algo operators (sampling, crossover, mutation, decomposition, selection, ref_dirs)
+        buttons = [algo_window.pushButton_sampling, algo_window.pushButton_crossover, algo_window.pushButton_mutation, algo_window.pushButton_selection, algo_window.pushButton_decomposition, algo_window.pushButton_ref_dirs]
+        labels = ["Edit Sampling Operators", "Edit Crossover Operators", "Edit Mutation Operators", "Edit Selection Operators", "Edit Decomposition Operators", "Edit Reference Directions"]
+        ui_files = [DESIGNER_EDIT_WINDOW] * len(buttons)
+        default_tables = [self.defaults.sampling, self.defaults.crossover, self.defaults.mutation, self.defaults.selection, self.defaults.decomposition, self.defaults.ref_dirs]
+        self.setEditWindows(buttons, labels, default_tables, ui_files)        
+        
+        # set comboboxes from main window
         tables_list = [self.tableWidget_run_pi, self.tableWidget_run_algo, self.tableWidget_run_prob]
-        items_list = [["Item 1", "Item 2", "Item 3"], ["Item 1", "Item 2", "Item 3"], ["Item 1", "Item 2", "Item 3"]]
-        self.setTablesToComboBoxes(tables_list, items_list)
+        pi_options = sorted([pi[0] for pi in self.defaults.pi])
+        algo_options = sorted([algo[0] for algo in self.defaults.algo])
+        prob_options = sorted([prob[0] for prob in self.defaults.prob])
+        comboBox_options = [pi_options, algo_options, prob_options]
+        self.setTablesToComboBoxes(tables_list, comboBox_options)
+        self.comboBox_term.addItems([term[0] for term in self.defaults.term])
+        self.comboBox_term.setCurrentIndex(-1)
                 
-        buttons = [self.pushButton_edit_pi, self.pushButton_edit_algo, self.pushButton_edit_prob, self.pushButton_edit_term]
-        labels = ["Edit Performance Indicators", "Edit Algorithms", "Edit Problems", "Edit Terminations"]
-        defaults = Defaults()
-        default_tables = [defaults.pi, defaults.algo, defaults.prob, defaults.term]         
-        self.setEditWindows(buttons, labels, default_tables)
-    
-    def setEditWindows(self, buttons, labels, tables):
-        for button, label, table in zip(buttons, labels, tables):
-            window = EditWindow(window_title=label, label=label, table=table)
+    def setEditWindows(self, buttons, labels, tables, ui_files):
+        for button, label, table, ui_file in zip(buttons, labels, tables, ui_files):
+            window = EditWindow(label, label, table, ui_file)
             self.edit_windows.append(window)
             button.clicked.connect(window.show)
             

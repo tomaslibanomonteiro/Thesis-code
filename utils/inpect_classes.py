@@ -35,14 +35,14 @@ class Defaults():
             
     def classInpection(self, class_name: str, cls: type, object_id = "default", algo_inspection = False):
         
-        if object_id == "default": object_id = "default_" + class_name
+        if object_id == "default": object_id =  class_name + "_default" 
         sig = inspect.signature(cls.__init__)
         
         args = []
         for arg in sig.parameters.keys():
             if arg in ["self", "args", "kwargs"]: continue
             if sig.parameters[arg].default is inspect.Parameter.empty:
-                value = "no default (need to change)"
+                value = "no default (need to change)" #TODO: change this
             else:
                 value = sig.parameters[arg].default
             args.append((arg, value))

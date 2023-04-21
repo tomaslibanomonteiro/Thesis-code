@@ -61,8 +61,8 @@
   <widget class="QTableWidget" name="tableWidget">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>100</y>
+     <x>30</x>
+     <y>130</y>
      <width>1041</width>
      <height>261</height>
     </rect>
@@ -201,6 +201,84 @@
      <string/>
     </property>
    </item>
+  </widget>
+  <widget class="QPushButton" name="pushButton_sampling">
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>90</y>
+     <width>131</width>
+     <height>28</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Edit Samplings</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_crossover">
+   <property name="geometry">
+    <rect>
+     <x>190</x>
+     <y>90</y>
+     <width>131</width>
+     <height>28</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Edit Crossovers</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_mutation">
+   <property name="geometry">
+    <rect>
+     <x>340</x>
+     <y>90</y>
+     <width>131</width>
+     <height>28</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Edit Mutations</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_selection">
+   <property name="geometry">
+    <rect>
+     <x>510</x>
+     <y>90</y>
+     <width>131</width>
+     <height>28</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Edit Selections</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_decomposition">
+   <property name="geometry">
+    <rect>
+     <x>660</x>
+     <y>90</y>
+     <width>131</width>
+     <height>28</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Edit Decompositions</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_ref_dirs">
+   <property name="geometry">
+    <rect>
+     <x>830</x>
+     <y>90</y>
+     <width>131</width>
+     <height>28</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Edit Reference Directions</string>
+   </property>
   </widget>
  </widget>
  <resources/>

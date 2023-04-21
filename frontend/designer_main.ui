@@ -274,21 +274,6 @@
        <property name="currentIndex">
         <number>-1</number>
        </property>
-       <item>
-        <property name="text">
-         <string>ola</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>ola2</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>ola3</string>
-        </property>
-       </item>
       </widget>
      </item>
      <item row="1" column="3">
