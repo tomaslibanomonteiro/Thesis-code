@@ -3,6 +3,7 @@ from utils.get import get_mutation_options, get_crossover_options, get_selection
 
 from utils.get import get_algorithm_options, get_problem_options, get_termination_options, get_performance_indicator_options
 
+NO_DEFAULT = "no default (need to be set)"
 class Defaults():
     def __init__(self):
         
@@ -42,7 +43,7 @@ class Defaults():
         for arg in sig.parameters.keys():
             if arg in ["self", "args", "kwargs"]: continue
             if sig.parameters[arg].default is inspect.Parameter.empty:
-                value = "no default (need to change)" #TODO: change this
+                value = NO_DEFAULT
             else:
                 value = sig.parameters[arg].default
             args.append((arg, value))
