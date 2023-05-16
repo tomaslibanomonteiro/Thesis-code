@@ -17,10 +17,10 @@ class Defaults():
         self.prob = self.get_class_list(get_problem_options())
         self.term = self.get_class_list(get_termination_options())
         self.pi = self.get_class_list(get_performance_indicator_options())
-        self.algo = self.get_class_list(get_algorithm_options(), algo_inspection=True)
+        self.algo = self.get_class_list(get_algorithm_options(), nested_classes=True)
 
-    def get_class_list(self, options_list, algo_inspection = False):
-        return [self.classInpection(name, obj, algo_inspection=algo_inspection) for name, obj in options_list]
+    def get_class_list(self, options_list, nested_classes = False):
+        return [self.classInpection(name, obj, nested_classes=nested_classes) for name, obj in options_list]
     
     def nestedClass(self, prev_object_id: str, args: list, i: int, options_list: list, list_to_append: list):
         
@@ -34,7 +34,7 @@ class Defaults():
                 break
         list_to_append.append(self.classInpection(class_name, value, nested_object_id))
             
-    def classInpection(self, class_name: str, cls: type, object_id = "default", algo_inspection = False):
+    def classInpection(self, class_name: str, cls: type, object_id = "default", nested_classes = False):
         
         if object_id == "default": object_id =  class_name + "_default" 
         sig = inspect.signature(cls.__init__)
@@ -48,7 +48,7 @@ class Defaults():
                 value = sig.parameters[arg].default
             args.append((arg, value))
         
-        if algo_inspection:
+        if nested_classes:
             # deal with nested classes
             for i, (arg, value) in enumerate(args):
                 if arg == "mutation":   

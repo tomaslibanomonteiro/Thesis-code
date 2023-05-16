@@ -26,13 +26,11 @@ class RunArgs():
         self.algo_object = algo_object
         self.pi_dict = pi_dict
 class Input():
-    def __init__(self, tables: Tables):
+    def __init__(self, main_window: Tables):
         self.run_args_list = []
         self.n_seeds = None
         self.term_object = None
-        
-        self.read_tables(tables)
-        
+                
     def read_tables(self, tables: Tables):
         
         n_obj_list = []

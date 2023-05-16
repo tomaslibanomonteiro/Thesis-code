@@ -1,0 +1,5 @@
+https://gist.github.com/jdreaver/0be2e44981159d0854f5 spinbox adaptada (por licenca)
+
+pymoo (obviamente)
+
+pyqt tem licença?

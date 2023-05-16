@@ -4,6 +4,8 @@ from PyQt5.QtWidgets import QHeaderView
 from PyQt5.QtGui import QColor
 from utils.inpect_classes import Defaults
 from utils.inpect_classes import NO_DEFAULT
+from .ScientificSpinBoxes import ScientificSpinBox, ScientificDoubleSpinBox
+from numpy import inf
 
 DESIGNER_MAIN = 'frontend/designer_main.ui'
 DESIGNER_EDIT_WINDOW = 'frontend/designer_edit_window.ui'
@@ -53,6 +55,9 @@ class MyMainWindow(QMainWindow):
         self.setTablesToComboBoxes(tables_list, comboBox_options)
         self.comboBox_term.addItems([term[0] for term in self.defaults.term])
         self.comboBox_term.setCurrentIndex(-1)
+        
+        # set run button
+        self.PushButton_Run.clicked.connect(self.runButton)
                 
     def setEditWindows(self, buttons, labels, tables, ui_files):
         for button, label, table, ui_file in zip(buttons, labels, tables, ui_files):
@@ -78,6 +83,23 @@ class MyMainWindow(QMainWindow):
         if row < table.rowCount() and col < table.columnCount():
             table.cellWidget(row, col).setEnabled(enabled)
 
+    def runButton(self):
+        # get the values from the main window
+        pi = self.getComboBoxValues(self.tableWidget_run_pi)
+        algo = self.getComboBoxValues(self.tableWidget_run_algo)
+        prob = self.getComboBoxValues(self.tableWidget_run_prob)
+        term = self.comboBox_term.currentText()
+        print(pi, algo, prob, term)
+        print(self.defaults.pi, self.defaults.algo, self.defaults.prob, self.defaults.term)
+    
+    def getComboBoxValues(self, table):
+        values = []
+        for row in range(table.rowCount()):
+            combobox = table.cellWidget(row, 0)
+            if combobox:
+                values.append(combobox.currentText())
+        return values
+    
 class EditWindow(QDialog):
     def __init__(self, window_title: str, label: str, table: list, ui_file, main_window: MyMainWindow):
         super().__init__()
@@ -95,10 +117,11 @@ class EditWindow(QDialog):
         self.setTableItems()
         
         # adjust the size of the table to fit the window
-        self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.tableWidget.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        # self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        # self.tableWidget.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
     
     def setTableItems(self):
+        # set the table items from the table, each row is a list of the arguments and values of the class
         table = self.default_table
         for row in range(self.tableWidget.rowCount()):
             for col in range(0, self.tableWidget.columnCount(), 2):
@@ -108,15 +131,22 @@ class EditWindow(QDialog):
                     self.tableWidget.setItem(row, col, QTableWidgetItem(""))
     
     def setTableItem(self, row, col):
+        # set the table item according to the type of the value
         self.tableWidget.setItem(row, col, QTableWidgetItem(self.default_table[row][col]))
         # check if is int to put a SpinBox
         if isinstance(self.default_table[row][col+1], int):
-            self.tableWidget.setCellWidget(row, col+1, QSpinBox())
+            self.tableWidget.setCellWidget(row, col+1, ScientificSpinBox())
             self.tableWidget.cellWidget(row, col+1).setValue(self.default_table[row][col+1])
         # check if it is float to put a doule SpinBox
         elif isinstance(self.default_table[row][col+1], float):
-            self.tableWidget.setCellWidget(row, col+1, QDoubleSpinBox())
-            self.tableWidget.cellWidget(row, col+1).setValue(self.default_table[row][col+1])
+            self.tableWidget.setCellWidget(row, col+1, ScientificDoubleSpinBox())
+            if self.default_table[row][col+1] == inf:
+                # set the value to the maximum value of the doubleSpinBox
+                self.tableWidget.cellWidget(row, col+1).setValue(self.tableWidget.cellWidget(row, col+1).maximum())
+            elif self.default_table[row][col+1] == -inf:
+                self.tableWidget.cellWidget(row, col+1).setValue(self.tableWidget.cellWidget(row, col+1).minimum())
+            else:
+                self.tableWidget.cellWidget(row, col+1).setValue(self.default_table[row][col+1])
         # if the table is from algorithms, check if arg is operator, and put a comboBox with the possible operators
         elif self.default_table == self.main_window.defaults.algo:    
             # check if arg is an operator, and put a comboBox with the possible operators
@@ -157,7 +187,7 @@ class EditWindow(QDialog):
             self.tableWidget.item(row, col+1).setBackground(QColor(255, 0, 0))
         else:
             self.tableWidget.setItem(row, col+1, QTableWidgetItem(self.default_table[row][col+1]))
-                        
+    
 def main():
     app = QApplication([])
     main_window = MyMainWindow()

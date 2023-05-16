@@ -1,18 +1,14 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QComboBox
-from PyQt5.uic import loadUi
+from PyQt5.QtWidgets import QApplication, QDoubleSpinBox, QVBoxLayout, QWidget
 
+app = QApplication([])
+window = QWidget()
 
-class MyMainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        loadUi('test.ui', self)
-        
-        
+layout = QVBoxLayout()
+spin_box = QDoubleSpinBox()
+spin_box.setDecimals(-2)
+spin_box.setValue(1.23e-45)
+layout.addWidget(spin_box)
+window.setLayout(layout)
 
-def main():
-    app = QApplication([])
-    window = QMainWindow()
-    app.exec_()
-
-if __name__ == '__main__':
-    main()    
+window.show()
+app.exec_()
