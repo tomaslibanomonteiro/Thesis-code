@@ -4,6 +4,7 @@ from utils.get import get_mutation_options, get_crossover_options, get_selection
 from utils.get import get_algorithm_options, get_problem_options, get_termination_options, get_performance_indicator_options
 
 NO_DEFAULT = "no default (need to be set)"
+
 class Defaults():
     def __init__(self):
         

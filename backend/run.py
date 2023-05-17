@@ -2,7 +2,7 @@ import pandas as pd
 from pymoo.optimize import minimize
 from pymoo.core.callback import Callback
 import pandas as pd
-from input.input import Input, RunArgs
+from input import Input, RunArgs
 from utils.debug import debug_print
 from pymoo.core.algorithm import Algorithm
 import numpy as np

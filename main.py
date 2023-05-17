@@ -1,19 +1,19 @@
-
-# frontend imports
-from frontend.my_ui import MyMainWindow
+from frontend.main_window import MyMainWindow
 from PyQt5.QtWidgets import QApplication
-
-# backend imports
+from utils.get_defaults import Defaults
 
 def main():
+    
+    # create the application
     app = QApplication([])
-    main_window = MyMainWindow()
+    
+    # get the default values for algo prob and term in the pymoo framework
+    defaults = Defaults()
+    
+    # start the main window of the application
+    main_window = MyMainWindow(defaults)
     main_window.show()
     app.exec_()
-    
-    # tables = Tables()
-    # input = Input(tables)
-    # run = Run(input)
         
 if __name__ == '__main__':
     main()

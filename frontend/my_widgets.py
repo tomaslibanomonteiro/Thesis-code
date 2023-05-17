@@ -4,6 +4,17 @@ from qtpy import QtGui
 import re
 from typing import Tuple
 
+class MyComboBox(QtWidgets.QComboBox):
+    def __init__(self, items = [], initial_index=-1, initial_text="", enabled = True):
+        super().__init__()
+        
+        for item in items:
+            self.addItem(item)
+        self.setCurrentIndex(initial_index)
+        self.setEnabled(enabled) # TODO: this is not working
+        self.setEditText(initial_text)
+        
+
 """
 This code has been adapted from: https://gist.github.com/jdreaver/0be2e44981159d0854f5
 Changes made are support for PyQt5, localisation, better intermediate state detection and better stepping.
@@ -387,3 +398,5 @@ class ScientificDoubleSpinBox(QtWidgets.QDoubleSpinBox):
 
 		new_string = "{:g}".format(val) + (groups[3] if groups[3] else "")
 		self.lineEdit().setText(new_string)
+
+
