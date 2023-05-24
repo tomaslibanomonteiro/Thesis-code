@@ -3,3 +3,34 @@ https://gist.github.com/jdreaver/0be2e44981159d0854f5 spinbox adaptada (por lice
 pymoo (obviamente)
 
 pyqt tem licença?
+
+vou fazer de modo a ter fraqueza de __init__( a = 1, b = "(assim dá erro):", c=2):
+
+for this code:
+
+class MyClass2:
+    def __init__(self, d=3, e=4):
+        self.d = d
+        self.e = e
+
+    def my_other_method(self):
+        pass
+
+class MyClass3:
+    def __init__(self, a,b=2, 
+                 c="hello",
+                 d=3, e=4, other_class=MyClass2(d=2)
+                ) -> None: 
+        self.a = a
+        self.b = b
+        self.c = c
+        self.d = d
+        self.e = e
+        self.other_class = other_class    
+
+- give me a code that returns the list of tuples:
+
+[('a', None), ('b', 2), ('c', '"hello"'), ('d', 3), ('e', 4), ('other_class', 'MyClass2(d=2)')]
+
+when you provided MyClass3 as an argument. Make it as generic as possible so it works with 
+other classes as well, and use inspect.getsourcelines()

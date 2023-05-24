@@ -144,6 +144,8 @@ class ScientificSpinBox(QtWidgets.QSpinBox):
 		except OverflowError:
 			self.setRange(-int(2 ** 31 - 1), int(2 ** 31 - 1))
 
+	from typing import Tuple
+
 	def validate(self, string: str, position: int) -> Tuple[QtGui.QValidator.State, str, int]:
 		"""
 		Returns the validity of the string, using a QtGui.QValidator object.
@@ -157,7 +159,7 @@ class ScientificSpinBox(QtWidgets.QSpinBox):
 
 		# support 2 different PyQt APIs.
 		if hasattr(QtCore, 'QString'):
-			return validity, position
+			return QtGui.QValidator.State(validity), string, position
 		else:
 			return validity, string, position
 
@@ -193,7 +195,7 @@ class ScientificSpinBox(QtWidgets.QSpinBox):
 		"""
 
 		string = "{:g}".format(value).replace("e+", "e").replace(".", QtCore.QLocale().decimalPoint(), 1)
-		string = re.sub("e(-?)0*(\d+)", r"e\1\2", string)
+		string = re.sub(r"e(-?)0*(\d+)", r"e\1\2", string)
 		return string
 
 	def stepBy(self, steps: int):
@@ -203,9 +205,13 @@ class ScientificSpinBox(QtWidgets.QSpinBox):
 
 		text = self.cleanText()
 
-		groups = exp_int_re.search(text).groups()
+		match = exp_int_re.search(text)
+		if match is None:
+			return
 
-		val, _, __ = groups[1].partition(QtCore.QLocale().decimalPoint())
+		groups = match.groups()
+
+		val, _, _ = groups[1].partition(QtCore.QLocale().decimalPoint())
 		significance = len(groups[1])-1
 		if groups[1] is not None and len(groups[1]) > 0 and groups[1][0] == '-':
 			significance -= 1
@@ -335,7 +341,7 @@ class ScientificDoubleSpinBox(QtWidgets.QDoubleSpinBox):
 
 		# support 2 different PyQt APIs.
 		if hasattr(QtCore, 'QString'):
-			return validity, position
+			return validity, str(string), position
 		else:
 			return validity, string, position
 
@@ -352,7 +358,7 @@ class ScientificDoubleSpinBox(QtWidgets.QDoubleSpinBox):
 		"""
 
 		string = "{:g}".format(value).replace("e+", "e").replace(".", QtCore.QLocale().decimalPoint(), 1)
-		string = re.sub("e(-?)0*(\d+)", r"e\1\2", string)
+		string = re.sub(r"e(-?)0*(\d+)", r"e\1\2", string)
 		return string
 
 	def valueFromText(self, string: str) -> float:
@@ -380,7 +386,11 @@ class ScientificDoubleSpinBox(QtWidgets.QDoubleSpinBox):
 
 		text = self.cleanText()
 
-		groups = exp_float_re.search(text).groups()
+		match = exp_float_re.search(text)
+		if match is None:
+			return
+
+		groups = match.groups()
 
 		# If we have digits after the decimal indicator:
 		if groups[2] is not None:
@@ -390,7 +400,7 @@ class ScientificDoubleSpinBox(QtWidgets.QDoubleSpinBox):
 			val = float(groups[1]) + steps * 10**(-significance)
 
 		else:
-			val, _, __ = groups[1].partition(QtCore.QLocale().decimalPoint())
+			val, _, _ = groups[1].partition(QtCore.QLocale().decimalPoint())
 			significance = len(groups[1])-1
 			if groups[1] is not None and len(groups[1]) > 0 and groups[1][0] == '-':
 				significance -= 1
@@ -398,5 +408,6 @@ class ScientificDoubleSpinBox(QtWidgets.QDoubleSpinBox):
 
 		new_string = "{:g}".format(val) + (groups[3] if groups[3] else "")
 		self.lineEdit().setText(new_string)
+
 
 

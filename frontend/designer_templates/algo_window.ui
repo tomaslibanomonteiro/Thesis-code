@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1105</width>
+    <width>1147</width>
     <height>581</height>
    </rect>
   </property>
@@ -61,8 +61,8 @@
   <widget class="QTableWidget" name="tableWidget">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>130</y>
+     <x>60</x>
+     <y>190</y>
      <width>1041</width>
      <height>261</height>
     </rect>
@@ -202,83 +202,59 @@
     </property>
    </item>
   </widget>
-  <widget class="QPushButton" name="pushButton_sampling">
+  <widget class="QWidget" name="horizontalLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>40</x>
+     <x>60</x>
      <y>90</y>
-     <width>131</width>
-     <height>28</height>
+     <width>1041</width>
+     <height>80</height>
     </rect>
    </property>
-   <property name="text">
-    <string>Edit Samplings</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="pushButton_crossover">
-   <property name="geometry">
-    <rect>
-     <x>190</x>
-     <y>90</y>
-     <width>131</width>
-     <height>28</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Edit Crossovers</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="pushButton_mutation">
-   <property name="geometry">
-    <rect>
-     <x>340</x>
-     <y>90</y>
-     <width>131</width>
-     <height>28</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Edit Mutations</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="pushButton_selection">
-   <property name="geometry">
-    <rect>
-     <x>510</x>
-     <y>90</y>
-     <width>131</width>
-     <height>28</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Edit Selections</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="pushButton_decomposition">
-   <property name="geometry">
-    <rect>
-     <x>660</x>
-     <y>90</y>
-     <width>131</width>
-     <height>28</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Edit Decompositions</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="pushButton_ref_dirs">
-   <property name="geometry">
-    <rect>
-     <x>830</x>
-     <y>90</y>
-     <width>131</width>
-     <height>28</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Edit Reference Directions</string>
-   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QPushButton" name="pushButton_sampling">
+      <property name="text">
+       <string>Edit Samplings</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="pushButton_crossover">
+      <property name="text">
+       <string>Edit Crossovers</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="pushButton_mutation">
+      <property name="text">
+       <string>Edit Mutations</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="pushButton_selection">
+      <property name="text">
+       <string>Edit Selections</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="pushButton_decomposition">
+      <property name="text">
+       <string>Edit Decompositions</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="pushButton_ref_dirs">
+      <property name="text">
+       <string>Edit Reference Directions</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
   </widget>
  </widget>
  <resources/>

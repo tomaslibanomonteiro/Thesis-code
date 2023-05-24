@@ -24,6 +24,7 @@ def get_from_list(l, name, args, kwargs):
 
         if len(l[i]) == 2:
             name, clazz = l[i]
+            return clazz(*args, **kwargs)
 
         elif len(l[i]) == 3:
             name, clazz, default_kwargs = l[i]
@@ -33,7 +34,8 @@ def get_from_list(l, name, args, kwargs):
                 default_kwargs[key] = val
             kwargs = default_kwargs
 
-        return clazz(*args, **kwargs)
+            return clazz(*args, **kwargs)
+
     else:
         raise Exception("Object '%s' for not found in %s" % (name, [e[0] for e in l]))
 
@@ -83,6 +85,37 @@ def get_algorithm(name, *args, d={}, **kwargs):
 
 
 # =========================================================================================================
+# Other Classes
+# =========================================================================================================
+
+def get_other_class_options():
+    # import output classes from pymoo like SingleObjectiveOutput
+    from pymoo.util.display.single import SingleObjectiveOutput
+    from pymoo.util.display.multi import MultiObjectiveOutput
+    from pymoo.algorithms.soo.nonconvex.ga import FitnessSurvival 
+    from pymoo.algorithms.soo.nonconvex.nelder import adaptive_params
+    from pymoo.core.repair import NoRepair
+    from pymoo.algorithms.soo.nonconvex.pso import PSOFuzzyOutput
+    from pymoo.operators.sampling.lhs import criterion_maxmin
+    from pymoo.algorithms.soo.nonconvex.cmaes import CMAESOutput
+    
+    OTHER_CLASS_OPTIONS = [
+        ("SingleObjectiveOutput", SingleObjectiveOutput), # output
+        ("MultiObjectiveOutput", MultiObjectiveOutput),   # output   
+        ("PSOFuzzyOutput", PSOFuzzyOutput),               # output  
+        ("CMAESOutput", CMAESOutput),                     # output
+        ("FitnessSurvival", FitnessSurvival),             # survival  
+        ("adaptive_params", adaptive_params),             # func_params
+        ("NoRepair", NoRepair),                           # repair
+        ("criterion_maxmin", criterion_maxmin)            # criterion  
+    ]
+
+    return OTHER_CLASS_OPTIONS
+
+def get_other_class(name, *args, d={}, **kwargs):
+    return get_from_list(get_other_class_options(), name, args, {**d, **kwargs})
+
+# =========================================================================================================
 # Sampling
 # =========================================================================================================
 
@@ -116,10 +149,10 @@ def get_sampling(name, *args, d={}, **kwargs):
 def get_selection_options():
     from pymoo.operators.selection.rnd import RandomSelection
     from pymoo.operators.selection.tournament import TournamentSelection
-
+    
     SELECTION = [
         ("random", RandomSelection),
-        ("tournament", TournamentSelection)
+        ("tournament", TournamentSelection),
     ]
 
     return SELECTION
@@ -146,15 +179,13 @@ def get_crossover_options():
     from pymoo.operators.crossover.ox import OrderCrossover
 
     CROSSOVER = [
-        ("real_sbx", SimulatedBinaryCrossover(eta=30)),
+        ("real_sbx", SimulatedBinaryCrossover),
         #("int_sbx", IntegerFromFloatCrossover, dict(clazz=SimulatedBinaryCrossover, prob=0.9, eta=30)),
         ("real_de", DEX),
         ("real_pcx", PCX),
         ("(real|bin|int)_ux", UniformCrossover),
         ("(bin|int)_hux", HalfUniformCrossover),
         ("(real|bin|int)_exp", ExponentialCrossover),
-        ("(real|bin|int)_one_point", PointCrossover(n_points=1)),
-        ("(real|bin|int)_two_point", PointCrossover(n_points=2)),
         ("(real|bin|int)_k_point", PointCrossover),
         ("perm_ox", OrderCrossover),
         ("perm_erx", EdgeRecombinationCrossover)
@@ -242,9 +273,9 @@ def get_termination(name, *args, **kwargs):
 # =========================================================================================================
 # Problems
 # =========================================================================================================
-from pymoo.problems.many import *
-from pymoo.problems.multi import *
-from pymoo.problems.single import *
+# from pymoo.problems.many import *
+# from pymoo.problems.multi import *
+# from pymoo.problems.single import *
 
 def get_problem_options():
 
@@ -575,7 +606,7 @@ def get_reference_direction_options():
 
 
 def get_reference_directions(name, *args, d={}, **kwargs):
-    return get_from_list(get_reference_direction_options(), name, args, {**d, **kwargs}).do()
+    return get_from_list(get_reference_direction_options(), name, args, {**d, **kwargs}) #! .do()???
 
 
 # =========================================================================================================
@@ -715,41 +746,3 @@ def dummy(name, kwargs):
 
 def options_to_string(l):
     return ", ".join(["'%s'" % k[0] for k in l])
-
-
-if Config.parse_custom_docs:
-    from pymoo.docs import parse_doc_string
-
-    from pymoo.factory import get_algorithm_options, get_selection_options, get_crossover_options, \
-        get_mutation_options, get_termination_options, get_algorithm, get_selection, get_crossover, get_mutation, \
-        get_termination, get_sampling, get_sampling_options
-
-    parse_doc_string(dummy, get_algorithm, {"type": "algorithm",
-                                            "clazz": ":class:`~pymoo.core.algorithm.Algorithm`",
-                                            "options": options_to_string(get_algorithm_options())
-                                            })
-
-    parse_doc_string(dummy, get_sampling, {"type": "sampling",
-                                           "clazz": ":class:`~pymoo.core.sampling.Sampling`",
-                                           "options": options_to_string(get_sampling_options())
-                                           })
-
-    parse_doc_string(dummy, get_selection, {"type": "selection",
-                                            "clazz": ":class:`~pymoo.core.selection.Selection`",
-                                            "options": options_to_string(get_selection_options())
-                                            })
-
-    parse_doc_string(dummy, get_crossover, {"type": "crossover",
-                                            "clazz": ":class:`~pymoo.core.crossover.Crossover`",
-                                            "options": options_to_string(get_crossover_options())
-                                            })
-
-    parse_doc_string(dummy, get_mutation, {"type": "mutation",
-                                           "clazz": ":class:`~pymoo.core.mutation.Mutation`",
-                                           "options": options_to_string(get_mutation_options())
-                                           })
-
-    parse_doc_string(dummy, get_termination, {"type": "termination",
-                                              "clazz": ":class:`~pymoo.core.termination.termination`",
-                                              "options": options_to_string(get_termination_options())
-                                              })

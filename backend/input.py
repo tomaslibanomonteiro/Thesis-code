@@ -4,20 +4,6 @@ from utils.get import get_algorithm, get_problem, get_termination, get_performan
 ARGS = ['arg1', 'arg2', 'arg3', 'arg4', 'arg5', 'arg6', 'arg7']
 ARGS_VALUES = ['arg1_value', 'arg2_value', 'arg3_value', 'arg4_value', 'arg5_value', 'arg6_value', 'arg7_value']
 
-class Tables():
-    def __init__(self, run_csv, prob_csv, term_csv, pi_csv, algo_csv, cross_csv, mut_csv, samp_csv, sel_csv, ref_csv, dec_csv):
-        # read csv files and drop empty rows 
-        self.run = pd.read_csv(run_csv).dropna(how='all').applymap(lambda s:s.lower() if type(s) == str else s)
-        self.prob = pd.read_csv(prob_csv).dropna(how='all').applymap(lambda s:s.lower() if type(s) == str else s)
-        self.term = pd.read_csv(term_csv).dropna(how='all').applymap(lambda s:s.lower() if type(s) == str else s)
-        self.pi = pd.read_csv(pi_csv).dropna(how='all').applymap(lambda s:s.lower() if type(s) == str else s)
-        self.algo = pd.read_csv(algo_csv).dropna(how='all').applymap(lambda s:s.lower() if type(s) == str else s)
-        self.cross = pd.read_csv(cross_csv).dropna(how='all').applymap(lambda s:s.lower() if type(s) == str else s)
-        self.mut = pd.read_csv(mut_csv).dropna(how='all').applymap(lambda s:s.lower() if type(s) == str else s)
-        self.samp = pd.read_csv(samp_csv).dropna(how='all').applymap(lambda s:s.lower() if type(s) == str else s)
-        self.selec = pd.read_csv(sel_csv).dropna(how='all').applymap(lambda s:s.lower() if type(s) == str else s)
-        self.ref_dirs = pd.read_csv(ref_csv).dropna(how='all').applymap(lambda s:s.lower() if type(s) == str else s)
-        self.decomp = pd.read_csv(dec_csv).dropna(how='all').applymap(lambda s:s.lower() if type(s) == str else s)
 class RunArgs():
     def __init__(self, prob_id: str, prob_object, algo_id: str, algo_object, pi_dict: dict): 
         self.prob_id = prob_id
@@ -26,12 +12,12 @@ class RunArgs():
         self.algo_object = algo_object
         self.pi_dict = pi_dict
 class Input():
-    def __init__(self, main_window: Tables):
+    def __init__(self):
         self.run_args_list = []
-        self.n_seeds = None
+        self.n_seeds = int
         self.term_object = None
                 
-    def read_tables(self, tables: Tables):
+    def read_tables(self, tables):
         
         n_obj_list = []
         #! TODO: estou a assumir que seed e term estão na linha 0
@@ -87,7 +73,7 @@ class Input():
 
         return class_type, args
     
-    def get_algo_from_row_id(self, id_column: str, type_column: str, row_id: str, tables: Tables, n_obj: int):
+    def get_algo_from_row_id(self, id_column: str, type_column: str, row_id: str, tables, n_obj: int):
         
         from utils.get import get_reference_directions, get_decomposition, get_sampling, get_selection, get_crossover, get_mutation
 

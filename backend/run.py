@@ -17,10 +17,11 @@ class MyCallback(Callback):
         self.n_gen = []
 
     def notify(self, algo: Algorithm):
-        feas = np.where(algo.opt.get("feasible"))[0]
-        self.best.append(algo.pop.get("F")[feas])
-        self.n_evals.append(algo.evaluator.n_eval)
-        self.n_gen.append(algo.n_gen)
+        if algo.opt is not None and algo.pop is not None:
+            feas = np.where(algo.opt.get("feasible"))[0]
+            self.best.append(algo.pop.get("F")[feas])
+            self.n_evals.append(algo.evaluator.n_eval)
+            self.n_gen.append(algo.n_gen)
 
 class Run():
     def __init__(self, input: Input): 
@@ -29,7 +30,7 @@ class Run():
             
     def run(self, input: Input):
         for run_id, run_args in enumerate(input.run_args_list):
-            for seed in range(input.n_seeds):
+            for seed in range(input.n_seeds):  # type: ignore
                 self.single_run(run_args, seed, input.term_object, run_id)    
 
                 debug_print(run_id, run_args.algo_id, run_args.prob_id, seed)
@@ -54,7 +55,7 @@ class Run():
         run_lenght = len(callback.n_evals)
             
         single_run = {  'run_id': [run_id] * run_lenght,
-                        'seed': [res.algorithm.seed] * run_lenght,
+                        'seed': [res.algorithm.seed] * run_lenght,  # type: ignore
                         'problem_id': [run_args.prob_id] * run_lenght,
                         'algorithm_id': [run_args.algo_id] * run_lenght,
                         'n_eval': callback.n_evals,
