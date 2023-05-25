@@ -1,36 +1,20 @@
+----------------- NOTAS GERAL --------------------
+
 https://gist.github.com/jdreaver/0be2e44981159d0854f5 spinbox adaptada (por licenca)
 
 pymoo (obviamente)
 
 pyqt tem licença?
 
-vou fazer de modo a ter fraqueza de __init__( a = 1, b = "(assim dá erro):", c=2):
+----------------- NOTAS DO CÓDIGO EM SI ----------
 
-for this code:
+elif arg in OPERATORS and cls.__name__ not in ['ReductionBa.... -> estou a lidar 
+casuisticamente com funcoes que têm o mesmo nome que os operators nos argumentos
 
-class MyClass2:
-    def __init__(self, d=3, e=4):
-        self.d = d
-        self.e = e
+----------------- A FAZER ------------------------
 
-    def my_other_method(self):
-        pass
-
-class MyClass3:
-    def __init__(self, a,b=2, 
-                 c="hello",
-                 d=3, e=4, other_class=MyClass2(d=2)
-                ) -> None: 
-        self.a = a
-        self.b = b
-        self.c = c
-        self.d = d
-        self.e = e
-        self.other_class = other_class    
-
-- give me a code that returns the list of tuples:
-
-[('a', None), ('b', 2), ('c', '"hello"'), ('d', 3), ('e', 4), ('other_class', 'MyClass2(d=2)')]
-
-when you provided MyClass3 as an argument. Make it as generic as possible so it works with 
-other classes as well, and use inspect.getsourcelines()
+- NAO ESTOU A APANHAR OS ARGUMENTOS BEM NOS OPERATORS, N POSSO IR AOS DEFAULTS
+    - alternativa: por agora, comparo só o nome da classe
+- por o run a funcionar
+- arranjar selection operator (tem problemas porque tem um argumento que é uma função)
+- separar defaults em single e multi-objective optimization

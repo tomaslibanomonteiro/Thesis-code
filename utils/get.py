@@ -120,15 +120,15 @@ def get_other_class(name, *args, d={}, **kwargs):
 # =========================================================================================================
 
 def get_sampling_options():
-    from pymoo.operators.sampling.lhs import LatinHypercubeSampling
+    from pymoo.operators.sampling.lhs import LHS
     from pymoo.operators.sampling.rnd import FloatRandomSampling
     # from pymoo.operators.integer_from_float_operator import IntegerFromFloatSampling
     from pymoo.operators.sampling.rnd import BinaryRandomSampling
     from pymoo.operators.sampling.rnd import PermutationRandomSampling
-
+    
     SAMPLING = [
         ("real_random", FloatRandomSampling),
-        ("real_lhs", LatinHypercubeSampling),
+        ("real_lhs", LHS),
         ("bin_random", BinaryRandomSampling),
         #("int_random", IntegerFromFloatSampling, {'clazz': FloatRandomSampling}),
         #("int_lhs", IntegerFromFloatSampling, {'clazz': LatinHypercubeSampling}),
@@ -177,9 +177,10 @@ def get_crossover_options():
     #from pymoo.operators.integer_from_float_operator import IntegerFromFloatCrossover
     from pymoo.operators.crossover.erx import EdgeRecombinationCrossover
     from pymoo.operators.crossover.ox import OrderCrossover
-
+    from pymoo.operators.crossover.sbx import SBX
+    
     CROSSOVER = [
-        ("real_sbx", SimulatedBinaryCrossover),
+        ("real_sbx", SBX),
         #("int_sbx", IntegerFromFloatCrossover, dict(clazz=SimulatedBinaryCrossover, prob=0.9, eta=30)),
         ("real_de", DEX),
         ("real_pcx", PCX),
@@ -205,13 +206,13 @@ def get_crossover(name, *args, d={}, **kwargs):
 def get_mutation_options():
     from pymoo.operators.mutation.nom import NoMutation
     from pymoo.operators.mutation.bitflip import BitflipMutation
-    from pymoo.operators.mutation.pm import PolynomialMutation
+    from pymoo.operators.mutation.pm import PM
     #from pymoo.operators.integer_from_float_operator import IntegerFromFloatMutation
     from pymoo.operators.mutation.inversion import InversionMutation
 
     MUTATION = [
         ("none", NoMutation),
-        ("real_pm", PolynomialMutation),
+        ("real_pm", PM),
         #("int_pm", IntegerFromFloatMutation, dict(clazz=PolynomialMutation, eta=20)),
         ("bitflip", BitflipMutation),
         ("perm_inv", InversionMutation)

@@ -28,7 +28,7 @@ class MyClass2:
 class MyClass3:
     def __init__(self, a,b=2, 
                  c="hello",
-                 d=3, e=4, other_class=MyClass2(d=2)
+                 d=3, e=4, other_class=MyClass2(d=2, e=3)
                 ) -> None: 
         self.a = a
         self.b = b

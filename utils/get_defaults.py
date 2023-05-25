@@ -6,16 +6,21 @@ from utils.get import get_mutation_options, get_crossover_options, get_selection
                     get_termination_options, get_performance_indicator_options                    
 from utils.get import get_mutation, get_crossover, get_selection, get_decomposition, get_sampling, get_reference_directions 
 
-ARG_TYPES = (int, float, str, bool, tuple, type(None))
-NO_DEFAULT = "No default, needs to be set"
+from utils.debug import debug_print
 
-OPERATORS = ["mutation", "crossover", "selection", "decomposition", "sampling", "ref_dirs"] 
+ARG_TYPES = (int, float, str, bool, type(None))
+NO_DEFAULT = "No def"
+
+# OPERATORS = ["mutation", "crossover", "selection", "decomposition", "sampling", "ref_dirs"] 
+OPERATORS = ["mutation", "crossover", "decomposition", "sampling", "ref_dirs"] 
+PRINT_LISTS = False
 
 def list_print(name,list):
-    print("\n\n  ", name, "\n")
-    for item in list:
-        print("           ", item)
-                 
+    if PRINT_LISTS:
+        print("\n\n  ", name, "\n")
+        for item in list:
+            print("           ", item)
+                    
 class Defaults():
     def __init__(self):
         
@@ -40,69 +45,58 @@ class Defaults():
         list_print("ref_dirs", self.ref_dirs)
 
         self.prob = self.get_class_list(get_problem_options())
-        self.term = self.get_class_list(get_termination_options())
-        self.pi = self.get_class_list(get_performance_indicator_options())
-        self.algo = self.get_class_list(get_algorithm_options())
-        
         list_print("prob", self.prob)
+
+        self.term = self.get_class_list(get_termination_options())
         list_print("term", self.term)
+
+        self.pi = self.get_class_list(get_performance_indicator_options())
         list_print("pi", self.pi)
+
+        self.algo = self.get_class_list(get_algorithm_options())
+        list_print("algo", self.algo)        
         
     def get_class_list(self, options_list):
         return [self.classInpection(name, obj) for name, obj in options_list]
-    
                 
-    def classInpection(self, class_name: str, cls: type, object_id = "default"):
+    def classInpection(self, get_name: str, cls: type, object_id = "default"):
         """ get a list with the class name, the object id and the arguments with their default values.
         If the argument is an operator, get the operator id """
         
-        if object_id == "default": object_id =  class_name + "_default" 
+        if object_id == "default": object_id =  get_name + "_default" 
         sig = inspect.signature(cls.__init__)
 
         args = self.extract_arguments(cls)
             
-        return [(object_id, class_name)] + args                        
+        return [(object_id, get_name)] + args                        
     
     def extract_arguments(self, cls: type):
-        init_source = None
-        for line in inspect.getsourcelines(cls)[0]:
-            if line.strip().startswith("def __init__"):
-                init_source = line
-                break
-        if init_source is None:
-            return []
-        match = re.search(r"def __init__\(self, (.*)\):", init_source)
-        if match is None:
-            return []
-        arg_list = match.group(1)
-        args = [arg.strip() for arg in arg_list.split(",")]
+        """ get a list with the arguments with their values."""
+        
+        # some classes have arguments with the same name as operators, but they are different
+        FAKE_OPERATORS = ['ReductionBasedReferenceDirectionFactory', 'RieszEnergyReferenceDirectionFactory']
+        
         arg_tuples = []
-        for arg in args:
-            match = re.match(r"(\w+)(\s*=\s*(.*))?", arg)
-            if match is None and arg not in ["self", "*args", "**kwargs"]:
-                arg_tuples.append((arg, None))
-            elif match is not None:
-                arg_name = match.group(1)
-                if arg_name in OPERATORS:
-                    self.getOperators(cls.__name__, arg_name, cls)
+        sig = inspect.signature(cls.__init__)
+        for arg in sig.parameters.keys():
+            if arg not in ["self", "args", "kwargs"]:
+                if sig.parameters[arg].default == inspect._empty:
+                    value = NO_DEFAULT
+                elif arg in OPERATORS and cls.__name__ not in FAKE_OPERATORS:
+                    value = self.getOperators(cls.__name__, arg, sig.parameters[arg].default)
                 else:
-                    default_value = match.group(3)
-                    if default_value is not None:
-                        try:
-                            default_value = eval(default_value)
-                            if not isinstance(default_value, ARG_TYPES):
-                                default_value = match.group(3)
-                        except:
-                            print("could not evaluate default value", default_value, "for argument", arg_name, "in class", cls.__name__)
-                            pass
-                if 'default_value' in locals():
-                    arg_tuples.append((arg_name, default_value))
-                else:
-                    arg_tuples.append((arg_name, None))
+                    value = sig.parameters[arg].default
+                    if type(value) not in ARG_TYPES:
+                        debug_print(f"Warning: {arg} has a value of type {type(value)} regarding class {cls}")
+                        continue
+                arg_tuples.append((arg, value))
+            
         return arg_tuples
 
     def getOperators(self, algo_name: str, arg: str, object):
 
+        if object == None:
+            return None
         if arg == "mutation":   
             return self.getOperator(object, algo_name, self.mutation, get_mutation)
         elif arg == "crossover":
@@ -118,35 +112,29 @@ class Defaults():
         else:
             raise Exception("unknown operator", arg)
         
-    def getOperator(self, object, algo_name: str, operators_list: list, get_function):
+    def getOperator(self, obj, algo_name: str, operators_list: list, get_function):
         # get object class name
-        for operator in operators_list:
-            operator_id = operator[0]
-            operator_class_name = operator[1]
-            operator_args = {item[0]: item[1] for item in operator[2:]}
+        for row in operators_list:
+            op_id, op_get_name = row[0]
+            op_args = row[1:]
+            op_args_dict = {arg: value for arg, value in op_args}
             try:
-                compare_operator = get_function(operator_class_name, **operator_args)
+                op_obj = get_function(op_get_name, **op_args_dict)
             except:
-                continue
-            print(f"Comparing {object} with {compare_operator}")
+                # debug_print("could not get operator", op_get_name, "with args", op_args, "trying without args")
+                try: 
+                    op_obj = get_function(op_get_name)
+                except:
+                    raise Exception("could not get operator", op_get_name, "with args", op_args)             
             
-            if object.__class__.__name__ == compare_operator.__class__.__name__ :
-                if inspect.signature(object.__init__) == inspect.signature(compare_operator.__init__):
-                    print("same signature")
-                    return operator_id
-                else:
-                    print("different signature")
-                    print(inspect.signature(object.__init__))
-                    print(inspect.signature(compare_operator.__init__))
-            # for arg in inspect.signature(object.__init__).parameters.keys(): 
-            #     obj_arg_value = getattr(object, arg)
-            #     cmp_arg_value = getattr(compare_operator, arg)
-            #     if obj_arg_value != cmp_arg_value:
-            #         print(f"Difference in argument {arg}: {obj_arg_value} vs {cmp_arg_value}")
-            # if compare_operator == object:
-            #     return operator_id
-            # elif compare_operator.__class__.__name__ == object.__class__.__name__:
-            #     # if the operator is not in the list, add it
-            #     operators_list.append(self.classInpection(operator_class_name, object, operator_class_name + "_" + algo_name))
+            debug_print(f"Comparing {op_obj} with {obj}")
+            
+            if op_obj.__class__.__name__ == obj.__class__.__name__:
+                # if the operator is the same class, compare the arguments
+                obj_args = self.extract_arguments(obj)
+                debug_print(f"Comparing {op_args} with {obj_args}")
+                if op_args == obj_args:
+                    # if the arguments are the same, return the operator id
+                    return op_id
 
-        raise Exception("unknown operator", object)                
+        raise Exception("unknown operator", obj)                

@@ -2,7 +2,7 @@ from frontend.my_widgets import ScientificSpinBox, ScientificDoubleSpinBox, MyCo
 from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QCheckBox
 from PyQt5.uic import loadUi
 from numpy import inf
-from utils.get_defaults import NO_DEFAULT
+from utils.get_defaults import NO_DEFAULT, OPERATORS
 from PyQt5.QtGui import QColor
 from utils.get_defaults import Defaults
 
@@ -18,6 +18,9 @@ class EditWindow(QDialog):
 
         # set the table items from the table, each row is a list of strings
         self.setTableItems()
+        
+        # strech the table columns to match the size of the items
+        self.tableWidget.resizeColumnsToContents()
             
     def setTableItems(self):
         
@@ -25,22 +28,28 @@ class EditWindow(QDialog):
         self.tableWidget.setRowCount(len(self.table_list)) 
         self.tableWidget.setColumnCount(max([len(row) for row in self.table_list])*2)
 
+        # set col names
+        for i in range(2, self.tableWidget.columnCount(), 2):
+            self.tableWidget.setHorizontalHeaderItem(i, QTableWidgetItem("Arg" + str(int(i))))
+            self.tableWidget.setHorizontalHeaderItem(i+1, QTableWidgetItem("Value"))
+            
         # set the table items from the table, each row is a list of the arguments and values of the class
-        table = self.table_list
         for row in range(self.tableWidget.rowCount()):
             for col in range(0, self.tableWidget.columnCount(), 2):
-                if col < len(table[row]):
-                    self.setTableItem(row, col)
-                else:
-                    self.tableWidget.setItem(row, col, QTableWidgetItem(""))
+                self.setTableItem(row, col)
     
     def setTableItem(self, row, col):
         
+        if col >= len(self.table_list[row]*2):                    
+            self.tableWidget.setItem(row, col, QTableWidgetItem(""))
+            self.tableWidget.setItem(row, col+1, QTableWidgetItem(""))
+            return
+        
+        FAKE_OPERATORS = ['(energy|riesz)', 'red']
+
         # get the argument and value of the class
         arg, value = self.table_list[row][int(col/2)]
         
-        OPERATORS = ["mutation", "crossover", "selection", "sampling", "decomposition", "ref_dirs"]
-
         # arg is always a string
         self.tableWidget.setItem(row, col, QTableWidgetItem(arg))
         
@@ -59,7 +68,7 @@ class EditWindow(QDialog):
             else:
                 self.tableWidget.cellWidget(row, col+1).setValue(value)
         # if arg is an operator, put a comboBox with the possible operators
-        elif arg in OPERATORS:
+        elif arg in OPERATORS and self.table_list[row][0][1] not in FAKE_OPERATORS: 
             self.setOperatorComboBox(row, col, arg, value)    
         # check if is True or False to put a CheckBox
         elif value in [True, False]:
@@ -81,34 +90,31 @@ class EditWindow(QDialog):
             self.tableWidget.setItem(row, col+1, QTableWidgetItem(value))
     
     def setOperatorComboBox(self, row, col, arg, value):
+        
+        items = []
         # check if arg is an operator, and put a comboBox with the possible operators
         if arg == "mutation":
-            items = [sublist[0] for sublist in self.defaults.mutation]
-            index = items.index(value)
-            self.tableWidget.setCellWidget(row, col+1, MyComboBox(items, index))
+            items = [sublist[0][0] for sublist in self.defaults.mutation]
         elif arg == "crossover":
-            items = [sublist[0] for sublist in self.defaults.crossover]
-            index = items.index(value)
-            self.tableWidget.setCellWidget(row, col+1, MyComboBox(items, index))
+            items = [sublist[0][0] for sublist in self.defaults.crossover]
         elif arg == "selection":
-            items = [sublist[0] for sublist in self.defaults.selection]
-            index = items.index(value)
-            self.tableWidget.setCellWidget(row, col+1, MyComboBox(items, index))
-        elif arg == "sampling" and value not in ('kraemer', 'reduction'):
-            items = [sublist[0] for sublist in self.defaults.sampling]
-            index = items.index(value)
-            self.tableWidget.setCellWidget(row, col+1, MyComboBox(items, index))
+            items = [sublist[0][0] for sublist in self.defaults.selection]
+        elif arg == "sampling":
+            items = [sublist[0][0] for sublist in self.defaults.sampling]
         elif arg == "decomposition":
-            items = [sublist[0] for sublist in self.defaults.decomposition]
-            index = items.index(value)
-            self.tableWidget.setCellWidget(row, col+1, MyComboBox(items, index))
+            items = [sublist[0][0] for sublist in self.defaults.decomposition]
         elif arg == "ref_dirs":
-            items = [sublist[0] for sublist in self.defaults.ref_dirs]
-            index = items.index(value)
-            self.tableWidget.setCellWidget(row, col+1, MyComboBox(items, index))            
+            items = [sublist[0][0] for sublist in self.defaults.ref_dirs]
         else:
             print("Error: operator ", arg, " not found with value ", value)
             self.tableWidget.setItem(row, col+1, QTableWidgetItem(value))
+        
+        if value not in [NO_DEFAULT, None]:
+            index = items.index(value)
+        else:
+            index = -1
+        self.tableWidget.setCellWidget(row, col+1, MyComboBox(items, index))
+
             
     def getObjectFromID(self, object_id):
         # get the object from the table
