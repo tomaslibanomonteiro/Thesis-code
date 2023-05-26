@@ -2,12 +2,16 @@ from frontend.my_widgets import ScientificSpinBox, ScientificDoubleSpinBox, MyCo
 from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QCheckBox
 from PyQt5.uic import loadUi
 from numpy import inf
-from utils.get_defaults import NO_DEFAULT, OPERATORS
+from backend.get_defaults import NO_DEFAULT, OPERATORS
 from PyQt5.QtGui import QColor
-from utils.get_defaults import Defaults
+from backend.get_defaults import Defaults
+from utils.debug import debug_print
+from utils.defines import DESIGNER_EDIT_WINDOW, DESIGNER_ALGO_WINDOW
+from backend.get import get_sampling, get_crossover, get_mutation, get_decomposition, \
+                      get_selection, get_reference_directions, get_other_class_options
 
 class EditWindow(QDialog):
-    def __init__(self, window_title: str, label: str, table_list: list, ui_file: str, get_function, defaults: Defaults):
+    def __init__(self, window_title: str, label: str, table_list: list, get_function, defaults: Defaults, ui_file=DESIGNER_EDIT_WINDOW):
         super().__init__()
         loadUi(ui_file, self)
         self.table_list = table_list
@@ -115,7 +119,6 @@ class EditWindow(QDialog):
             index = -1
         self.tableWidget.setCellWidget(row, col+1, MyComboBox(items, index))
 
-            
     def getObjectFromID(self, object_id):
         # get the object from the table
         for row in range(self.tableWidget.rowCount()):
@@ -123,15 +126,7 @@ class EditWindow(QDialog):
                 return self.getObjectFromRow(row)
             
         raise Exception("Object ID '", object_id, "' not found in table from window ", self.windowTitle()) 
-    
-    def getArgsFromID(self, object_id):
-        # get the args from the table
-        for row in range(self.tableWidget.rowCount()):
-            if self.tableWidget.item(row, 0).text() == object_id:
-                return self.tableWidget.item(row, 1).text(), self.getArgsFromRow(row)
             
-        raise Exception("Object ID '" + str(object_id) + "' not found in table from window ", self.windowTitle())    
-        
     def getObjectFromRow(self, row):
         # get the object from the table
         class_name = self.tableWidget.item(row, 1).text()
@@ -147,13 +142,113 @@ class EditWindow(QDialog):
         # get the args from the table
         args_dict = {}
         for col in range(2, self.tableWidget.columnCount(), 2):
-            # check if the cell is empty
-            if self.tableWidget.item(row, col+1) is None and self.tableWidget.cellWidget(row, col+1) is None:
+            arg = self.tableWidget.item(row, col).text()
+            
+            value = None
+            if arg == "":
                 break
             elif isinstance(self.tableWidget.cellWidget(row, col+1), (ScientificSpinBox, ScientificDoubleSpinBox)):
-                args_dict[self.tableWidget.item(row, col).text()] = self.tableWidget.cellWidget(row, col+1).value()       
+                value = self.tableWidget.cellWidget(row, col+1).value()       
             elif isinstance(self.tableWidget.cellWidget(row, col+1), QCheckBox):
-                args_dict[self.tableWidget.item(row, col).text()] = self.tableWidget.cellWidget(row, col+1).isChecked()
+                value = self.tableWidget.cellWidget(row, col+1).isChecked()
+            elif isinstance(self.tableWidget.cellWidget(row, col+1), MyComboBox):
+                value = self.tableWidget.cellWidget(row, col+1).currentText()
+            # elif self.tableWidget.item(row, col+1).text() == NO_DEFAULT:
+            #     raise Exception("No default -> need to set value for arg ", arg, " in row ", row, " of window ", self.windowTitle())
+            elif self.tableWidget.item(row, col+1).text() == "None":
+                value = None
             else:
-                args_dict[self.tableWidget.item(row, col).text()] = self.tableWidget.item(row, col+1).text()
+                value = self.tableWidget.item(row, col+1).text()
+                # try to convert text to int or float
+                try:
+                    value = int(value)
+                    debug_print("Converted to int")
+                except:
+                    try:
+                        value = float(value)
+                        debug_print("Converted to float")
+                    except:
+                        pass
+                
+            args_dict[arg] = value
         return args_dict    
+    
+    def getArgsFromID(self, object_id):
+        # get the args from the table
+        for row in range(self.tableWidget.rowCount()):
+            if self.tableWidget.item(row, 0).text() == object_id:
+                return self.tableWidget.item(row, 1).text(), self.getArgsFromRow(row)
+            
+        raise Exception("Object ID '" + str(object_id) + "' not found in table from window ", self.windowTitle())    
+
+def setEditWindow(button, label: str, table: list, get_function, defaults: Defaults, ui_file = DESIGNER_EDIT_WINDOW):
+    """Set the edit window to when the button is clicked"""
+    window = EditWindow(label, label, table, get_function, defaults, ui_file)
+    button.clicked.connect(window.show)
+    return window
+
+class AlgoWindow(EditWindow):
+    def __init__(self, window_title: str, table: list, get_function, defaults: Defaults, ui_file = DESIGNER_ALGO_WINDOW):
+        super().__init__(window_title, "Algorithm", table, get_function, defaults, ui_file)
+        
+        self.mutation_window = setEditWindow(self.pushButton_mutation, "Mutation", self.defaults.mutation, get_mutation, defaults)
+        self.crossover_window = setEditWindow(self.pushButton_crossover, "Crossover", self.defaults.crossover, get_crossover, defaults)
+        self.selection_window = setEditWindow(self.pushButton_selection, "Selection", self.defaults.selection, get_selection, defaults)
+        self.sampling_window = setEditWindow(self.pushButton_sampling, "Sampling", self.defaults.sampling, get_sampling, defaults)
+        self.decomposition_window = setEditWindow(self.pushButton_decomposition, "Decomposition", self.defaults.decomposition, get_decomposition, defaults)
+        self.ref_dirs_window = setEditWindow(self.pushButton_ref_dirs, "Ref_dirs", self.defaults.ref_dirs, get_reference_directions, defaults)
+            
+    def getArgsFromRow(self, row: int):
+        # get the args from the table
+        args_dict = {}
+        for col in range(2, self.tableWidget.columnCount(), 2):
+            arg = self.tableWidget.item(row, col).text()
+            
+            value = None
+            if arg == "":
+                break
+            elif arg in OPERATORS:
+                value = self.getOperator(arg, self.tableWidget.cellWidget(row, col+1).currentText())
+            elif isinstance(self.tableWidget.cellWidget(row, col+1), (ScientificSpinBox, ScientificDoubleSpinBox)):
+                value = self.tableWidget.cellWidget(row, col+1).value()       
+            elif isinstance(self.tableWidget.cellWidget(row, col+1), QCheckBox):
+                value = self.tableWidget.cellWidget(row, col+1).isChecked()
+            elif isinstance(self.tableWidget.cellWidget(row, col+1), MyComboBox):
+                value = self.tableWidget.cellWidget(row, col+1).currentText()
+            # elif self.tableWidget.item(row, col+1).text() == NO_DEFAULT:
+            #     raise Exception("No default -> need to set value for arg ", arg, " in row ", row, " of window ", self.windowTitle())
+            elif self.tableWidget.item(row, col+1).text() == "None":
+                value = None
+            else:
+                value = self.tableWidget.item(row, col+1).text()
+                # try to convert text to int or float
+                try:
+                    value = int(value)
+                    debug_print("Converted to int")
+                except:
+                    try:
+                        value = float(value)
+                        debug_print("Converted to float")
+                    except:
+                        pass
+                
+            args_dict[arg] = value
+        return args_dict    
+    
+    def getOperator(self, op_name: str, op_id: str):
+        
+        if op_name ==  "mutation":
+            return self.mutation_window.getObjectFromID(op_id)
+        elif op_name == "crossover":
+            return self.crossover_window.getObjectFromID(op_id)
+        elif op_name == "selection":
+            return self.selection_window.getObjectFromID(op_id)
+        elif op_name == "sampling":
+            return self.sampling_window.getObjectFromID(op_id)
+        elif op_name == "decomposition":
+            return self.decomposition_window.getObjectFromID(op_id)
+        elif op_name == "ref_dirs":
+            return self.ref_dirs_window.getObjectFromID(op_id)
+        else:
+            raise Exception("Operator " + op_name + " not found, with id " + op_id)
+        

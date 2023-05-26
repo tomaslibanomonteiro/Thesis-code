@@ -1,5 +1,5 @@
 import pandas as pd
-from utils.get import get_algorithm, get_problem, get_termination, get_performance_indicator 
+from backend.get import get_algorithm, get_problem, get_termination, get_performance_indicator 
                  
 ARGS = ['arg1', 'arg2', 'arg3', 'arg4', 'arg5', 'arg6', 'arg7']
 ARGS_VALUES = ['arg1_value', 'arg2_value', 'arg3_value', 'arg4_value', 'arg5_value', 'arg6_value', 'arg7_value']
@@ -75,7 +75,7 @@ class Input():
     
     def get_algo_from_row_id(self, id_column: str, type_column: str, row_id: str, tables, n_obj: int):
         
-        from utils.get import get_reference_directions, get_decomposition, get_sampling, get_selection, get_crossover, get_mutation
+        from backend.get import get_reference_directions, get_decomposition, get_sampling, get_selection, get_crossover, get_mutation
 
         # get the row of the table that matches the algo id in the 'algo_id' column
         row = tables.algo.loc[tables.algo[id_column] == row_id].iloc[0]

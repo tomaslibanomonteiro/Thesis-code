@@ -1,10 +1,10 @@
 import inspect                
 import re
 import numpy as np
-from utils.get import get_mutation_options, get_crossover_options, get_selection_options, get_decomposition_options, \
+from backend.get import get_mutation_options, get_crossover_options, get_selection_options, get_decomposition_options, \
                     get_sampling_options, get_reference_direction_options, get_algorithm_options, get_problem_options,\
                     get_termination_options, get_performance_indicator_options                    
-from utils.get import get_mutation, get_crossover, get_selection, get_decomposition, get_sampling, get_reference_directions 
+from backend.get import get_mutation, get_crossover, get_selection, get_decomposition, get_sampling, get_reference_directions 
 
 from utils.debug import debug_print
 
@@ -98,43 +98,27 @@ class Defaults():
         if object == None:
             return None
         if arg == "mutation":   
-            return self.getOperator(object, algo_name, self.mutation, get_mutation)
+            return self.getOperator(object, self.mutation, get_mutation_options())
         elif arg == "crossover":
-            return self.getOperator(object, algo_name, self.crossover, get_crossover)
+            return self.getOperator(object, self.crossover, get_crossover_options())    
         elif arg == "selection":
-            return self.getOperator(object, algo_name, self.selection, get_selection)
+            return self.getOperator(object, self.selection, get_selection_options())                                    
         elif arg == "decomposition":
-            return self.getOperator(object, algo_name, self.decomposition, get_decomposition)
+            return self.getOperator(object, self.decomposition, get_decomposition_options())
         elif arg == "sampling":
-            return self.getOperator(object, algo_name, self.sampling, get_sampling)
+            return self.getOperator(object, self.sampling, get_sampling_options())
         elif arg == "ref_dirs":
-            return self.getOperator(object, algo_name, self.ref_dirs, get_reference_directions)
+            return self.getOperator(object, self.ref_dirs, get_reference_direction_options())
         else:
             raise Exception("unknown operator", arg)
         
-    def getOperator(self, obj, algo_name: str, operators_list: list, get_function):
-        # get object class name
-        for row in operators_list:
-            op_id, op_get_name = row[0]
-            op_args = row[1:]
-            op_args_dict = {arg: value for arg, value in op_args}
-            try:
-                op_obj = get_function(op_get_name, **op_args_dict)
-            except:
-                # debug_print("could not get operator", op_get_name, "with args", op_args, "trying without args")
-                try: 
-                    op_obj = get_function(op_get_name)
-                except:
-                    raise Exception("could not get operator", op_get_name, "with args", op_args)             
-            
-            debug_print(f"Comparing {op_obj} with {obj}")
-            
-            if op_obj.__class__.__name__ == obj.__class__.__name__:
-                # if the operator is the same class, compare the arguments
-                obj_args = self.extract_arguments(obj)
-                debug_print(f"Comparing {op_args} with {obj_args}")
-                if op_args == obj_args:
-                    # if the arguments are the same, return the operator id
-                    return op_id
-
+    def getOperator(self, obj: str, operators_list: list, get_list: list):
+        # get object class name    
+        for get_name, cls in get_list:
+            if obj.__class__.__name__ == cls.__name__:
+                for row in operators_list:
+                    op_id, op_get_name = row[0]
+                    if get_name == op_get_name:
+                        return op_id
+                
         raise Exception("unknown operator", obj)                

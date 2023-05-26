@@ -1,46 +1,25 @@
 from PyQt5.QtWidgets import QMainWindow, QHeaderView
 from PyQt5.uic import loadUi
-from utils.get_defaults import Defaults
-from utils.get_defaults import NO_DEFAULT
+from backend.get_defaults import Defaults
 from frontend.my_widgets import MyComboBox
-from frontend.edit_window import EditWindow
-from utils.get import get_algorithm, get_problem, get_termination, get_performance_indicator, get_sampling, \
-                    get_crossover, get_mutation, get_decomposition, get_selection, get_reference_directions, get_other_class_options
-
-DESIGNER_MAIN = 'frontend/designer_templates/main_window.ui' 
-DESIGNER_EDIT_WINDOW = 'frontend/designer_templates/edit_window.ui'
-DESIGNER_ALGO_WINDOW = 'frontend/designer_templates/algo_window.ui'
-
+from frontend.other_windows import AlgoWindow, setEditWindow
+from backend.get import get_algorithm, get_problem, get_termination, get_performance_indicator
+from utils.defines import DESIGNER_MAIN
+    
 class MyMainWindow(QMainWindow):
     def __init__(self, defaults: Defaults):
         super().__init__()
         
         loadUi(DESIGNER_MAIN, self)
-        self.edit_windows = []
         
-        # set windows for pi, prob, term
-        buttons = [self.pushButton_edit_term, self.pushButton_edit_pi, self.pushButton_edit_prob]
-        labels = ["Edit Termination", "Edit Performance Indicators", "Edit Problem"]
-        ui_files = [DESIGNER_EDIT_WINDOW] * len(buttons)
-        default_tables = [defaults.term, defaults.pi, defaults.prob]
-        get_functions = [get_termination, get_performance_indicator, get_problem]         
-        self.setEditWindows(buttons, labels, default_tables, ui_files, get_functions, defaults)
+        # set other windows
+        self.term_window = setEditWindow(self.pushButton_edit_term, "Edit Terminations", defaults.term, get_termination, defaults)
+        self.pi_window = setEditWindow(self.pushButton_edit_pi, "Edit Performance Indicators", defaults.pi, get_performance_indicator, defaults)
+        self.prob_window = setEditWindow(self.pushButton_edit_prob, "Edit Problems", defaults.prob, get_problem, defaults)
         
-        # set window for algo (more buttons to connect to operators)
-        self.setEditWindows([self.pushButton_edit_algo], ["Edit Algorithms"], [defaults.algo], [DESIGNER_ALGO_WINDOW], [get_algorithm], defaults)
-        algo_window = self.edit_windows[-1]
-        
-        # set windows for algo operators (sampling, crossover, mutation, decomposition, selection, ref_dirs)
-        buttons = [algo_window.pushButton_sampling, algo_window.pushButton_crossover, algo_window.pushButton_mutation, \
-                    algo_window.pushButton_selection, algo_window.pushButton_decomposition, algo_window.pushButton_ref_dirs] 
-        labels = ["Edit Sampling Operators", "Edit Crossover Operators", "Edit Mutation Operators", "Edit Selection Operators",\
-                    "Edit Decomposition Operators", "Edit Reference Directions"]
-        ui_files = [DESIGNER_EDIT_WINDOW] * len(buttons)
-        default_tables = [defaults.sampling, defaults.crossover, defaults.mutation, defaults.selection, defaults.decomposition,\
-                            defaults.ref_dirs]
-        get_functions = [get_sampling, get_crossover, get_mutation, get_selection, get_decomposition, get_reference_directions]
-        self.setEditWindows(buttons, labels, default_tables, ui_files, get_functions, defaults)        
-        
+        self.algo_window = AlgoWindow("Edit Algorithms", defaults.algo, get_algorithm, defaults)
+        self.pushButton_edit_algo.clicked.connect(self.algo_window.show)
+                            
         # set comboboxes from main window
         tables_list = [self.tableWidget_run_pi, self.tableWidget_run_algo, self.tableWidget_run_prob]
         pi_options = sorted([lst[0][0] for lst in defaults.pi])
@@ -53,13 +32,7 @@ class MyMainWindow(QMainWindow):
         
         # set run button
         self.PushButton_Run.clicked.connect(self.runButton)
-                
-    def setEditWindows(self, buttons, labels, tables, ui_files, get_functions, defaults: Defaults):
-        for button, label, table, ui_file, get_function in zip(buttons, labels, tables, ui_files, get_functions): # type: ignore
-            window = EditWindow(label, label, table, ui_file, get_function, defaults)
-            self.edit_windows.append(window)
-            button.clicked.connect(window.show)
-            
+                    
     def setTablesToComboBoxes(self, tableWidget_list, comboBox_items_list):
         for table, items in zip(tableWidget_list, comboBox_items_list): # type: ignore
             # strech the table to fit the window
@@ -84,17 +57,17 @@ class MyMainWindow(QMainWindow):
         
         # get the termination object
         term_id = self.comboBox_term.currentText()
-        term_object = self.edit_windows[0].getObjectFromID(term_id)
+        term_object = self.term_window.getObjectFromID(term_id)
         print(term_object)
         
         pi_ids = []
         pi_class_args_tuple = []
-        # get pi args (object can only be instantiated after )
+        # get pi args (object can only be instantiated after)
         for row in range(self.tableWidget_run_pi.rowCount()):
             if self.tableWidget_run_pi.cellWidget(row, 0).currentText() == "":
                 break
             pi_ids.append(self.tableWidget_run_pi.cellWidget(row, 0).currentText())
-            pi_class_args_tuple.append(self.edit_windows[1].getArgsFromID(pi_ids[-1]))
+            pi_class_args_tuple.append(self.pi_window.getArgsFromID(pi_ids[-1]))
             
         # get the problem objects
         prob_ids = []
@@ -103,7 +76,7 @@ class MyMainWindow(QMainWindow):
             if self.tableWidget_run_prob.cellWidget(row, 0).currentText() == "":
                 break
             prob_ids.append(self.tableWidget_run_prob.cellWidget(row, 0).currentText())
-            prob_objects.append(self.edit_windows[2].getObjectFromID(prob_ids[-1]))
+            prob_objects.append(self.prob_window.getObjectFromID(prob_ids[-1]))
             
         print("prob_objects", prob_objects)
         
@@ -114,4 +87,6 @@ class MyMainWindow(QMainWindow):
             if self.tableWidget_run_algo.cellWidget(row, 0).currentText() == "":
                 break
             algo_ids.append(self.tableWidget_run_algo.cellWidget(row, 0).currentText())
-            algo_objects.append(self.edit_windows[3].getObjectFromID(algo_ids[-1]))
+            algo_objects.append(self.algo_window.getObjectFromID(algo_ids[-1]))
+            
+        
