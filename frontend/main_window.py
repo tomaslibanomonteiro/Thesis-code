@@ -58,7 +58,6 @@ class MyMainWindow(QMainWindow):
         # get the termination object
         term_id = self.comboBox_term.currentText()
         term_object = self.term_window.getObjectFromID(term_id)
-        print(term_object)
         
         pi_ids = []
         pi_class_args_tuple = []
@@ -77,9 +76,7 @@ class MyMainWindow(QMainWindow):
                 break
             prob_ids.append(self.tableWidget_run_prob.cellWidget(row, 0).currentText())
             prob_objects.append(self.prob_window.getObjectFromID(prob_ids[-1]))
-            
-        print("prob_objects", prob_objects)
-        
+                    
         # get the algorithm objects
         algo_ids = []
         algo_objects = []

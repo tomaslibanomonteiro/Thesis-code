@@ -4,7 +4,7 @@ from backend.get_defaults import Defaults
 
 DEFAULT_RUN_OPTIONS = True
 
-def setRunOptions(main_window: MyMainWindow):
+def DefaultRunOptions(main_window: MyMainWindow):
     # set seeds to 3
     main_window.SpinBox_n_seeds.setValue(3)
     # set termination to soo_default
@@ -32,8 +32,7 @@ def main():
     main_window = MyMainWindow(defaults)
 
     if DEFAULT_RUN_OPTIONS:
-        setRunOptions(main_window)
-        # press the run button
+        DefaultRunOptions(main_window)
         main_window.PushButton_Run.click()
         
     main_window.show()

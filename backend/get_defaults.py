@@ -13,48 +13,28 @@ NO_DEFAULT = "No def"
 
 # OPERATORS = ["mutation", "crossover", "selection", "decomposition", "sampling", "ref_dirs"] 
 OPERATORS = ["mutation", "crossover", "decomposition", "sampling", "ref_dirs"] 
-PRINT_LISTS = False
 
-def list_print(name,list):
-    if PRINT_LISTS:
-        print("\n\n  ", name, "\n")
-        for item in list:
-            print("           ", item)
+# classes that have arguments with the same name as the operatores names but are different
+FAKE_OPERATORS = ['ReductionBasedReferenceDirectionFactory', 'RieszEnergyReferenceDirectionFactory']
+
+PRINT_LISTS = False
                     
 class Defaults():
-    def __init__(self):
+    def __init__(self, obj = "single"):
         
-        # self.other_classes = self.get_class_list(get_other_class_options())
-                
+        if obj not in ["single", "multi", "all"]:
+            raise ValueError("obj argument must be 'single', 'multi' or 'all' when instantiating Defaults class")
+                        
         self.mutation = self.get_class_list(get_mutation_options())
-        list_print("mutation", self.mutation)
-
         self.crossover = self.get_class_list(get_crossover_options())
-        list_print("crossover", self.crossover)
-
         self.selection = self.get_class_list(get_selection_options())
-        list_print("selection", self.selection)
-
         self.decomposition = self.get_class_list(get_decomposition_options())
-        list_print("decomposition", self.decomposition)
-        
         self.sampling = self.get_class_list(get_sampling_options())
-        list_print("sampling", self.sampling)
-        
         self.ref_dirs = self.get_class_list(get_reference_direction_options())
-        list_print("ref_dirs", self.ref_dirs)
-
         self.prob = self.get_class_list(get_problem_options())
-        list_print("prob", self.prob)
-
         self.term = self.get_class_list(get_termination_options())
-        list_print("term", self.term)
-
         self.pi = self.get_class_list(get_performance_indicator_options())
-        list_print("pi", self.pi)
-
         self.algo = self.get_class_list(get_algorithm_options())
-        list_print("algo", self.algo)        
         
     def get_class_list(self, options_list):
         return [self.classInpection(name, obj) for name, obj in options_list]
@@ -73,6 +53,11 @@ class Defaults():
     def extract_arguments(self, cls: type):
         """ get a list with the arguments with their values."""
         
+        
+        # some classes have arguments with the same name as operators, but they are different
+        FAKE_OPERATORS = ['ReductionBasedReferenceDirectionFactory', 'RieszEnergyReferenceDirectionFactory']
+        
+                
         # some classes have arguments with the same name as operators, but they are different
         FAKE_OPERATORS = ['ReductionBasedReferenceDirectionFactory', 'RieszEnergyReferenceDirectionFactory']
         
@@ -83,17 +68,17 @@ class Defaults():
                 if sig.parameters[arg].default == inspect._empty:
                     value = NO_DEFAULT
                 elif arg in OPERATORS and cls.__name__ not in FAKE_OPERATORS:
-                    value = self.getOperators(cls.__name__, arg, sig.parameters[arg].default)
+                    value = self.getOperators(arg, sig.parameters[arg].default)
                 else:
                     value = sig.parameters[arg].default
                     if type(value) not in ARG_TYPES:
-                        debug_print(f"Warning: {arg} has a value of type {type(value)} regarding class {cls}")
+                        debug_print(f"Warning: supressing arg \"{arg}\" of class {cls.__name__} because of invalid type")
                         continue
                 arg_tuples.append((arg, value))
             
         return arg_tuples
 
-    def getOperators(self, algo_name: str, arg: str, object):
+    def getOperators(self, arg: str, object):
 
         if object == None:
             return None

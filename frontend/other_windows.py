@@ -8,7 +8,7 @@ from backend.get_defaults import Defaults
 from utils.debug import debug_print
 from utils.defines import DESIGNER_EDIT_WINDOW, DESIGNER_ALGO_WINDOW
 from backend.get import get_sampling, get_crossover, get_mutation, get_decomposition, \
-                      get_selection, get_reference_directions, get_other_class_options
+                      get_selection, get_reference_directions
 
 class EditWindow(QDialog):
     def __init__(self, window_title: str, table_list: list, get_function, defaults: Defaults, ui_file=DESIGNER_EDIT_WINDOW):
@@ -19,6 +19,13 @@ class EditWindow(QDialog):
         self.setWindowTitle(window_title)
         self.label.setText(window_title)
         self.get_function = get_function
+        
+        # for each operator, set the combobox items available (only for algo window)
+        combo_items = {}
+        for op, op_list in [("mutation",self.defaults.mutation), ("crossover",self.defaults.crossover), ("selection",self.defaults.selection), ("sampling",self.defaults.sampling), ("decomposition",self.defaults.decomposition), ("ref_dirs",self.defaults.ref_dirs)]:
+            combo_items[op] = [sublist[0][0] for sublist in op_list]
+        self.operator_combobox_items = combo_items
+
 
         # set the table items from the table, each row is a list of strings
         self.setTableItems()
@@ -86,7 +93,6 @@ class EditWindow(QDialog):
         elif not isinstance(value, str):
             self.tableWidget.setItem(row, col+1, QTableWidgetItem(str(value)))
             self.tableWidget.item(row, col+1).setBackground(QColor(255, 0, 0))
-            print("Object arg in row ", row, ": ", value, " of window: ", self.windowTitle())
         # check if has no default value, color
         elif value == NO_DEFAULT:
             self.tableWidget.setItem(row, col+1, QTableWidgetItem(NO_DEFAULT))
@@ -95,30 +101,7 @@ class EditWindow(QDialog):
             self.tableWidget.setItem(row, col+1, QTableWidgetItem(value))
     
     def setOperatorComboBox(self, row, col, arg, value):
-        
-        items = []
-        # check if arg is an operator, and put a comboBox with the possible operators
-        if arg == "mutation":
-            items = [sublist[0][0] for sublist in self.defaults.mutation]
-        elif arg == "crossover":
-            items = [sublist[0][0] for sublist in self.defaults.crossover]
-        elif arg == "selection":
-            items = [sublist[0][0] for sublist in self.defaults.selection]
-        elif arg == "sampling":
-            items = [sublist[0][0] for sublist in self.defaults.sampling]
-        elif arg == "decomposition":
-            items = [sublist[0][0] for sublist in self.defaults.decomposition]
-        elif arg == "ref_dirs":
-            items = [sublist[0][0] for sublist in self.defaults.ref_dirs]
-        else:
-            print("Error: operator ", arg, " not found with value ", value)
-            self.tableWidget.setItem(row, col+1, QTableWidgetItem(value))
-        
-        if value not in [NO_DEFAULT, None]:
-            index = items.index(value)
-        else:
-            index = -1
-        self.tableWidget.setCellWidget(row, col+1, MyComboBox(items, index))
+        raise NotImplementedError("setOperatorComboBox called from EditWindow")
 
     def getObjectFromID(self, object_id):
         # get the object from the table
@@ -163,11 +146,11 @@ class EditWindow(QDialog):
                 # try to convert text to int or float
                 try:
                     value = int(value)
-                    debug_print("Converted to int")
+                    debug_print(value, "Converted to int in window ", self.windowTitle(), " row ", row, " col ", col, " arg ", arg, " value ", value)
                 except:
                     try:
                         value = float(value)
-                        debug_print("Converted to float")
+                        debug_print(value, "Converted to float in window ", self.windowTitle(), " row ", row, " col ", col, " arg ", arg, " value ", value)
                     except:
                         pass
                 
@@ -192,12 +175,23 @@ class AlgoWindow(EditWindow):
     def __init__(self, window_title: str, table: list, get_function, defaults: Defaults, ui_file = DESIGNER_ALGO_WINDOW):
         super().__init__(window_title, table, get_function, defaults, ui_file)
         
+        # set the edit windows for each operator
         self.mutation_window = setEditWindow(self.pushButton_mutation, "Edit Mutations", self.defaults.mutation, get_mutation, defaults)
         self.crossover_window = setEditWindow(self.pushButton_crossover, "Edit Crossovers", self.defaults.crossover, get_crossover, defaults)
         self.selection_window = setEditWindow(self.pushButton_selection, "Edit Selections", self.defaults.selection, get_selection, defaults)
         self.sampling_window = setEditWindow(self.pushButton_sampling, "Edit Samplings", self.defaults.sampling, get_sampling, defaults)
         self.decomposition_window = setEditWindow(self.pushButton_decomposition, "Edit Decompositions", self.defaults.decomposition, get_decomposition, defaults)
         self.ref_dirs_window = setEditWindow(self.pushButton_ref_dirs, "Edit Ref_dirs", self.defaults.ref_dirs, get_reference_directions, defaults)
+        
+    def setOperatorComboBox(self, row, col, arg, value):
+
+        items = self.operator_combobox_items[arg]
+                
+        if value not in [NO_DEFAULT, None]:
+            index = items.index(value)
+        else:
+            index = -1
+        self.tableWidget.setCellWidget(row, col+1, MyComboBox(items, index))
             
     def getArgsFromRow(self, row: int):
         # get the args from the table
