@@ -18,9 +18,7 @@ def setRunOptions(main_window: MyMainWindow):
     main_window.tableWidget_run_algo.cellWidget(1, 0).setCurrentIndex(10)
     main_window.tableWidget_run_algo.cellWidget(2, 0).setCurrentIndex(3)
     # set prob to indexes 1 2 and 3 of combobox
-    main_window.tableWidget_run_prob.cellWidget(0, 0).setCurrentIndex(1)
-    main_window.tableWidget_run_prob.cellWidget(1, 0).setCurrentIndex(2)
-    main_window.tableWidget_run_prob.cellWidget(2, 0).setCurrentIndex(3)
+    main_window.tableWidget_run_prob.cellWidget(0, 0).setCurrentIndex(0)
 
 def main():
     

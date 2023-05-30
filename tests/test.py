@@ -1,24 +1,40 @@
-import inspect
-import re
-from typing import Any, List, Tuple
-getcallargs = inspect.getcallargs
+from backend.run import Run
+from backend.get_defaults import Defaults
 
-class MyClass:
-    def __init__(self, a,b=2, 
-                 c="hello",
-                 d=3, e=4
-                ):
-        self.h = d + e
+import pickle
+from pymoo.optimize import minimize
+from backend.get import get_problem, get_algorithm, get_termination, get_performance_indicator
+    
 
-def extract_arguments(cls: type):
-    """ get a list with the arguments with their values."""
-            
-    arg_tuples = []
-    sig = inspect.signature(cls.__init__)
-    for arg in sig.parameters.keys():
-        # get the default value
-        default = sig.parameters[arg].default
-        continue
+prob = get_problem("ackley")
+algo = get_algorithm("ga")
 
-a = extract_arguments(MyClass)
-b = extract_arguments(MyClass(a=3, b=4))
+res = minimize( algorithm=algo,
+                problem=prob,
+                termination=('n_gen', 2))
+
+# defaults = Defaults()
+# algo_list = defaults.algo
+# algo_row = []
+# for algo_row in algo_list:
+#     if algo_row[0][1] == "ga":
+#         break
+# algo_row = [algo_row[1]] + algo_row[5:7]
+
+# algo_dict = dict(algo_row)
+
+# algo2 = get_algorithm("ga", **algo_dict)
+# algo2 = run_object.run_args[0].algo_object
+
+# res = minimize( algorithm=algo2,
+#                 problem=prob,
+#                 termination=('n_gen', 2))
+
+with open('ga.pickle', 'rb') as f:
+    my_ga = pickle.load(f)
+
+res = minimize( algorithm=my_ga,
+                problem=prob,
+                termination=('n_gen', 2))
+
+print("\n\ndone\n\n")

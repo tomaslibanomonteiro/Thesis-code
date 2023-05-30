@@ -11,13 +11,13 @@ from backend.get import get_sampling, get_crossover, get_mutation, get_decomposi
                       get_selection, get_reference_directions, get_other_class_options
 
 class EditWindow(QDialog):
-    def __init__(self, window_title: str, label: str, table_list: list, get_function, defaults: Defaults, ui_file=DESIGNER_EDIT_WINDOW):
+    def __init__(self, window_title: str, table_list: list, get_function, defaults: Defaults, ui_file=DESIGNER_EDIT_WINDOW):
         super().__init__()
         loadUi(ui_file, self)
         self.table_list = table_list
         self.defaults = defaults
         self.setWindowTitle(window_title)
-        self.label.setText(label)
+        self.label.setText(window_title)
         self.get_function = get_function
 
         # set the table items from the table, each row is a list of strings
@@ -57,8 +57,12 @@ class EditWindow(QDialog):
         # arg is always a string
         self.tableWidget.setItem(row, col, QTableWidgetItem(arg))
         
+        # check if is True or False to put a CheckBox
+        if value is True or value is False:
+            self.tableWidget.setCellWidget(row, col+1, QCheckBox())
+            self.tableWidget.cellWidget(row, col+1).setChecked(value)
         # set table item according to value type 
-        if isinstance(value, int):
+        elif isinstance(value, int):
             self.tableWidget.setCellWidget(row, col+1, ScientificSpinBox())
             self.tableWidget.cellWidget(row, col+1).setValue(value)
         # check if it is float to put a doule SpinBox
@@ -74,9 +78,6 @@ class EditWindow(QDialog):
         # if arg is an operator, put a comboBox with the possible operators
         elif arg in OPERATORS and self.table_list[row][0][1] not in FAKE_OPERATORS: 
             self.setOperatorComboBox(row, col, arg, value)    
-        # check if is True or False to put a CheckBox
-        elif value in [True, False]:
-            self.tableWidget.setCellWidget(row, col+1, QCheckBox().setChecked(value))
         # check if is None
         elif value == None:
             self.tableWidget.setItem(row, col+1, QTableWidgetItem(str(value)))
@@ -181,22 +182,22 @@ class EditWindow(QDialog):
             
         raise Exception("Object ID '" + str(object_id) + "' not found in table from window ", self.windowTitle())    
 
-def setEditWindow(button, label: str, table: list, get_function, defaults: Defaults, ui_file = DESIGNER_EDIT_WINDOW):
+def setEditWindow(button, window_title: str, table: list, get_function, defaults: Defaults, ui_file = DESIGNER_EDIT_WINDOW):
     """Set the edit window to when the button is clicked"""
-    window = EditWindow(label, label, table, get_function, defaults, ui_file)
+    window = EditWindow(window_title, table, get_function, defaults, ui_file)
     button.clicked.connect(window.show)
     return window
 
 class AlgoWindow(EditWindow):
     def __init__(self, window_title: str, table: list, get_function, defaults: Defaults, ui_file = DESIGNER_ALGO_WINDOW):
-        super().__init__(window_title, "Algorithm", table, get_function, defaults, ui_file)
+        super().__init__(window_title, table, get_function, defaults, ui_file)
         
-        self.mutation_window = setEditWindow(self.pushButton_mutation, "Mutation", self.defaults.mutation, get_mutation, defaults)
-        self.crossover_window = setEditWindow(self.pushButton_crossover, "Crossover", self.defaults.crossover, get_crossover, defaults)
-        self.selection_window = setEditWindow(self.pushButton_selection, "Selection", self.defaults.selection, get_selection, defaults)
-        self.sampling_window = setEditWindow(self.pushButton_sampling, "Sampling", self.defaults.sampling, get_sampling, defaults)
-        self.decomposition_window = setEditWindow(self.pushButton_decomposition, "Decomposition", self.defaults.decomposition, get_decomposition, defaults)
-        self.ref_dirs_window = setEditWindow(self.pushButton_ref_dirs, "Ref_dirs", self.defaults.ref_dirs, get_reference_directions, defaults)
+        self.mutation_window = setEditWindow(self.pushButton_mutation, "Edit Mutations", self.defaults.mutation, get_mutation, defaults)
+        self.crossover_window = setEditWindow(self.pushButton_crossover, "Edit Crossovers", self.defaults.crossover, get_crossover, defaults)
+        self.selection_window = setEditWindow(self.pushButton_selection, "Edit Selections", self.defaults.selection, get_selection, defaults)
+        self.sampling_window = setEditWindow(self.pushButton_sampling, "Edit Samplings", self.defaults.sampling, get_sampling, defaults)
+        self.decomposition_window = setEditWindow(self.pushButton_decomposition, "Edit Decompositions", self.defaults.decomposition, get_decomposition, defaults)
+        self.ref_dirs_window = setEditWindow(self.pushButton_ref_dirs, "Edit Ref_dirs", self.defaults.ref_dirs, get_reference_directions, defaults)
             
     def getArgsFromRow(self, row: int):
         # get the args from the table

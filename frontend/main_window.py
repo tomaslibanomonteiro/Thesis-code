@@ -5,7 +5,7 @@ from frontend.my_widgets import MyComboBox
 from frontend.other_windows import AlgoWindow, setEditWindow
 from backend.get import get_algorithm, get_problem, get_termination, get_performance_indicator
 from utils.defines import DESIGNER_MAIN
-    
+from backend.run import Run    
 class MyMainWindow(QMainWindow):
     def __init__(self, defaults: Defaults):
         super().__init__()
@@ -67,7 +67,7 @@ class MyMainWindow(QMainWindow):
             if self.tableWidget_run_pi.cellWidget(row, 0).currentText() == "":
                 break
             pi_ids.append(self.tableWidget_run_pi.cellWidget(row, 0).currentText())
-            pi_class_args_tuple.append(self.pi_window.getArgsFromID(pi_ids[-1]))
+            pi_class_args_tuple.append(self.pi_window.getArgsFromID(pi_ids[-1])) 
             
         # get the problem objects
         prob_ids = []
@@ -89,4 +89,7 @@ class MyMainWindow(QMainWindow):
             algo_ids.append(self.tableWidget_run_algo.cellWidget(row, 0).currentText())
             algo_objects.append(self.algo_window.getObjectFromID(algo_ids[-1]))
             
-        
+        run = Run(prob_ids, prob_objects, algo_ids, algo_objects, pi_ids, pi_class_args_tuple, term_id, term_object, n_seeds)
+                    
+        run.run()
+        run.printData()
