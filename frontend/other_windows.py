@@ -103,18 +103,29 @@ class EditWindow(QDialog):
     def setOperatorComboBox(self, row, col, arg, value):
         raise NotImplementedError("setOperatorComboBox called from EditWindow")
 
-    def getObjectFromID(self, object_id):
+    def getObjectFromID(self, object_id, pf=None, n_obj=None):
         # get the object from the table
         for row in range(self.tableWidget.rowCount()):
             if self.tableWidget.item(row, 0).text() == object_id:
-                return self.getObjectFromRow(row)
+                return self.getObjectFromRow(row, pf, n_obj)
             
         raise Exception("Object ID '", object_id, "' not found in table from window ", self.windowTitle()) 
             
-    def getObjectFromRow(self, row):
+    def getObjectFromRow(self, row, pf=None, n_obj=None):
         # get the object from the table
         class_name = self.tableWidget.item(row, 1).text()
-        args_dict = self.getArgsFromRow(row)
+        args_dict = self.getArgsFromRow(row, pf, n_obj)
+        
+        if self.windowTitle() == "Edit Ref_dirs":    
+            if "n_dim" in args_dict and args_dict["n_dim"] in [None, NO_DEFAULT]: 
+                args_dict["n_dim"] = n_obj
+            if "n_points" in args_dict and args_dict["n_points"] in [None, NO_DEFAULT]:
+                args_dict["n_points"] = n_obj*2 if n_obj is not None else None 
+            if "partitions" in args_dict and args_dict["partitions"] in [None, NO_DEFAULT]:
+                args_dict["partitions"] = n_obj*2 if n_obj is not None else None
+        elif self.windowTitle() == "Edit Performance Indicators":
+            if "pf" in args_dict and args_dict["pf"] in [None, NO_DEFAULT]:
+                args_dict["pf"] = pf
             
         obj = self.get_function(class_name, **args_dict)
         if obj is None:
@@ -122,7 +133,7 @@ class EditWindow(QDialog):
         else:
             return obj
         
-    def getArgsFromRow(self, row):
+    def getArgsFromRow(self, row: int, pf = None, n_obj=None):
         # get the args from the table
         args_dict = {}
         for col in range(2, self.tableWidget.columnCount(), 2):
@@ -156,14 +167,6 @@ class EditWindow(QDialog):
                 
             args_dict[arg] = value
         return args_dict    
-    
-    def getArgsFromID(self, object_id):
-        # get the args from the table
-        for row in range(self.tableWidget.rowCount()):
-            if self.tableWidget.item(row, 0).text() == object_id:
-                return self.tableWidget.item(row, 1).text(), self.getArgsFromRow(row)
-            
-        raise Exception("Object ID '" + str(object_id) + "' not found in table from window ", self.windowTitle())    
 
 def setEditWindow(button, window_title: str, table: list, get_function, defaults: Defaults, ui_file = DESIGNER_EDIT_WINDOW):
     """Set the edit window to when the button is clicked"""
@@ -193,7 +196,7 @@ class AlgoWindow(EditWindow):
             index = -1
         self.tableWidget.setCellWidget(row, col+1, MyComboBox(items, index))
             
-    def getArgsFromRow(self, row: int):
+    def getArgsFromRow(self, row: int, pf = None, n_obj=None):
         # get the args from the table
         args_dict = {}
         for col in range(2, self.tableWidget.columnCount(), 2):
@@ -203,15 +206,15 @@ class AlgoWindow(EditWindow):
             if arg == "":
                 break
             elif arg in OPERATORS:
-                value = self.getOperator(arg, self.tableWidget.cellWidget(row, col+1).currentText())
+                value = self.getOperator(arg, self.tableWidget.cellWidget(row, col+1).currentText(), pf, n_obj)
             elif isinstance(self.tableWidget.cellWidget(row, col+1), (ScientificSpinBox, ScientificDoubleSpinBox)):
                 value = self.tableWidget.cellWidget(row, col+1).value()       
             elif isinstance(self.tableWidget.cellWidget(row, col+1), QCheckBox):
                 value = self.tableWidget.cellWidget(row, col+1).isChecked()
             elif isinstance(self.tableWidget.cellWidget(row, col+1), MyComboBox):
                 value = self.tableWidget.cellWidget(row, col+1).currentText()
-            # elif self.tableWidget.item(row, col+1).text() == NO_DEFAULT:
-            #     raise Exception("No default -> need to set value for arg ", arg, " in row ", row, " of window ", self.windowTitle())
+            elif self.tableWidget.item(row, col+1).text() == NO_DEFAULT:
+                raise Exception("No default -> need to set value for arg ", arg, " in row ", row, " of window ", self.windowTitle())
             elif self.tableWidget.item(row, col+1).text() == "None":
                 value = None
             else:
@@ -230,7 +233,7 @@ class AlgoWindow(EditWindow):
             args_dict[arg] = value
         return args_dict    
     
-    def getOperator(self, op_name: str, op_id: str):
+    def getOperator(self, op_name: str, op_id: str, pf = None, n_obj=None):
         
         if op_name ==  "mutation":
             return self.mutation_window.getObjectFromID(op_id)
@@ -243,7 +246,7 @@ class AlgoWindow(EditWindow):
         elif op_name == "decomposition":
             return self.decomposition_window.getObjectFromID(op_id)
         elif op_name == "ref_dirs":
-            return self.ref_dirs_window.getObjectFromID(op_id)
+            return self.ref_dirs_window.getObjectFromID(op_id, pf, n_obj)
         else:
             raise Exception("Operator " + op_name + " not found, with id " + op_id)
         

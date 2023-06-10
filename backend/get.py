@@ -1,7 +1,5 @@
 import re
 
-from pymoo.config import Config
-
 # =========================================================================================================
 # Generic
 # =========================================================================================================
@@ -39,28 +37,39 @@ def get_from_list(l, name, args, kwargs):
     else:
         raise Exception("Object '%s' for not found in %s" % (name, [e[0] for e in l]))
 
-
+def returnOptions(objectives, single_list, multi_list):
+    
+    if objectives == 'all':
+        return list( set(single_list + multi_list) )
+    elif objectives == 'soo':
+        return single_list
+    elif objectives == 'moo':
+        return multi_list
+    else:
+        raise Exception("'objectives' must be 'all', 'soo' or 'moo'")
+        
 # =========================================================================================================
 # Algorithms
 # =========================================================================================================
 
-def get_algorithm_options():
+def get_algorithm_options(objectives = 'all'):
+        
     from pymoo.algorithms.moo.ctaea import CTAEA
     from pymoo.algorithms.moo.moead import MOEAD
     from pymoo.algorithms.moo.nsga2 import NSGA2
     from pymoo.algorithms.moo.nsga3 import NSGA3
     from pymoo.algorithms.moo.rnsga2 import RNSGA2
     from pymoo.algorithms.moo.rnsga3 import RNSGA3
+    from pymoo.algorithms.moo.unsga3 import UNSGA3
+    from pymoo.algorithms.soo.nonconvex.brkga import BRKGA
+    from pymoo.algorithms.soo.nonconvex.cmaes import CMAES
     from pymoo.algorithms.soo.nonconvex.de import DE
     from pymoo.algorithms.soo.nonconvex.ga import GA
-    from pymoo.algorithms.moo.unsga3 import UNSGA3
     from pymoo.algorithms.soo.nonconvex.nelder import NelderMead
-    from pymoo.algorithms.soo.nonconvex.cmaes import CMAES
-    from pymoo.algorithms.soo.nonconvex.brkga import BRKGA
     from pymoo.algorithms.soo.nonconvex.pattern import PatternSearch
     from pymoo.algorithms.soo.nonconvex.pso import PSO
 
-    ALGORITHMS = [
+    ALGORITHMS_SINGLE = [
         ("ga", GA),
         ("brkga", BRKGA),
         ("de", DE),
@@ -68,6 +77,9 @@ def get_algorithm_options():
         ("pattern-search", PatternSearch),
         ("cmaes", CMAES),
         ("pso", PSO),
+    ]
+    
+    ALGORITHMS_MULTI = [
         ("nsga2", NSGA2),
         ("rnsga2", RNSGA2),
         ("nsga3", NSGA3),
@@ -77,31 +89,30 @@ def get_algorithm_options():
         ("ctaea", CTAEA),
     ]
 
-    return ALGORITHMS
+    return returnOptions(objectives, ALGORITHMS_SINGLE, ALGORITHMS_MULTI)
 
 
-def get_algorithm(name, *args, d={}, **kwargs):
-    return get_from_list(get_algorithm_options(), name, args, {**d, **kwargs})
+def get_algorithm(name, objectives = 'all', *args, d={}, **kwargs):
+    return get_from_list(get_algorithm_options(objectives), name, args, {**d, **kwargs})
 
 
 # =========================================================================================================
 # Other Classes
 # =========================================================================================================
 
-def get_other_class_options():
-    # import output classes from pymoo like SingleObjectiveOutput
-    from pymoo.util.display.single import SingleObjectiveOutput
-    from pymoo.util.display.multi import MultiObjectiveOutput
-    from pymoo.algorithms.soo.nonconvex.ga import FitnessSurvival 
-    from pymoo.algorithms.soo.nonconvex.nelder import adaptive_params
-    from pymoo.core.repair import NoRepair
-    from pymoo.algorithms.soo.nonconvex.pso import PSOFuzzyOutput
-    from pymoo.operators.sampling.lhs import criterion_maxmin
+def get_other_class_options(objectives = 'all'):
+        
     from pymoo.algorithms.soo.nonconvex.cmaes import CMAESOutput
+    from pymoo.algorithms.soo.nonconvex.ga import FitnessSurvival
+    from pymoo.algorithms.soo.nonconvex.nelder import adaptive_params
+    from pymoo.algorithms.soo.nonconvex.pso import PSOFuzzyOutput
+    from pymoo.core.repair import NoRepair
+    from pymoo.operators.sampling.lhs import criterion_maxmin
+    from pymoo.util.display.multi import MultiObjectiveOutput
+    from pymoo.util.display.single import SingleObjectiveOutput
     
-    OTHER_CLASS_OPTIONS = [
+    OTHER_CLASS_OPTIONS_SINGLE = [
         ("SingleObjectiveOutput", SingleObjectiveOutput), # output
-        ("MultiObjectiveOutput", MultiObjectiveOutput),   # output   
         ("PSOFuzzyOutput", PSOFuzzyOutput),               # output  
         ("CMAESOutput", CMAESOutput),                     # output
         ("FitnessSurvival", FitnessSurvival),             # survival  
@@ -110,21 +121,26 @@ def get_other_class_options():
         ("criterion_maxmin", criterion_maxmin)            # criterion  
     ]
 
-    return OTHER_CLASS_OPTIONS
+    OTHER_CLASS_OPTIONS_MULTI = [
+        ("MultiObjectiveOutput", MultiObjectiveOutput)   # output   
+    ]
+    
+    return returnOptions(objectives, OTHER_CLASS_OPTIONS_SINGLE, OTHER_CLASS_OPTIONS_MULTI)
 
-def get_other_class(name, *args, d={}, **kwargs):
-    return get_from_list(get_other_class_options(), name, args, {**d, **kwargs})
+def get_other_class(name, objectives = 'all', *args, d={}, **kwargs):
+    return get_from_list(get_other_class_options(objectives), name, args, {**d, **kwargs})
 
 # =========================================================================================================
 # Sampling
 # =========================================================================================================
 
-def get_sampling_options():
+def get_sampling_options(objectives = 'all'):
+        
     from pymoo.operators.sampling.lhs import LHS
-    from pymoo.operators.sampling.rnd import FloatRandomSampling
     # from pymoo.operators.integer_from_float_operator import IntegerFromFloatSampling
-    from pymoo.operators.sampling.rnd import BinaryRandomSampling
-    from pymoo.operators.sampling.rnd import PermutationRandomSampling
+    from pymoo.operators.sampling.rnd import (BinaryRandomSampling,
+                                              FloatRandomSampling,
+                                              PermutationRandomSampling)
     
     SAMPLING = [
         ("real_random", FloatRandomSampling),
@@ -138,15 +154,16 @@ def get_sampling_options():
     return SAMPLING
 
 
-def get_sampling(name, *args, d={}, **kwargs):
-    return get_from_list(get_sampling_options(), name, args, {**d, **kwargs})
+def get_sampling(name, objectives = 'all', *args, d={}, **kwargs):
+    return get_from_list(get_sampling_options(objectives), name, args, {**d, **kwargs})
 
 
 # =========================================================================================================
 # Selection
 # =========================================================================================================
 
-def get_selection_options():
+def get_selection_options(objectives = 'all'):
+        
     from pymoo.operators.selection.rnd import RandomSelection
     from pymoo.operators.selection.tournament import TournamentSelection
     
@@ -158,26 +175,26 @@ def get_selection_options():
     return SELECTION
 
 
-def get_selection(name, *args, d={}, **kwargs):
-    return get_from_list(get_selection_options(), name, args, {**d, **kwargs})
+def get_selection(name, objectives = 'all', *args, d={}, **kwargs):
+    return get_from_list(get_selection_options(objectives), name, args, {**d, **kwargs})
 
 
 # =========================================================================================================
 # Crossover
 # =========================================================================================================
 
-def get_crossover_options():
+def get_crossover_options(objectives = 'all'):
+        
     from pymoo.operators.crossover.dex import DEX
-    from pymoo.operators.crossover.expx import ExponentialCrossover
-    from pymoo.operators.crossover.hux import HalfUniformCrossover
-    from pymoo.operators.crossover.pntx import PointCrossover
-    from pymoo.operators.crossover.sbx import SimulatedBinaryCrossover
-    from pymoo.operators.crossover.ux import UniformCrossover
-    from pymoo.operators.crossover.pcx import PCX
     #from pymoo.operators.integer_from_float_operator import IntegerFromFloatCrossover
     from pymoo.operators.crossover.erx import EdgeRecombinationCrossover
+    from pymoo.operators.crossover.expx import ExponentialCrossover
+    from pymoo.operators.crossover.hux import HalfUniformCrossover
     from pymoo.operators.crossover.ox import OrderCrossover
-    from pymoo.operators.crossover.sbx import SBX
+    from pymoo.operators.crossover.pcx import PCX
+    from pymoo.operators.crossover.pntx import PointCrossover
+    from pymoo.operators.crossover.sbx import SBX, SimulatedBinaryCrossover
+    from pymoo.operators.crossover.ux import UniformCrossover
     
     CROSSOVER = [
         ("real_sbx", SBX),
@@ -195,20 +212,21 @@ def get_crossover_options():
     return CROSSOVER
 
 
-def get_crossover(name, *args, d={}, **kwargs):
-    return get_from_list(get_crossover_options(), name, args, {**d, **kwargs})
+def get_crossover(name, objectives = 'all', *args, d={}, **kwargs):
+    return get_from_list(get_crossover_options(objectives), name, args, {**d, **kwargs})
 
 
 # =========================================================================================================
 # Mutation
 # =========================================================================================================
 
-def get_mutation_options():
-    from pymoo.operators.mutation.nom import NoMutation
+def get_mutation_options(objectives = 'all'):
+        
     from pymoo.operators.mutation.bitflip import BitflipMutation
-    from pymoo.operators.mutation.pm import PM
     #from pymoo.operators.integer_from_float_operator import IntegerFromFloatMutation
     from pymoo.operators.mutation.inversion import InversionMutation
+    from pymoo.operators.mutation.nom import NoMutation
+    from pymoo.operators.mutation.pm import PM
 
     MUTATION = [
         ("none", NoMutation),
@@ -221,83 +239,113 @@ def get_mutation_options():
     return MUTATION
 
 
-def get_mutation(name, *args, d={}, **kwargs):
-    return get_from_list(get_mutation_options(), name, args, {**d, **kwargs})
+def get_mutation(name, objectives = 'all', *args, d={}, **kwargs):
+    return get_from_list(get_mutation_options(objectives), name, args, {**d, **kwargs})
 
 
 # =========================================================================================================
 # Termination
 # =========================================================================================================
 
-def get_termination_options():
-    from pymoo.termination.default import DefaultMultiObjectiveTermination, DefaultSingleObjectiveTermination
+def get_termination_options(objectives = 'all'):
+        
+    from pymoo.termination.default import (DefaultMultiObjectiveTermination,
+                                           DefaultSingleObjectiveTermination)
+    from pymoo.termination.fmin import MinimumFunctionValueTermination
     from pymoo.termination.max_eval import MaximumFunctionCallTermination
     from pymoo.termination.max_gen import MaximumGenerationTermination
     from pymoo.termination.max_time import TimeBasedTermination
-    from pymoo.termination.fmin import MinimumFunctionValueTermination
-    
-    TERMINATION = [
-        ("n_eval", MaximumFunctionCallTermination),
+        
+    TERMINATION_SINGLE = [
         ("n_evals", MaximumFunctionCallTermination),
         ("n_gen", MaximumGenerationTermination),
-        ("n_iter", MaximumGenerationTermination),
         ("fmin", MinimumFunctionValueTermination),
         ("time", TimeBasedTermination),
         ("soo", DefaultSingleObjectiveTermination),
+        ]
+
+    TERMINATION_MULTI = [
+        ("n_evals", MaximumFunctionCallTermination),
+        ("n_gen", MaximumGenerationTermination),
+        ("fmin", MinimumFunctionValueTermination),
+        ("time", TimeBasedTermination),
         ("moo", DefaultMultiObjectiveTermination),
         ]
-    return TERMINATION
+    
+    return returnOptions(objectives, TERMINATION_SINGLE, TERMINATION_MULTI) 
 
-def get_termination(name, *args, **kwargs):
-    from pymoo.termination.default import DefaultMultiObjectiveTermination, DefaultSingleObjectiveTermination
-    from pymoo.termination.max_eval import MaximumFunctionCallTermination
-    from pymoo.termination.max_gen import MaximumGenerationTermination
-    from pymoo.termination.max_time import TimeBasedTermination
-    from pymoo.termination.fmin import MinimumFunctionValueTermination
-
-    TERMINATION = {
-        "n_eval": MaximumFunctionCallTermination,
-        "n_evals": MaximumFunctionCallTermination,
-        "n_gen": MaximumGenerationTermination,
-        "n_iter": MaximumGenerationTermination,
-        "fmin": MinimumFunctionValueTermination,
-        "time": TimeBasedTermination,
-        "soo": DefaultSingleObjectiveTermination,
-        "moo": DefaultMultiObjectiveTermination,
-    }
-
-    if name not in TERMINATION:
-        raise Exception("Termination not found.")
-
-    return TERMINATION[name](*args, **kwargs)
+def get_termination(name, objectives = 'all', *args, d={}, **kwargs):
+    return get_from_list(get_termination_options(objectives), name, args, {**d, **kwargs})
 
 # =========================================================================================================
 # Problems
 # =========================================================================================================
-# from pymoo.problems.many import *
-# from pymoo.problems.multi import *
-# from pymoo.problems.single import *
 
-def get_problem_options():
+def get_problem_options(objectives = 'all'):    
 
-    from pymoo.problems.multi import BNH, Carside
-    from pymoo.problems.multi import CTP1, CTP2, CTP3, CTP4, CTP5, CTP6, CTP7, CTP8
-    from pymoo.problems.multi import DASCMOP1, DASCMOP2, DASCMOP3, DASCMOP4, DASCMOP5, DASCMOP6, DASCMOP7, DASCMOP8, \
-        DASCMOP9
-    from pymoo.problems.multi import MODAct, MW1, MW2, MW3, MW4, MW5, MW6, MW7, MW8, MW9, MW10, MW11, MW12, MW13, MW14
-    from pymoo.problems.single import Ackley
-    from pymoo.problems.many import DTLZ1, C1DTLZ1, DC1DTLZ1, DC1DTLZ3, DC2DTLZ1, DC2DTLZ3, DC3DTLZ1, DC3DTLZ3, C1DTLZ3, \
-        C2DTLZ2, C3DTLZ1, C3DTLZ4, ScaledDTLZ1, ConvexDTLZ2, ConvexDTLZ4, DTLZ2, DTLZ3, DTLZ4, DTLZ5, DTLZ6, DTLZ7, \
-        InvertedDTLZ1, WFG1, WFG2, WFG3, WFG4, WFG5, WFG6, WFG7, WFG8, WFG9
-    from pymoo.problems.multi import Kursawe, OSY, SRN, TNK, Truss2D, WeldedBeam, ZDT1, ZDT2, ZDT3, ZDT4, ZDT5, ZDT6
-    from pymoo.problems.single import CantileveredBeam, Griewank, Himmelblau, Knapsack, PressureVessel, Rastrigin, \
-        Rosenbrock, Schwefel, Sphere, Zakharov
-    from pymoo.problems.single import G1, G2, G3, G4, G5, G6, G7, G8, G9, G10, G11, G12, G13, G14, G15, G16, G17, G18, \
-        G19, G20, G21, G22, G23, G24
-    from pymoo.problems.dynamic.df import DF1, DF2, DF3, DF4, DF5, DF6, DF7, DF8, DF9, DF10, DF11, DF12, DF13, DF14
-
-    PROBLEM = [
+    from pymoo.problems.dynamic.df import (DF1, DF2, DF3, DF4, DF5, DF6, DF7,
+                                           DF8, DF9, DF10, DF11, DF12, DF13,
+                                           DF14)
+    from pymoo.problems.many import (C1DTLZ1, C1DTLZ3, C2DTLZ2, C3DTLZ1,
+                                     C3DTLZ4, DC1DTLZ1, DC1DTLZ3, DC2DTLZ1,
+                                     DC2DTLZ3, DC3DTLZ1, DC3DTLZ3, DTLZ1,
+                                     DTLZ2, DTLZ3, DTLZ4, DTLZ5, DTLZ6, DTLZ7,
+                                     WFG1, WFG2, WFG3, WFG4, WFG5, WFG6, WFG7,
+                                     WFG8, WFG9, ConvexDTLZ2, ConvexDTLZ4,
+                                     InvertedDTLZ1, ScaledDTLZ1)
+    from pymoo.problems.multi import (BNH, CTP1, CTP2, CTP3, CTP4, CTP5, CTP6,
+                                      CTP7, CTP8, DASCMOP1, DASCMOP2, DASCMOP3,
+                                      DASCMOP4, DASCMOP5, DASCMOP6, DASCMOP7,
+                                      DASCMOP8, DASCMOP9, MW1, MW2, MW3, MW4,
+                                      MW5, MW6, MW7, MW8, MW9, MW10, MW11,
+                                      MW12, MW13, MW14, OSY, SRN, TNK, ZDT1,
+                                      ZDT2, ZDT3, ZDT4, ZDT5, ZDT6, Carside,
+                                      Kursawe, MODAct, Truss2D, WeldedBeam)
+    from pymoo.problems.single import (G1, G2, G3, G4, G5, G6, G7, G8, G9, G10,
+                                       G11, G12, G13, G14, G15, G16, G17, G18,
+                                       G19, G20, G21, G22, G23, G24, Ackley,
+                                       CantileveredBeam, Griewank, Himmelblau,
+                                       Knapsack, PressureVessel, Rastrigin,
+                                       Rosenbrock, Schwefel, Sphere, Zakharov)
+    PROBLEM_SINGLE = [
         ('ackley', Ackley),
+        ('g1', G1),
+        ('g2', G2),
+        ('g3', G3),
+        ('g4', G4),
+        ('g5', G5),
+        ('g6', G6),
+        ('g7', G7),
+        ('g8', G8),
+        ('g9', G9),
+        ('g10', G10),
+        ('g11', G11),
+        ('g12', G12),
+        ('g13', G13),
+        ('g14', G14),
+        ('g15', G15),
+        ('g16', G16),
+        ('g17', G17),
+        ('g18', G18),
+        ('g19', G19),
+        ('g20', G20),
+        ('g21', G21),
+        ('g22', G22),
+        ('g23', G23),
+        ('g24', G24),
+        ('cantilevered_beam', CantileveredBeam),
+        ('griewank', Griewank),
+        ('himmelblau', Himmelblau),
+        ('knp', Knapsack),
+        ('pressure_vessel', PressureVessel),
+        ('rastrigin', Rastrigin),
+        ('rosenbrock', Rosenbrock),
+        ('schwefel', Schwefel),
+        ('sphere', Sphere),
+        ('zakharov', Zakharov),
+        ]
+
+    PROBLEM_MULTI = [
         ('bnh', BNH),
         ('carside', Carside),
         ('ctp1', CTP1),
@@ -368,52 +416,18 @@ def get_problem_options():
         ('dc2dtlz3', DC2DTLZ3),
         ('dc3dtlz1', DC3DTLZ1),
         ('dc3dtlz3', DC3DTLZ3),
-        ('cantilevered_beam', CantileveredBeam),
-        ('griewank', Griewank),
-        ('himmelblau', Himmelblau),
-        ('knp', Knapsack),
         ('kursawe', Kursawe),
         ('osy', OSY),
-        ('pressure_vessel', PressureVessel),
-        ('rastrigin', Rastrigin),
-        ('rosenbrock', Rosenbrock),
-        ('schwefel', Schwefel),
-        ('sphere', Sphere),
         ('srn', SRN),
         ('tnk', TNK),
         ('truss2d', Truss2D),
         ('welded_beam', WeldedBeam),
-        ('zakharov', Zakharov),
         ('zdt1', ZDT1),
         ('zdt2', ZDT2),
         ('zdt3', ZDT3),
         ('zdt4', ZDT4),
         ('zdt5', ZDT5),
         ('zdt6', ZDT6),
-        ('g1', G1),
-        ('g2', G2),
-        ('g3', G3),
-        ('g4', G4),
-        ('g5', G5),
-        ('g6', G6),
-        ('g7', G7),
-        ('g8', G8),
-        ('g9', G9),
-        ('g10', G10),
-        ('g11', G11),
-        ('g12', G12),
-        ('g13', G13),
-        ('g14', G14),
-        ('g15', G15),
-        ('g16', G16),
-        ('g17', G17),
-        ('g18', G18),
-        ('g19', G19),
-        ('g20', G20),
-        ('g21', G21),
-        ('g22', G22),
-        ('g23', G23),
-        ('g24', G24),
         ('wfg1', WFG1),
         ('wfg2', WFG2),
         ('wfg3', WFG3),
@@ -425,7 +439,7 @@ def get_problem_options():
         ('wfg9', WFG9),
     ]
 
-    return PROBLEM
+    return returnOptions(objectives, PROBLEM_SINGLE, PROBLEM_MULTI)
 
 def get_problem(name, *args, **kwargs):
     name = name.lower()
@@ -434,21 +448,30 @@ def get_problem(name, *args, **kwargs):
         from pymoo.vendor.vendor_coco import COCOProblem
         return COCOProblem(name.lower(), **kwargs)
 
-    from pymoo.problems.multi import BNH, Carside
-    from pymoo.problems.multi import CTP1, CTP2, CTP3, CTP4, CTP5, CTP6, CTP7, CTP8
-    from pymoo.problems.multi import DASCMOP1, DASCMOP2, DASCMOP3, DASCMOP4, DASCMOP5, DASCMOP6, DASCMOP7, DASCMOP8, \
-        DASCMOP9
-    from pymoo.problems.multi import MODAct, MW1, MW2, MW3, MW4, MW5, MW6, MW7, MW8, MW9, MW10, MW11, MW12, MW13, MW14
-    from pymoo.problems.single import Ackley
-    from pymoo.problems.many import DTLZ1, C1DTLZ1, DC1DTLZ1, DC1DTLZ3, DC2DTLZ1, DC2DTLZ3, DC3DTLZ1, DC3DTLZ3, C1DTLZ3, \
-        C2DTLZ2, C3DTLZ1, C3DTLZ4, ScaledDTLZ1, ConvexDTLZ2, ConvexDTLZ4, DTLZ2, DTLZ3, DTLZ4, DTLZ5, DTLZ6, DTLZ7, \
-        InvertedDTLZ1, WFG1, WFG2, WFG3, WFG4, WFG5, WFG6, WFG7, WFG8, WFG9
-    from pymoo.problems.multi import Kursawe, OSY, SRN, TNK, Truss2D, WeldedBeam, ZDT1, ZDT2, ZDT3, ZDT4, ZDT5, ZDT6
-    from pymoo.problems.single import CantileveredBeam, Griewank, Himmelblau, Knapsack, PressureVessel, Rastrigin, \
-        Rosenbrock, Schwefel, Sphere, Zakharov
-    from pymoo.problems.single import G1, G2, G3, G4, G5, G6, G7, G8, G9, G10, G11, G12, G13, G14, G15, G16, G17, G18, \
-        G19, G20, G21, G22, G23, G24
-    from pymoo.problems.dynamic.df import DF1, DF2, DF3, DF4, DF5, DF6, DF7, DF8, DF9, DF10, DF11, DF12, DF13, DF14
+    from pymoo.problems.dynamic.df import (DF1, DF2, DF3, DF4, DF5, DF6, DF7,
+                                           DF8, DF9, DF10, DF11, DF12, DF13,
+                                           DF14)
+    from pymoo.problems.many import (C1DTLZ1, C1DTLZ3, C2DTLZ2, C3DTLZ1,
+                                     C3DTLZ4, DC1DTLZ1, DC1DTLZ3, DC2DTLZ1,
+                                     DC2DTLZ3, DC3DTLZ1, DC3DTLZ3, DTLZ1,
+                                     DTLZ2, DTLZ3, DTLZ4, DTLZ5, DTLZ6, DTLZ7,
+                                     WFG1, WFG2, WFG3, WFG4, WFG5, WFG6, WFG7,
+                                     WFG8, WFG9, ConvexDTLZ2, ConvexDTLZ4,
+                                     InvertedDTLZ1, ScaledDTLZ1)
+    from pymoo.problems.multi import (BNH, CTP1, CTP2, CTP3, CTP4, CTP5, CTP6,
+                                      CTP7, CTP8, DASCMOP1, DASCMOP2, DASCMOP3,
+                                      DASCMOP4, DASCMOP5, DASCMOP6, DASCMOP7,
+                                      DASCMOP8, DASCMOP9, MW1, MW2, MW3, MW4,
+                                      MW5, MW6, MW7, MW8, MW9, MW10, MW11,
+                                      MW12, MW13, MW14, OSY, SRN, TNK, ZDT1,
+                                      ZDT2, ZDT3, ZDT4, ZDT5, ZDT6, Carside,
+                                      Kursawe, MODAct, Truss2D, WeldedBeam)
+    from pymoo.problems.single import (G1, G2, G3, G4, G5, G6, G7, G8, G9, G10,
+                                       G11, G12, G13, G14, G15, G16, G17, G18,
+                                       G19, G20, G21, G22, G23, G24, Ackley,
+                                       CantileveredBeam, Griewank, Himmelblau,
+                                       Knapsack, PressureVessel, Rastrigin,
+                                       Rosenbrock, Schwefel, Sphere, Zakharov)
 
     PROBLEM = {
         'ackley': Ackley,
@@ -588,12 +611,16 @@ def get_problem(name, *args, **kwargs):
 # Weights
 # =========================================================================================================
 
-def get_reference_direction_options():
+from pymoo.util.ref_dirs.energy import RieszEnergyReferenceDirectionFactory
+from pymoo.util.ref_dirs.energy_layer import \
+    LayerwiseRieszEnergyReferenceDirectionFactory
+from pymoo.util.ref_dirs.reduction import \
+    ReductionBasedReferenceDirectionFactory
+from pymoo.util.reference_direction import MultiLayerReferenceDirectionFactory
+
+def get_reference_direction_options(objectives = 'all'):
+        
     from pymoo.util.reference_direction import UniformReferenceDirectionFactory
-    from pymoo.util.reference_direction import MultiLayerReferenceDirectionFactory
-    from pymoo.util.ref_dirs.reduction import ReductionBasedReferenceDirectionFactory
-    from pymoo.util.ref_dirs.energy import RieszEnergyReferenceDirectionFactory
-    from pymoo.util.ref_dirs.energy_layer import LayerwiseRieszEnergyReferenceDirectionFactory
 
     REFERENCE_DIRECTIONS = [
         ("(das-dennis|uniform)", UniformReferenceDirectionFactory),
@@ -607,22 +634,23 @@ def get_reference_direction_options():
 
 
 def get_reference_directions(name, *args, d={}, **kwargs):
-    return get_from_list(get_reference_direction_options(), name, args, {**d, **kwargs}) #! .do()???
+    return get_from_list(get_reference_direction_options(), name, args, {**d, **kwargs}).do()
 
 
 # =========================================================================================================
 # Visualization
 # =========================================================================================================
 
-def get_visualization_options():
+def get_visualization_options(objectives = 'all'):
+        
+    from pymoo.visualization.fitness_landscape import FitnessLandscape
+    from pymoo.visualization.heatmap import Heatmap
     from pymoo.visualization.pcp import PCP
     from pymoo.visualization.petal import Petal
     from pymoo.visualization.radar import Radar
     from pymoo.visualization.radviz import Radviz
     from pymoo.visualization.scatter import Scatter
     from pymoo.visualization.star_coordinate import StarCoordinate
-    from pymoo.visualization.heatmap import Heatmap
-    from pymoo.visualization.fitness_landscape import FitnessLandscape
 
     VISUALIZATION = [
         ("scatter", Scatter),
@@ -646,16 +674,26 @@ def get_visualization(name, *args, d={}, **kwargs):
 # Performance Indicator
 # =========================================================================================================
 
-
-def get_performance_indicator_options():
+def get_performance_indicator_options(objectives = 'all'):
+        
     from pymoo.indicators.gd import GD
     from pymoo.indicators.gd_plus import GDPlus
+    from pymoo.indicators.hv import Hypervolume
     from pymoo.indicators.igd import IGD
     from pymoo.indicators.igd_plus import IGDPlus
-    from pymoo.indicators.hv import Hypervolume
     from pymoo.indicators.rmetric import RMetric
 
-    PERFORMANCE_INDICATOR = [
+    class BEST():
+        def __init__(self, *args, **kwargs):
+            pass
+        def do(self, *args, **kwargs):
+            raise Exception("Not implemented.")
+        
+    PERFORMANCE_INDICATOR_SINGLE = [
+        ("best", BEST)
+    ]
+        
+    PERFORMANCE_INDICATOR_MULTI = [
         ("gd", GD),
         ("gd+", GDPlus),
         ("igd", IGD),
@@ -663,7 +701,7 @@ def get_performance_indicator_options():
         ("hv", Hypervolume),
         ("rmetric", RMetric)
     ]
-    return PERFORMANCE_INDICATOR
+    return returnOptions(objectives, PERFORMANCE_INDICATOR_SINGLE, PERFORMANCE_INDICATOR_MULTI)
 
 
 def get_performance_indicator(name, *args, d={}, **kwargs):
@@ -674,13 +712,14 @@ def get_performance_indicator(name, *args, d={}, **kwargs):
 # DECOMPOSITION
 # =========================================================================================================
 
-def get_decomposition_options():
+def get_decomposition_options(objectives = 'all'):
+        
+    from pymoo.decomposition.aasf import AASF
+    from pymoo.decomposition.asf import ASF
     from pymoo.decomposition.pbi import PBI
+    from pymoo.decomposition.perp_dist import PerpendicularDistance
     from pymoo.decomposition.tchebicheff import Tchebicheff
     from pymoo.decomposition.weighted_sum import WeightedSum
-    from pymoo.decomposition.asf import ASF
-    from pymoo.decomposition.aasf import AASF
-    from pymoo.decomposition.perp_dist import PerpendicularDistance
 
     DECOMPOSITION = [
         ("weighted-sum", WeightedSum),
@@ -702,7 +741,8 @@ def get_decomposition(name, *args, d={}, **kwargs):
 # DECISION MAKING
 # =========================================================================================================
 
-def get_decision_making_options():
+def get_decision_making_options(objectives = 'all'):
+        
     from pymoo.mcdm.high_tradeoff import HighTradeoffPoints
     from pymoo.mcdm.pseudo_weights import PseudoWeights
 
@@ -717,33 +757,3 @@ def get_decision_making_options():
 def get_decision_making(name, *args, d={}, **kwargs):
     return get_from_list(get_decision_making_options(), name, args, {**d, **kwargs})
 
-
-# =========================================================================================================
-# Documentation
-# =========================================================================================================
-
-
-def dummy(name, kwargs):
-    """
-    A convenience method to get a {type} object just by providing a string.
-
-    Parameters
-    ----------
-
-    name : {{ {options} }}
-        Name of the {type}.
-
-    kwargs : dict
-        Dictionary that should be used to call the method mapped to the {type} factory function.
-
-    Returns
-    -------
-    class : {clazz}
-        An {type} object based on the string. `None` if the {type} was not found.
-
-    """
-    pass
-
-
-def options_to_string(l):
-    return ", ".join(["'%s'" % k[0] for k in l])

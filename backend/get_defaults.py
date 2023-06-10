@@ -7,34 +7,23 @@ from backend.get import get_mutation_options, get_crossover_options, get_selecti
 from backend.get import get_mutation, get_crossover, get_selection, get_decomposition, get_sampling, get_reference_directions 
 
 from utils.debug import debug_print
-
-ARG_TYPES = (int, float, str, bool, type(None))
-NO_DEFAULT = "No def"
-
-# OPERATORS = ["mutation", "crossover", "selection", "decomposition", "sampling", "ref_dirs"] 
-OPERATORS = ["mutation", "crossover", "decomposition", "sampling", "ref_dirs"] 
-
-# classes that have arguments with the same name as the operatores names but are different
-FAKE_OPERATORS = ['ReductionBasedReferenceDirectionFactory', 'RieszEnergyReferenceDirectionFactory']
-
-PRINT_LISTS = False
+from utils.defines import VALUE_TYPES, NO_DEFAULT, OPERATORS
                     
 class Defaults():
-    def __init__(self, obj = "single"):
+    def __init__(self, obj = 'all'):
         
-        if obj not in ["single", "multi", "all"]:
-            raise ValueError("obj argument must be 'single', 'multi' or 'all' when instantiating Defaults class")
+        self.obj = obj
                         
-        self.mutation = self.get_class_list(get_mutation_options())
-        self.crossover = self.get_class_list(get_crossover_options())
-        self.selection = self.get_class_list(get_selection_options())
-        self.decomposition = self.get_class_list(get_decomposition_options())
-        self.sampling = self.get_class_list(get_sampling_options())
-        self.ref_dirs = self.get_class_list(get_reference_direction_options())
-        self.prob = self.get_class_list(get_problem_options())
-        self.term = self.get_class_list(get_termination_options())
-        self.pi = self.get_class_list(get_performance_indicator_options())
-        self.algo = self.get_class_list(get_algorithm_options())
+        self.mutation = self.get_class_list(get_mutation_options(self.obj))
+        self.crossover = self.get_class_list(get_crossover_options(self.obj))
+        self.selection = self.get_class_list(get_selection_options(self.obj))
+        self.decomposition = self.get_class_list(get_decomposition_options(self.obj))
+        self.sampling = self.get_class_list(get_sampling_options(self.obj))
+        self.ref_dirs = self.get_class_list(get_reference_direction_options(self.obj))
+        self.prob = self.get_class_list(get_problem_options(self.obj))
+        self.term = self.get_class_list(get_termination_options(self.obj))
+        self.pi = self.get_class_list(get_performance_indicator_options(self.obj))
+        self.algo = self.get_class_list(get_algorithm_options(self.obj))
         
     def get_class_list(self, options_list):
         return [self.classInpection(name, obj) for name, obj in options_list]
@@ -60,44 +49,49 @@ class Defaults():
                 
         # some classes have arguments with the same name as operators, but they are different
         FAKE_OPERATORS = ['ReductionBasedReferenceDirectionFactory', 'RieszEnergyReferenceDirectionFactory']
-        
+
         arg_tuples = []
         sig = inspect.signature(cls.__init__)
         for arg in sig.parameters.keys():
             if arg not in ["self", "args", "kwargs"]:
-                if sig.parameters[arg].default == inspect._empty:
-                    value = NO_DEFAULT
-                elif arg in OPERATORS and cls.__name__ not in FAKE_OPERATORS:
-                    value = self.getOperators(arg, sig.parameters[arg].default)
+                
+                value = NO_DEFAULT if sig.parameters[arg].default == inspect._empty else sig.parameters[arg].default 
+                
+                # arg is an operator, value is an object. Get the operator id from the object
+                if arg in OPERATORS and cls.__name__ not in FAKE_OPERATORS:
+                    value = self.getOperators(arg, value)
+                    
+                # check if value is a valid type, otherwise remove it from the list of arguments    
+                if type(value) not in VALUE_TYPES:
+                    debug_print(f"Warning: supressing arg \"{arg}\" of class {cls.__name__} because of invalid type")
                 else:
-                    value = sig.parameters[arg].default
-                    if type(value) not in ARG_TYPES:
-                        debug_print(f"Warning: supressing arg \"{arg}\" of class {cls.__name__} because of invalid type")
-                        continue
-                arg_tuples.append((arg, value))
+                    arg_tuples.append((arg, value))
             
         return arg_tuples
 
-    def getOperators(self, arg: str, object):
+    def getOperators(self, arg: str, obj):
 
-        if object == None:
-            return None
         if arg == "mutation":   
-            return self.getOperator(object, self.mutation, get_mutation_options())
+            return self.getOperator(obj, self.mutation, get_mutation_options(self.obj))
         elif arg == "crossover":
-            return self.getOperator(object, self.crossover, get_crossover_options())    
+            return self.getOperator(obj, self.crossover, get_crossover_options(self.obj))    
         elif arg == "selection":
-            return self.getOperator(object, self.selection, get_selection_options())                                    
+            return self.getOperator(obj, self.selection, get_selection_options(self.obj))                                    
         elif arg == "decomposition":
-            return self.getOperator(object, self.decomposition, get_decomposition_options())
+            return self.getOperator(obj, self.decomposition, get_decomposition_options(self.obj))
         elif arg == "sampling":
-            return self.getOperator(object, self.sampling, get_sampling_options())
+            return self.getOperator(obj, self.sampling, get_sampling_options(self.obj))
         elif arg == "ref_dirs":
-            return self.getOperator(object, self.ref_dirs, get_reference_direction_options())
+            return self.getOperator(obj, self.ref_dirs, get_reference_direction_options(self.obj))
         else:
             raise Exception("unknown operator", arg)
         
     def getOperator(self, obj: str, operators_list: list, get_list: list):
+        
+        # if operator has no default value, return the first operator in the list
+        if obj in [None, NO_DEFAULT]:
+            return get_list[0][0] + "_default"
+        
         # get object class name    
         for get_name, cls in get_list:
             if obj.__class__.__name__ == cls.__name__:

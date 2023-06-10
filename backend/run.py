@@ -6,7 +6,7 @@ from utils.debug import debug_print
 from pymoo.core.algorithm import Algorithm
 import numpy as np
 from pymoo.core.result import Result
-
+from backend.get import get_performance_indicator
 class MyCallback(Callback):
 
     def __init__(self) -> None:
@@ -23,29 +23,21 @@ class MyCallback(Callback):
             self.n_gen.append(algo.n_gen)
 
 class RunArgs():
-    def __init__(self, prob_id: str, prob_object, algo_id: str, algo_object, pi_id: str, pi_object): 
+    def __init__(self, prob_id: str, prob_object, algo_id: str, algo_object, pi_ids: list, pi_objects: list): 
         self.prob_id = prob_id
         self.prob_object = prob_object
         self.algo_id = algo_id
         self.algo_object = algo_object
-        self.pi_id = pi_id
-        self.pi_object = pi_object                
+        self.pi_ids = pi_ids
+        self.pi_object = pi_objects                
 
 class Run():
-    def __init__(self, prob_ids, prob_objects, algo_ids, algo_objects, pi_ids, pi_objects, term_id, term_object, n_seeds: int):
+    def __init__(self, run_args: list, term_id, term_object, n_seeds: int):
         self.n_seeds = n_seeds
         self.term_id = term_id
         self.term_object = term_object
-        self.run_args = self.getRunArgs(prob_ids, prob_objects, algo_ids, algo_objects, pi_ids, pi_objects)
+        self.run_args = run_args
         self.data = pd.DataFrame()
-
-    def getRunArgs(self, prob_ids: str, prob_objects, algo_ids: str, algo_objects, pi_ids: str, pi_objects):
-        run_args = []
-        for prob_id, prob_object, pi_id, pi_object in zip(prob_ids, prob_objects, pi_ids, pi_objects):
-            for algo_id, algo_object in zip(algo_ids, algo_objects):
-                run_args.append(RunArgs(prob_id, prob_object, algo_id, algo_object, pi_id, pi_object))
-                
-        return run_args
             
     def run(self):
         for run_id, run_args in enumerate(self.run_args):
