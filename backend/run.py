@@ -34,11 +34,12 @@ class RunArgs():
         self.pi_object = pi_objects                
 
 class Run():
-    def __init__(self, run_args: list, term_id, term_object, n_seeds: int):
+    def __init__(self, run_args: list, term_id, term_object, n_seeds: int, moo: bool):
         self.n_seeds = n_seeds
         self.term_id = term_id
         self.term_object = term_object
         self.run_args = run_args
+        self.moo = moo
         self.data = pd.DataFrame()
 
     def run(self):
@@ -50,6 +51,8 @@ class Run():
             for seed in range(self.n_seeds):
                 self.single_run(run_args, seed, self.term_object, run_id)
                 debug_print(run_id, run_args.algo_id, run_args.prob_id, seed)
+                
+        self.printData()
 
     def single_run(self, run_args: RunArgs, seed: int, termination, run_id: int):
         res = minimize(algorithm=run_args.algo_object,
@@ -75,11 +78,17 @@ class Run():
                       'algorithm_id': [run_args.algo_id] * run_length,
                       'n_eval': callback.n_evals,
                       'n_gen': callback.n_gen}
-
-        pi_id = "best"
-        pi_data = callback.best
-        single_run[pi_id] = pi_data
-
+        
+        # get the performance indicators values
+        for pi_id, pi_object in zip(run_args.pi_ids, run_args.pi_object):
+            if pi_id == "best_default":
+                pi_data = callback.best
+            else:
+                pi_data = [pi_object.do(pf) for pf in callback.best]
+            # add the data to the data frame    
+            single_run[pi_id] = pi_data
+        
+        # create data frame with columns ['run_id', 'seed', 'Problem','Algorithm', 'n_evals', 'n_gen', 'PM1', 'PM2', 'PM3']
         single_run = pd.DataFrame(single_run)
 
         return pd.concat([data, single_run])

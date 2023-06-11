@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QApplication
 
 DEFAULT_RUN_OPTIONS = True
 CLICK_RUN_BUTTON = False
-MULTI_OBJECTIVE = True
+MULTI_OBJECTIVE = False
 
 def DefaultRunOptions(main_window: MyMainWindow):
     # set seeds to 3
@@ -20,12 +20,12 @@ def DefaultRunOptions(main_window: MyMainWindow):
     main_window.tableWidget_run_pi.cellWidget(2, 0).setCurrentIndex(3)
     # set algo to indexes 1 2 and 3 of combobox
     main_window.tableWidget_run_algo.cellWidget(0, 0).setCurrentIndex(0)
-    main_window.tableWidget_run_algo.cellWidget(1, 0).setCurrentIndex(1)
-    main_window.tableWidget_run_algo.cellWidget(2, 0).setCurrentIndex(2)
+    main_window.tableWidget_run_algo.cellWidget(1, 0).setCurrentIndex(2)
+    main_window.tableWidget_run_algo.cellWidget(2, 0).setCurrentIndex(3)
     # set prob to indexes 1 2 and 3 of combobox
     main_window.tableWidget_run_prob.cellWidget(0, 0).setCurrentIndex(0)
-    main_window.tableWidget_run_prob.cellWidget(0, 0).setCurrentIndex(1)
-    main_window.tableWidget_run_prob.cellWidget(0, 0).setCurrentIndex(2)
+    main_window.tableWidget_run_prob.cellWidget(1, 0).setCurrentIndex(1)
+    main_window.tableWidget_run_prob.cellWidget(2, 0).setCurrentIndex(2)
 
 def main():
     

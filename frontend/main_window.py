@@ -76,6 +76,9 @@ class MyMainWindow(QMainWindow):
         
         After having the objects, run every combination of problem and algorithm"""
         
+        # get if it is single or multi objective optimization
+        moo = self.radioButton_moo.isChecked()
+        
         # get seed values
         n_seeds = self.SpinBox_n_seeds.value()
         
@@ -91,7 +94,7 @@ class MyMainWindow(QMainWindow):
                 break
             prob_id = self.tableWidget_run_prob.cellWidget(row, 0).currentText()
             prob_object = self.prob_window.getObjectFromID(prob_id)
-            pf = prob_object.pareto_front if prob_object.pareto_front else None
+            pf = prob_object.pareto_front() if prob_object.pareto_front else None
             n_obj = prob_object.n_obj
             
             # get pi objects (pi depends on prob pf)
@@ -113,7 +116,6 @@ class MyMainWindow(QMainWindow):
                 run_args.append(RunArgs(prob_id, prob_object, algo_id, algo_object, pi_ids, pi_objects))
                     
         # get the algorithm objects
-        run = Run(run_args, term_id, term_object, n_seeds)
+        run = Run(run_args, term_id, term_object, n_seeds, moo)
                     
         run.run()
-        run.printData()

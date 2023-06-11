@@ -686,9 +686,9 @@ def get_performance_indicator_options(objectives = 'all'):
     class BEST():
         def __init__(self, *args, **kwargs):
             pass
-        def do(self, *args, **kwargs):
-            raise Exception("Not implemented.")
-        
+        def do(self, lst, *args, **kwargs):
+            pass
+                 
     PERFORMANCE_INDICATOR_SINGLE = [
         ("best", BEST)
     ]
@@ -701,6 +701,7 @@ def get_performance_indicator_options(objectives = 'all'):
         ("hv", Hypervolume),
         ("rmetric", RMetric)
     ]
+    
     return returnOptions(objectives, PERFORMANCE_INDICATOR_SINGLE, PERFORMANCE_INDICATOR_MULTI)
 
 
