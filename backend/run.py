@@ -7,6 +7,8 @@ from pymoo.core.algorithm import Algorithm
 import numpy as np
 from pymoo.core.result import Result
 from backend.get import get_performance_indicator
+import threading
+
 class MyCallback(Callback):
 
     def __init__(self) -> None:
@@ -38,55 +40,49 @@ class Run():
         self.term_object = term_object
         self.run_args = run_args
         self.data = pd.DataFrame()
-            
+
     def run(self):
+        thread = threading.Thread(target=self.run_thread)
+        thread.start()
+
+    def run_thread(self):
         for run_id, run_args in enumerate(self.run_args):
-            for seed in range(self.n_seeds):  # type: ignore
-                self.single_run(run_args, seed, self.term_object, run_id)    
+            for seed in range(self.n_seeds):
+                self.single_run(run_args, seed, self.term_object, run_id)
                 debug_print(run_id, run_args.algo_id, run_args.prob_id, seed)
 
     def single_run(self, run_args: RunArgs, seed: int, termination, run_id: int):
-        res = minimize( algorithm=run_args.algo_object,
-                        problem=run_args.prob_object,
-                        termination = termination,
-                        seed=seed,
-                        verbose=False,
-                        save_history=False,
-                        progress_bar=True,
-                        callback=MyCallback())
+        res = minimize(algorithm=run_args.algo_object,
+                       problem=run_args.prob_object,
+                       termination=termination,
+                       seed=seed,
+                       verbose=True,
+                       save_history=False,
+                       progress_bar=True,
+                       callback=MyCallback())
 
         # update data with the result of the run
-        self.data = self.update_data(run_args, res, res.algorithm.callback, run_id)                      
-                    
-    def update_data(self, run_args: RunArgs, res: Result, callback: MyCallback, run_id: int):
+        self.data = self.update_data(run_args, res, res.algorithm.callback, run_id)
 
+    def update_data(self, run_args: RunArgs, res: Result, callback: MyCallback, run_id: int):
         data = self.data
-        
-        run_lenght = len(callback.n_evals)
-            
-        single_run = {  'run_id': [run_id] * run_lenght,
-                        'seed': [res.algorithm.seed] * run_lenght,  # type: ignore
-                        'problem_id': [run_args.prob_id] * run_lenght,
-                        'algorithm_id': [run_args.algo_id] * run_lenght,
-                        'n_eval': callback.n_evals,
-                        'n_gen': callback.n_gen}
-        
-        # get the performance indicators values
-        # for pi_id, pi in run_args.pi_dict.items():
-        #     if pi_id == "best":
-        #         pi_data = callback.best
-        #     else:
-        #         pi_data = [pi.do(pf) for pf in callback.best]
-        
+
+        run_length = len(callback.n_evals)
+
+        single_run = {'run_id': [run_id] * run_length,
+                      'seed': [res.algorithm.seed] * run_length,
+                      'problem_id': [run_args.prob_id] * run_length,
+                      'algorithm_id': [run_args.algo_id] * run_length,
+                      'n_eval': callback.n_evals,
+                      'n_gen': callback.n_gen}
+
         pi_id = "best"
         pi_data = callback.best
-        # add the data to the data frame    
         single_run[pi_id] = pi_data
-        
-        # create data frame with columns
+
         single_run = pd.DataFrame(single_run)
-    
+
         return pd.concat([data, single_run])
-    
+
     def printData(self):
         print(self.data)
