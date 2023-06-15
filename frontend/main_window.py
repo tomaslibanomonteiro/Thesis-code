@@ -2,9 +2,9 @@ from PyQt5.QtWidgets import QMainWindow, QHeaderView
 from PyQt5.uic import loadUi
 from backend.get_defaults import Defaults
 from frontend.my_widgets import MyComboBox
-from frontend.other_windows import AlgoWindow, setEditWindow
+from frontend.other_windows import AlgoWindow, setEditWindow, ArgsAreSet
 from backend.get import get_algorithm, get_problem, get_termination, get_performance_indicator
-from utils.defines import DESIGNER_MAIN
+from utils.defines import DESIGNER_MAIN, NO_DEFAULT
 from backend.run import Run, RunArgs    
 
 class MyMainWindow(QMainWindow):
@@ -18,6 +18,12 @@ class MyMainWindow(QMainWindow):
         self.defaults_multi = Defaults('moo')
         self.defaults = self.defaults_single
         self.radioButton_moo.toggled.connect(self.objectivesButton)
+        
+        self.algo_window = None
+        self.prob_window = None
+        self.pi_window = None
+        self.term_window = None
+        self.window_combobox_items = None
         self.initialize()        
 
         # set run button
@@ -35,18 +41,18 @@ class MyMainWindow(QMainWindow):
         self.pushButton_edit_algo.clicked.connect(self.algo_window.show)
                             
         self.setComboBoxes()
-                                        
+    
     def setComboBoxes(self):
         
         # set comboboxes from main window
         tables_list = [self.tableWidget_run_pi, self.tableWidget_run_algo, self.tableWidget_run_prob, self.tableWidget_run_term]
-        pi_options = sorted([lst[0][0] for lst in self.defaults.pi])
-        algo_options = sorted([algo[0][0] for algo in self.defaults.algo])
-        prob_options = sorted([prob[0][0] for prob in self.defaults.prob])
-        term_options = sorted([term[0][0] for term in self.defaults.term])
-        comboBox_options = [pi_options, algo_options, prob_options, term_options]
-
-        for table, items in zip(tables_list, comboBox_options): # type: ignore
+        pi_options = sorted([pi[0][0] for pi in self.defaults.pi]) # pi object is istantiated even with NO_DEFAULT (pareto front of each problem)
+        algo_options = sorted([algo[0][0] for algo in self.defaults.algo if ArgsAreSet(algo)])
+        prob_options = sorted([prob[0][0] for prob in self.defaults.prob if ArgsAreSet(prob)])
+        term_options = sorted([term[0][0] for term in self.defaults.term if ArgsAreSet(term)])
+        self.window_combobox_items = [pi_options, algo_options, prob_options, term_options]
+        
+        for table, items in zip(tables_list, self.window_combobox_items): 
             # strech the table to fit the window
             table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
             table.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)

@@ -10,6 +10,10 @@ from utils.defines import DESIGNER_EDIT_WINDOW, DESIGNER_ALGO_WINDOW
 from backend.get import get_sampling, get_crossover, get_mutation, get_decomposition, \
                       get_selection, get_reference_directions
 
+def ArgsAreSet(lst: list) -> bool:
+    # check if any of the values in the list is == NO_DEFAULT
+    return not any([value == NO_DEFAULT for (arg, value) in lst[1:]])
+
 class EditWindow(QDialog):
     def __init__(self, window_title: str, table_list: list, get_function, defaults: Defaults, ui_file=DESIGNER_EDIT_WINDOW):
         super().__init__()
@@ -19,13 +23,6 @@ class EditWindow(QDialog):
         self.setWindowTitle(window_title)
         self.label.setText(window_title)
         self.get_function = get_function
-        
-        # for each operator, set the combobox items available (only for algo window)
-        combo_items = {}
-        for op, op_list in [("mutation",self.defaults.mutation), ("crossover",self.defaults.crossover), ("selection",self.defaults.selection), ("sampling",self.defaults.sampling), ("decomposition",self.defaults.decomposition), ("ref_dirs",self.defaults.ref_dirs)]:
-            combo_items[op] = [sublist[0][0] for sublist in op_list]
-        self.operator_combobox_items = combo_items
-
 
         # set the table items from the table, each row is a list of strings
         self.setTableItems()
@@ -148,8 +145,8 @@ class EditWindow(QDialog):
                 value = self.tableWidget.cellWidget(row, col+1).isChecked()
             elif isinstance(self.tableWidget.cellWidget(row, col+1), MyComboBox):
                 value = self.tableWidget.cellWidget(row, col+1).currentText()
-            # elif self.tableWidget.item(row, col+1).text() == NO_DEFAULT:
-            #     raise Exception("No default -> need to set value for arg ", arg, " in row ", row, " of window ", self.windowTitle())
+            elif self.tableWidget.item(row, col+1).text() == NO_DEFAULT and self.windowTitle() not in ["Edit Ref_dirs", "Edit Performance Indicators"]:
+                raise Exception("No default -> need to set value for arg ", arg, " in row ", row, " of window ", self.windowTitle())
             elif self.tableWidget.item(row, col+1).text() == "None":
                 value = None
             else:
@@ -176,6 +173,12 @@ def setEditWindow(button, window_title: str, table: list, get_function, defaults
 
 class AlgoWindow(EditWindow):
     def __init__(self, window_title: str, table: list, get_function, defaults: Defaults, ui_file = DESIGNER_ALGO_WINDOW):
+        
+        self.operator_comboBox_items = {} 
+        # for each operator, set the combobox items available (only for algo window)
+        for op, op_list in [("mutation", defaults.mutation), ("crossover", defaults.crossover), ("selection", defaults.selection), ("sampling", defaults.sampling), ("decomposition", defaults.decomposition), ("ref_dirs", defaults.ref_dirs)]:
+            self.operator_comboBox_items[op] = [sublist[0][0] for sublist in op_list if op == "ref_dirs" or ArgsAreSet(sublist)] # ref_dirs are instantiated even with no default values (n_obj of each problem is used)
+    
         super().__init__(window_title, table, get_function, defaults, ui_file)
         
         # set the edit windows for each operator
@@ -188,7 +191,7 @@ class AlgoWindow(EditWindow):
         
     def setOperatorComboBox(self, row, col, arg, value):
 
-        items = self.operator_combobox_items[arg]
+        items = self.operator_comboBox_items[arg]
                 
         if value not in [NO_DEFAULT, None]:
             index = items.index(value)
