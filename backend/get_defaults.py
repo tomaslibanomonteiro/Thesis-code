@@ -11,63 +11,73 @@ from utils.defines import VALUE_TYPES, NO_DEFAULT, OPERATORS
                     
 class Defaults():
     def __init__(self, obj = 'all'):
-        
+        """obj can be 'soo', 'moo' or 'all'        
+            what is changed in the defaults set by the code?
+            - if the algorithm has no default operator value, the first operator in the 
+            list is assumed as the default
+            - the list of specific arguments changed is at the end 
+        """                
         self.obj = obj
-                        
-        self.mutation = self.get_class_list(get_mutation_options(self.obj))
-        self.crossover = self.get_class_list(get_crossover_options(self.obj))
-        self.selection = self.get_class_list(get_selection_options(self.obj))
-        self.decomposition = self.get_class_list(get_decomposition_options(self.obj))
-        self.sampling = self.get_class_list(get_sampling_options(self.obj))
-        self.ref_dirs = self.get_class_list(get_reference_direction_options(self.obj))
-        self.prob = self.get_class_list(get_problem_options(self.obj))
-        self.term = self.get_class_list(get_termination_options(self.obj))
-        self.pi = self.get_class_list(get_performance_indicator_options(self.obj))
-        self.algo = self.get_class_list(get_algorithm_options(self.obj))
+
+        self.mutation = self.get_table_dict(get_mutation_options(self.obj))
+        self.crossover = self.get_table_dict(get_crossover_options(self.obj))
+        self.selection = self.get_table_dict(get_selection_options(self.obj))
+        self.decomposition = self.get_table_dict(get_decomposition_options(self.obj))
+        self.sampling = self.get_table_dict(get_sampling_options(self.obj))
+        self.ref_dirs = self.get_table_dict(get_reference_direction_options(self.obj))
+        self.prob = self.get_table_dict(get_problem_options(self.obj))
+        self.term = self.get_table_dict(get_termination_options(self.obj))
+        self.pi = self.get_table_dict(get_performance_indicator_options(self.obj))
+        self.algo = self.get_table_dict(get_algorithm_options(self.obj))
         
-    def get_class_list(self, options_list):
-        return [self.classInpection(name, obj) for name, obj in options_list]
+        # changed defaults
+        self.term['n_evals_default']['n_max_evals'] = 1000 
+        self.term['n_gen_default']['n_max_gen'] = 100
+        self.term['fmin_default']['fmin'] = 1
+        self.term['time_default']['max_time'] = 10 
+        
+        self.ref_dirs['(das-dennis|uniform)_default']['n_dim'] = 'n_obj*1'
+        self.ref_dirs['(das-dennis|uniform)_default']['n_points'] = 'n_obj*2'
+        self.ref_dirs['(energy|riesz)_default']['n_dim'] = 'n_obj*1'
+        self.ref_dirs['(energy|riesz)_default']['n_points'] = 'n_obj*2'
+        self.ref_dirs['(layer-energy|layer-riesz)_default']['n_dim'] = 'n_obj*2'
+        self.ref_dirs['(layer-energy|layer-riesz)_default']['partitions'] = 'n_obj*2'
+        self.ref_dirs['red_default']['n_dim'] = 'n_obj*1'
+        self.ref_dirs['red_default']['n_points'] = 'n_obj*2'
+        
+        if self.obj != 'soo':                
+            self.pi['gd_default']['pf'] = 'get from problem'
+            self.pi['igd_default']['pf'] = 'get from problem'
+            self.pi['igd+_default']['pf'] = 'get from problem'
+            self.pi['gd+_default']['pf'] = 'get from problem'
+        
+        
+    def get_table_dict(self, options_list):
+        return {name + '_default' : self.get_class_dict(name, obj) for name, obj in options_list}
                 
-    def classInpection(self, get_name: str, cls: type, object_id = "default"):
-        """ get a list with the class name, the object id and the arguments with their default values.
+    def get_class_dict(self, get_name: str, cls: type):
+        """ get a dict with the class name, the object id and the arguments with their default values.
         If the argument is an operator, get the operator id """
         
-        if object_id == "default": object_id =  get_name + "_default" 
-        sig = inspect.signature(cls.__init__)
-
-        args = self.extract_arguments(cls)
-            
-        return [(object_id, get_name)] + args                        
-    
-    def extract_arguments(self, cls: type):
-        """ get a list with the arguments with their values."""
-        
-        
         # some classes have arguments with the same name as operators, but they are different
         FAKE_OPERATORS = ['ReductionBasedReferenceDirectionFactory', 'RieszEnergyReferenceDirectionFactory']
         
-                
-        # some classes have arguments with the same name as operators, but they are different
-        FAKE_OPERATORS = ['ReductionBasedReferenceDirectionFactory', 'RieszEnergyReferenceDirectionFactory']
-
-        arg_tuples = []
         sig = inspect.signature(cls.__init__)
-        for arg in sig.parameters.keys():
-            if arg not in ["self", "args", "kwargs"]:
+        args_dict = {arg: param.default for arg, param in sig.parameters.items()}
+        
+        ret_dict = {"class": get_name}    
+        for arg, value in args_dict.items():   
+            if value == inspect._empty:
+                value = NO_DEFAULT
                 
-                value = NO_DEFAULT if sig.parameters[arg].default == inspect._empty else sig.parameters[arg].default 
+            # if arg is an operator, value is an object. Get the operator id from the object
+            if arg in OPERATORS and cls.__name__ not in FAKE_OPERATORS:
+                ret_dict[arg] = self.getOperators(arg, value)
+            # check if arg and value are valid, otherwise remove it from the dict     
+            elif arg not in ["self", "args", "kwargs"] and type(value) in VALUE_TYPES: 
+                ret_dict[arg] = value
                 
-                # arg is an operator, value is an object. Get the operator id from the object
-                if arg in OPERATORS and cls.__name__ not in FAKE_OPERATORS:
-                    value = self.getOperators(arg, value)
-                    
-                # check if value is a valid type, otherwise remove it from the list of arguments    
-                if type(value) not in VALUE_TYPES:
-                    debug_print(f"Warning: supressing arg \"{arg}\" of class {cls.__name__} because of invalid type")
-                else:
-                    arg_tuples.append((arg, value))
-            
-        return arg_tuples
+        return ret_dict
 
     def getOperators(self, arg: str, obj):
 
@@ -86,7 +96,7 @@ class Defaults():
         else:
             raise Exception("unknown operator", arg)
         
-    def getOperator(self, obj: str, operators_list: list, get_list: list):
+    def getOperator(self, obj: str, op_table: list, get_list: list):
         
         # if operator has no default value, return the first operator in the list
         if obj in [None, NO_DEFAULT]:
@@ -95,9 +105,8 @@ class Defaults():
         # get object class name    
         for get_name, cls in get_list:
             if obj.__class__.__name__ == cls.__name__:
-                for row in operators_list:
-                    op_id, op_get_name = row[0]
-                    if get_name == op_get_name:
+                for op_id, op_dict in op_table.items():
+                    if get_name == op_dict['class']:
                         return op_id
                 
         raise Exception("unknown operator", obj)                

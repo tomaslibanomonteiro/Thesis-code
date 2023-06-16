@@ -6,6 +6,7 @@ from frontend.other_windows import AlgoWindow, setEditWindow, ArgsAreSet
 from backend.get import get_algorithm, get_problem, get_termination, get_performance_indicator
 from utils.defines import DESIGNER_MAIN, NO_DEFAULT
 from backend.run import Run, RunArgs    
+import threading
 
 class MyMainWindow(QMainWindow):
     def __init__(self):
@@ -46,10 +47,10 @@ class MyMainWindow(QMainWindow):
         
         # set comboboxes from main window
         tables_list = [self.tableWidget_run_pi, self.tableWidget_run_algo, self.tableWidget_run_prob, self.tableWidget_run_term]
-        pi_options = sorted([pi[0][0] for pi in self.defaults.pi]) # pi object is istantiated even with NO_DEFAULT (pareto front of each problem)
-        algo_options = sorted([algo[0][0] for algo in self.defaults.algo if ArgsAreSet(algo)])
-        prob_options = sorted([prob[0][0] for prob in self.defaults.prob if ArgsAreSet(prob)])
-        term_options = sorted([term[0][0] for term in self.defaults.term if ArgsAreSet(term)])
+        pi_options = [key for key in self.defaults.pi.keys() if ArgsAreSet(self.defaults.pi[key])]
+        algo_options = [key for key in self.defaults.algo.keys() if ArgsAreSet(self.defaults.algo[key])]
+        prob_options = [key for key in self.defaults.prob.keys() if ArgsAreSet(self.defaults.prob[key])]
+        term_options = [key for key in self.defaults.term.keys() if ArgsAreSet(self.defaults.term[key])]
         self.window_combobox_items = [pi_options, algo_options, prob_options, term_options]
         
         for table, items in zip(tables_list, self.window_combobox_items): 
@@ -75,8 +76,12 @@ class MyMainWindow(QMainWindow):
         else:
             self.defaults = self.defaults_single
         self.initialize()
-            
+    
     def runButton(self):
+        thread = threading.Thread(target=self.runButtonThread)
+        thread.start()
+
+    def runButtonThread(self):
         """Get the objects for each column in main window, by matching their ids, with the respective 
         ids in their windows, and instantiating the class with the arguments in the row.
         

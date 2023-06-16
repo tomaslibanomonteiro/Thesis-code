@@ -7,7 +7,6 @@ from pymoo.core.algorithm import Algorithm
 import numpy as np
 from pymoo.core.result import Result
 from backend.get import get_performance_indicator
-import threading
 
 class MyCallback(Callback):
 
@@ -41,12 +40,8 @@ class Run():
         self.run_args = run_args
         self.moo = moo
         self.data = pd.DataFrame()
-
+        
     def run(self):
-        thread = threading.Thread(target=self.run_thread)
-        thread.start()
-
-    def run_thread(self):
         for run_id, run_args in enumerate(self.run_args):
             for seed in range(self.n_seeds):
                 self.single_run(run_args, seed, self.term_object, run_id)
