@@ -3,29 +3,39 @@ from PyQt5.QtWidgets import QApplication
 
 DEFAULT_RUN_OPTIONS = True
 CLICK_RUN_BUTTON = False
-MULTI_OBJECTIVE = True
+MULTI_OBJECTIVE = False
 
+def setTableWidgetItems(tableWidget, items):
+    for i, item in enumerate(items):
+        index = tableWidget.cellWidget(i, 0).findText(item)
+        tableWidget.cellWidget(i, 0).setCurrentIndex(index)
+        
 def DefaultRunOptions(main_window: MyMainWindow):
     # set seeds to 3
     main_window.SpinBox_n_seeds.setValue(1)
     # set termination to soo_default
     if MULTI_OBJECTIVE:
-        index = main_window.tableWidget_run_term.cellWidget(0, 0).findText('moo_default')
+        # set termination 
+        setTableWidgetItems(main_window.tableWidget_run_term, ['n_gen_default'])
+        # set pi 
+        setTableWidgetItems(main_window.tableWidget_run_pi, ['gd_default', 'gd+_default', 'igd+_default'])
+        # set algo 
+        setTableWidgetItems(main_window.tableWidget_run_algo, ['nsga2_default', 'nsga3_default', 'ctaea_default'])
+        # set prob
+        setTableWidgetItems(main_window.tableWidget_run_prob, ['bnh_default','ctp1_default', 'carside_default'])
+        # set seed
+        main_window.SpinBox_n_seeds.setValue(1)        
     else:
-        index = main_window.tableWidget_run_term.cellWidget(0, 0).findText('soo_default')
-    main_window.tableWidget_run_term.cellWidget(0, 0).setCurrentIndex(index)
-    # set pi to indexes 1 2 and 3 of combobox
-    main_window.tableWidget_run_pi.cellWidget(0, 0).setCurrentIndex(0)
-    main_window.tableWidget_run_pi.cellWidget(1, 0).setCurrentIndex(1)
-    main_window.tableWidget_run_pi.cellWidget(2, 0).setCurrentIndex(3)
-    # set algo to indexes 1 2 and 3 of combobox
-    main_window.tableWidget_run_algo.cellWidget(0, 0).setCurrentIndex(0)
-    main_window.tableWidget_run_algo.cellWidget(1, 0).setCurrentIndex(2)
-    main_window.tableWidget_run_algo.cellWidget(2, 0).setCurrentIndex(3)
-    # set prob to indexes 1 2 and 3 of combobox
-    main_window.tableWidget_run_prob.cellWidget(0, 0).setCurrentIndex(0)
-    main_window.tableWidget_run_prob.cellWidget(1, 0).setCurrentIndex(1)
-    main_window.tableWidget_run_prob.cellWidget(2, 0).setCurrentIndex(2)
+        # set termination 
+        setTableWidgetItems(main_window.tableWidget_run_term, ['n_gen_default'])
+        # set pi 
+        setTableWidgetItems(main_window.tableWidget_run_pi, ['best_default'])
+        # set algo 
+        setTableWidgetItems(main_window.tableWidget_run_algo, ['ga_default', 'pso_default', 'de_default'])
+        # set prob
+        setTableWidgetItems(main_window.tableWidget_run_prob, ['ackley_default','g1_default','griewank_default','rastrigin_default','rosenbrock_default'])
+        # set seed
+        main_window.SpinBox_n_seeds.setValue(1)        
 
 def main():
     

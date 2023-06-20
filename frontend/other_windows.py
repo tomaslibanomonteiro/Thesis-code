@@ -179,14 +179,14 @@ class EditWindow(QDialog):
     def getOperator(self, operator, operator_name, pf = None, n_obj=None):
         raise NotImplementedError("getOperator called from EditWindow")
     
-def setEditWindow(button, window_title: str, table: list, get_function, defaults: Defaults, ui_file = DESIGNER_EDIT_WINDOW):
+def setEditWindow(button, window_title: str, table: dict, get_function, defaults: Defaults, ui_file = DESIGNER_EDIT_WINDOW):
     """Set the edit window to when the button is clicked"""
     window = EditWindow(window_title, table, get_function, defaults, ui_file)
     button.clicked.connect(window.show)
     return window
 
 class AlgoWindow(EditWindow):
-    def __init__(self, window_title: str, table: list, get_function, defaults: Defaults, ui_file = DESIGNER_ALGO_WINDOW):
+    def __init__(self, window_title: str, table: dict, get_function, defaults: Defaults, ui_file = DESIGNER_ALGO_WINDOW):
         
         self.operator_comboBox_items = {} 
         # for each operator, set the combobox items available (only for algo window)
