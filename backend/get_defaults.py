@@ -31,10 +31,19 @@ class Defaults():
         self.algo = self.get_table_dict(get_algorithm_options(self.obj))
         
         # changed defaults
-        self.term['n_evals_default']['n_max_evals'] = 1000 
-        self.term['n_gen_default']['n_max_gen'] = 100
-        self.term['fmin_default']['fmin'] = 1
-        self.term['time_default']['max_time'] = 10 
+        if obj != 'moo':
+            self.algo['ga_default']['selection'] = 'tournament_by_cv_and_fitness_default'
+        if obj != 'soo':
+            self.algo['nsga2_default']['selection'] = 'binary_tournament_default'
+            self.algo['nsga3_default']['selection'] = 'tournament_by_cv_then_random_default'
+            self.algo['unsga3_default']['selection'] = 'tournament_by_rank_and_ref_line_dist_default'
+            self.algo['ctaea_default']['selection'] = 'restricted_mating_ctaea_default'
+            self.algo['rnsga3_default']['selection'] = 'tournament_by_cv_then_random_default'
+        
+        self.term['n_evals_default']['n_max_evals'] = '1000'  
+        self.term['n_gen_default']['n_max_gen'] = '100' 
+        self.term['fmin_default']['fmin'] = '1' 
+        self.term['time_default']['max_time'] = '10'  
         
         self.ref_dirs['(das-dennis|uniform)_default']['n_dim'] = 'n_obj*1'
         self.ref_dirs['(das-dennis|uniform)_default']['n_points'] = 'n_obj*2'
@@ -85,23 +94,22 @@ class Defaults():
             return self.getOperator(obj, self.mutation, get_mutation_options(self.obj))
         elif arg == "crossover":
             return self.getOperator(obj, self.crossover, get_crossover_options(self.obj))    
-        elif arg == "selection":
-            return self.getOperator(obj, self.selection, get_selection_options(self.obj))                                    
         elif arg == "decomposition":
             return self.getOperator(obj, self.decomposition, get_decomposition_options(self.obj))
         elif arg == "sampling":
             return self.getOperator(obj, self.sampling, get_sampling_options(self.obj))
         elif arg == "ref_dirs":
             return self.getOperator(obj, self.ref_dirs, get_reference_direction_options(self.obj))
+        elif arg == "selection": # selection must be 'by hand' because one arg is a function
+            return 'by hand'                                  
         else:
             raise Exception("unknown operator", arg)
-        
-    def getOperator(self, obj: str, op_table: list, get_list: list):
+    
+    def getOperator(self, obj: str, op_table: dict, get_list: list):
         
         # if operator has no default value, return the first operator in the list
         if obj in [None, NO_DEFAULT]:
             return get_list[0][0] + "_default"
-        
         # get object class name    
         for get_name, cls in get_list:
             if obj.__class__.__name__ == cls.__name__:

@@ -166,13 +166,45 @@ def get_selection_options(objectives = 'all'):
         
     from pymoo.operators.selection.rnd import RandomSelection
     from pymoo.operators.selection.tournament import TournamentSelection
+    from pymoo.algorithms.moo.ctaea import RestrictedMating
+    from pymoo.algorithms.moo.ctaea import comp_by_cv_dom_then_random
+    from pymoo.algorithms.soo.nonconvex.ga import comp_by_cv_and_fitness
+    from pymoo.algorithms.moo.nsga2 import binary_tournament
+    from pymoo.algorithms.moo.nsga3 import comp_by_cv_then_random
+    from pymoo.algorithms.moo.unsga3 import comp_by_rank_and_ref_line_dist
+    class TournamentByCVAndFitness(TournamentSelection):
+        def __init__(self, pressure=2, **kwargs):
+            super().__init__(func_comp=comp_by_cv_and_fitness, **kwargs)
+        
+    class RestrictedMatingCTAEA(RestrictedMating):
+        def __init__(self, pressure=2, **kwargs):
+            super().__init__(func_comp=comp_by_cv_dom_then_random, **kwargs)
+            
+    class BinaryTournament(TournamentSelection):
+        def __init__(self, pressure=2, **kwargs):
+            super().__init__(func_comp=binary_tournament, **kwargs)
     
-    SELECTION = [
+    class TournamentByCVThenRandom(TournamentSelection):
+        def __init__(self, pressure=2, **kwargs):
+            super().__init__(func_comp=comp_by_cv_then_random, **kwargs)
+            
+    class TournamentByRankAndRefLineDist(TournamentSelection):
+        def __init__(self, pressure=2, **kwargs):
+            super().__init__(func_comp=comp_by_rank_and_ref_line_dist, **kwargs)
+    
+    SELECTION_SINGLE = [
         ("random", RandomSelection),
-        ("tournament", TournamentSelection),
+        ("tournament_by_cv_and_fitness", TournamentByCVAndFitness) # ga
+    ]
+    
+    SELECTION_MULTI = [
+        ("restricted_mating_ctaea", RestrictedMatingCTAEA), #ctaea
+        ("binary_tournament", BinaryTournament), # nsga2
+        ("tournament_by_cv_then_random", TournamentByCVThenRandom), # nsga3
+        ("tournament_by_rank_and_ref_line_dist", TournamentByRankAndRefLineDist) # unsga3
     ]
 
-    return SELECTION
+    return returnOptions(objectives, SELECTION_SINGLE, SELECTION_MULTI)
 
 
 def get_selection(name, objectives = 'all', *args, d={}, **kwargs):

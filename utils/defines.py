@@ -8,8 +8,7 @@ NO_DEFAULT = "No def"
 # to be put in ui table as respective widget 
 VALUE_TYPES = (int, float, str, bool, type(None), NO_DEFAULT)
 
-# OPERATORS = ["mutation", "crossover", "selection", "decomposition", "sampling", "ref_dirs"] 
-OPERATORS = ["mutation", "crossover", "decomposition", "sampling", "ref_dirs"] 
+OPERATORS = ["mutation", "crossover", "selection", "decomposition", "sampling", "ref_dirs"] 
 
 # classes that have arguments with the same name as the operatores names but are different
 FAKE_OPERATORS = ['ReductionBasedReferenceDirectionFactory', 'RieszEnergyReferenceDirectionFactory']

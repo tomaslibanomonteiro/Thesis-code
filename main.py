@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QApplication
 
 DEFAULT_RUN_OPTIONS = True
 CLICK_RUN_BUTTON = False
-MULTI_OBJECTIVE = False
+MULTI_OBJECTIVE = True
 
 def setTableWidgetItems(tableWidget, items):
     for i, item in enumerate(items):
