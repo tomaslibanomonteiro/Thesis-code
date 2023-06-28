@@ -164,14 +164,14 @@ def get_sampling(name, objectives = 'all', *args, d={}, **kwargs):
 
 def get_selection_options(objectives = 'all'):
         
-    from pymoo.operators.selection.rnd import RandomSelection
-    from pymoo.operators.selection.tournament import TournamentSelection
-    from pymoo.algorithms.moo.ctaea import RestrictedMating
-    from pymoo.algorithms.moo.ctaea import comp_by_cv_dom_then_random
-    from pymoo.algorithms.soo.nonconvex.ga import comp_by_cv_and_fitness
+    from pymoo.algorithms.moo.ctaea import (RestrictedMating,
+                                            comp_by_cv_dom_then_random)
     from pymoo.algorithms.moo.nsga2 import binary_tournament
     from pymoo.algorithms.moo.nsga3 import comp_by_cv_then_random
     from pymoo.algorithms.moo.unsga3 import comp_by_rank_and_ref_line_dist
+    from pymoo.algorithms.soo.nonconvex.ga import comp_by_cv_and_fitness
+    from pymoo.operators.selection.rnd import RandomSelection
+    from pymoo.operators.selection.tournament import TournamentSelection
     class TournamentByCVAndFitness(TournamentSelection):
         def __init__(self, pressure=2, **kwargs):
             super().__init__(func_comp=comp_by_cv_and_fitness, **kwargs)

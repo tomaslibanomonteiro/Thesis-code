@@ -1,6 +1,7 @@
 DESIGNER_MAIN = 'frontend/designer_templates/main_window.ui' 
 DESIGNER_EDIT_WINDOW = 'frontend/designer_templates/edit_window.ui'
 DESIGNER_ALGO_WINDOW = 'frontend/designer_templates/algo_window.ui'
+DESIGNER_RUN_WINDOW = 'frontend/designer_templates/run_window.ui'
 
 # to be put in ui table
 NO_DEFAULT = "No def"

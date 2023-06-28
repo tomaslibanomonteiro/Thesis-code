@@ -1,8 +1,8 @@
-from qtpy import QtWidgets
-from qtpy import QtCore
-from qtpy import QtGui
 import re
 from typing import Tuple
+
+from qtpy import QtCore, QtGui, QtWidgets
+
 
 class MyComboBox(QtWidgets.QComboBox):
     def __init__(self, items = [], initial_index=-1, initial_text="", enabled = True):

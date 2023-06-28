@@ -1,12 +1,15 @@
-from PyQt5.QtWidgets import QMainWindow, QHeaderView
+from PyQt5.QtCore import QThread
+from PyQt5.QtWidgets import QHeaderView, QMainWindow
 from PyQt5.uic import loadUi
+
+from backend.get import (get_algorithm, get_performance_indicator, get_problem,
+                         get_termination)
 from backend.get_defaults import Defaults
+from backend.run import Run, SingleRunArgs
 from frontend.my_widgets import MyComboBox
-from frontend.other_windows import AlgoWindow, setEditWindow, ArgsAreSet
-from backend.get import get_algorithm, get_problem, get_termination, get_performance_indicator
+from frontend.other_windows import (AlgoWindow, ArgsAreSet, RunWindow,
+                                    setEditWindow)
 from utils.defines import DESIGNER_MAIN, NO_DEFAULT
-from backend.run import Run, RunArgs    
-import threading
 
 class MyMainWindow(QMainWindow):
     def __init__(self):
@@ -25,6 +28,7 @@ class MyMainWindow(QMainWindow):
         self.pi_window = None
         self.term_window = None
         self.window_combobox_items = None
+        self.run_windows = []
         self.initialize()        
 
         # set run button
@@ -78,14 +82,10 @@ class MyMainWindow(QMainWindow):
         self.initialize()
     
     def runButton(self):
-        thread = threading.Thread(target=self.runButtonThread)
-        thread.start()
-
-    def runButtonThread(self):
         """Get the objects for each column in main window, by matching their ids, with the respective 
         ids in their windows, and instantiating the class with the arguments in the row.
         
-        After having the objects, run every combination of problem and algorithm"""
+        After having the objects, create a run window"""
         
         # get if it is single or multi objective optimization
         moo = self.radioButton_moo.isChecked()
@@ -124,9 +124,9 @@ class MyMainWindow(QMainWindow):
                 algo_object = self.algo_window.getObjectFromID(algo_id, pf, n_obj)
                 
                 # append the arguments for this run
-                run_args.append(RunArgs(prob_id, prob_object, algo_id, algo_object, pi_ids, pi_objects))
+                run_args.append(SingleRunArgs(prob_id, prob_object, algo_id, algo_object, pi_ids, pi_objects))
                     
-        # get the algorithm objects
+        # get the run objects and create the run window
         run = Run(run_args, term_id, term_object, n_seeds, moo)
-                    
-        run.run()
+        self.run_windows.append(RunWindow(run,'Run ' + str(len(self.run_windows)+1)))
+        

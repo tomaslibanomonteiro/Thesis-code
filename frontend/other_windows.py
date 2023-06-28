@@ -1,14 +1,20 @@
-from frontend.my_widgets import ScientificSpinBox, ScientificDoubleSpinBox, MyComboBox
-from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QCheckBox
-from PyQt5.uic import loadUi
+import typing
 from numpy import inf
-from backend.get_defaults import NO_DEFAULT, OPERATORS
+from PyQt5.QtCore import QThread
 from PyQt5.QtGui import QColor
-from backend.get_defaults import Defaults
+from PyQt5.QtWidgets import QCheckBox, QDialog, QTableWidget, QTableWidgetItem
+from PyQt5.uic import loadUi
+
+from backend.get import (get_crossover, get_decomposition, get_mutation,
+                         get_reference_directions, get_sampling, get_selection)
+from backend.get_defaults import NO_DEFAULT, OPERATORS, Defaults
+from backend.run import Run
+from frontend.my_widgets import (MyComboBox, ScientificDoubleSpinBox,
+                                 ScientificSpinBox)
 from utils.debug import debug_print
-from utils.defines import DESIGNER_EDIT_WINDOW, DESIGNER_ALGO_WINDOW
-from backend.get import get_sampling, get_crossover, get_mutation, get_decomposition, \
-                      get_selection, get_reference_directions
+from utils.defines import (DESIGNER_ALGO_WINDOW, DESIGNER_EDIT_WINDOW,
+                           DESIGNER_RUN_WINDOW)
+
 
 def ArgsAreSet(dic: dict) -> bool:
     # check if any of the values in the list is == NO_DEFAULT
@@ -229,3 +235,59 @@ class AlgoWindow(EditWindow):
         else:
             raise Exception("Operator " + op_name + " not found, with id " + op_id)
         
+class MyThread(QThread):
+    def __init__(self, run_obj: Run):
+        super().__init__()
+        self.run_obj = run_obj 
+    def run(self):
+        self.run_obj.run()
+        
+class RunWindow(QDialog):
+    def __init__(self, run_obj: Run, window_title = 'Run Window', ui_file=DESIGNER_RUN_WINDOW):
+        super().__init__()
+        loadUi(ui_file, self)
+
+        self.setWindowTitle(window_title)
+        self.label.setText(window_title)
+        self.run = None # updated in afterRun
+        
+        # make the run in a separate thread (has to be called in another class)
+        self.my_thread = MyThread(run_obj)
+        self.my_thread.finished.connect(self.afterRun)
+        self.my_thread.start()
+         
+    def afterRun(self):    
+        self.run = self.my_thread.run_obj
+        # update the combo box with the performance indicators
+        pi_ids = [key for key in self.run.dfs_dict.keys()]
+        self.comboBox_pi.addItems(pi_ids)
+        self.comboBox_pi.currentIndexChanged.connect(self.changeTable)
+        self.comboBox_pi.setCurrentIndex(0)
+
+        # update table widget and show the window 
+        self.changeTable()
+        self.show()
+                                
+    def changeTable(self):
+        """Change the table widget to display the results for the selected performance indicator"""
+        
+        # get the performance indicator id and the corresponding dataframe
+        pi_id = self.comboBox_pi.currentText()
+        df = self.run.dfs_dict[pi_id]
+        
+        # update the table widget
+        self.tableWidget.setEditTriggers(QTableWidget.NoEditTriggers) # make table non-editable
+        self.tableWidget.setColumnCount(len(df.columns))
+        self.tableWidget.setRowCount(len(df.index))
+    
+        for i in range(len(df.index)):
+            self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(df.index[i]))
+            for j in range(len(df.columns)):
+                self.tableWidget.setHorizontalHeaderItem(j, QTableWidgetItem(df.columns[j]))           
+                # get the float into str representation, last column is voting (int)
+                if j == len(df.columns)-1:
+                    item = QTableWidgetItem(str(df.iloc[i, -1]))
+                else:
+                    nice_string = "{:.3e}".format(df.iloc[i, j]) 
+                    item = QTableWidgetItem(nice_string)
+                self.tableWidget.setItem(i, j, item)

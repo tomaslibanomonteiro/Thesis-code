@@ -2,7 +2,7 @@ from frontend.main_window import MyMainWindow
 from PyQt5.QtWidgets import QApplication
 
 DEFAULT_RUN_OPTIONS = True
-CLICK_RUN_BUTTON = False
+CLICK_RUN_BUTTON = True
 MULTI_OBJECTIVE = True
 
 def setTableWidgetItems(tableWidget, items):
@@ -12,7 +12,7 @@ def setTableWidgetItems(tableWidget, items):
         
 def DefaultRunOptions(main_window: MyMainWindow):
     # set seeds to 3
-    main_window.SpinBox_n_seeds.setValue(1)
+    main_window.SpinBox_n_seeds.setValue(2)
     # set termination to soo_default
     if MULTI_OBJECTIVE:
         # set termination 
@@ -20,11 +20,11 @@ def DefaultRunOptions(main_window: MyMainWindow):
         # set pi 
         setTableWidgetItems(main_window.tableWidget_run_pi, ['gd_default', 'gd+_default', 'igd+_default'])
         # set algo 
-        setTableWidgetItems(main_window.tableWidget_run_algo, ['nsga2_default', 'nsga3_default', 'ctaea_default'])
+        # setTableWidgetItems(main_window.tableWidget_run_algo, ['nsga2_default', 'nsga3_default', 'ctaea_default'])
+        setTableWidgetItems(main_window.tableWidget_run_algo, ['nsga2_default', 'nsga3_default'])
         # set prob
-        setTableWidgetItems(main_window.tableWidget_run_prob, ['bnh_default','ctp1_default', 'carside_default'])
-        # set seed
-        main_window.SpinBox_n_seeds.setValue(1)        
+        # setTableWidgetItems(main_window.tableWidget_run_prob, ['bnh_default','ctp1_default', 'carside_default'])
+        setTableWidgetItems(main_window.tableWidget_run_prob, ['bnh_default','ctp1_default'])
     else:
         # set termination 
         setTableWidgetItems(main_window.tableWidget_run_term, ['n_gen_default'])
@@ -34,8 +34,6 @@ def DefaultRunOptions(main_window: MyMainWindow):
         setTableWidgetItems(main_window.tableWidget_run_algo, ['ga_default', 'pso_default', 'de_default'])
         # set prob
         setTableWidgetItems(main_window.tableWidget_run_prob, ['ackley_default','g1_default','griewank_default','rastrigin_default','rosenbrock_default'])
-        # set seed
-        main_window.SpinBox_n_seeds.setValue(1)        
 
 def main():
     
@@ -44,16 +42,18 @@ def main():
     
     # start the main window of the application
     main_window = MyMainWindow()
-
+    
     if MULTI_OBJECTIVE:
         main_window.radioButton_moo.setChecked(True)
     if DEFAULT_RUN_OPTIONS:
         DefaultRunOptions(main_window)
         if CLICK_RUN_BUTTON:
             main_window.PushButton_Run.click()
-        
+
     main_window.show()
     app.exec_()
+
+        
     
         
 if __name__ == '__main__':

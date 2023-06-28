@@ -1,14 +1,14 @@
-import inspect                
-import re
-import numpy as np
-from backend.get import get_mutation_options, get_crossover_options, get_selection_options, get_decomposition_options, \
-                    get_sampling_options, get_reference_direction_options, get_algorithm_options, get_problem_options,\
-                    get_termination_options, get_performance_indicator_options                    
-from backend.get import get_mutation, get_crossover, get_selection, get_decomposition, get_sampling, get_reference_directions 
+import inspect
 
-from utils.debug import debug_print
-from utils.defines import VALUE_TYPES, NO_DEFAULT, OPERATORS
-                    
+from backend.get import (get_algorithm_options, get_crossover_options,
+                         get_decomposition_options, get_mutation_options,
+                         get_performance_indicator_options,
+                         get_problem_options, get_reference_direction_options,
+                         get_sampling_options, get_selection_options,
+                         get_termination_options)
+from utils.defines import NO_DEFAULT, OPERATORS, VALUE_TYPES
+
+
 class Defaults():
     def __init__(self, obj = 'all'):
         """obj can be 'soo', 'moo' or 'all'        
@@ -41,7 +41,7 @@ class Defaults():
             self.algo['rnsga3_default']['selection'] = 'tournament_by_cv_then_random_default'
         
         self.term['n_evals_default']['n_max_evals'] = '1000'  
-        self.term['n_gen_default']['n_max_gen'] = '100' 
+        self.term['n_gen_default']['n_max_gen'] = '20' 
         self.term['fmin_default']['fmin'] = '1' 
         self.term['time_default']['max_time'] = '10'  
         
@@ -59,6 +59,8 @@ class Defaults():
             self.pi['igd_default']['pf'] = 'get from problem'
             self.pi['igd+_default']['pf'] = 'get from problem'
             self.pi['gd+_default']['pf'] = 'get from problem'
+            self.pi['hv_default']['pf'] = 'get from problem'
+            self.pi['hv_default']['ref_point'] = NO_DEFAULT
         
         
     def get_table_dict(self, options_list):

@@ -1,12 +1,12 @@
-import pandas as pd
-from pymoo.optimize import minimize
-from pymoo.core.callback import Callback
-import pandas as pd
-from utils.debug import debug_print
-from pymoo.core.algorithm import Algorithm
 import numpy as np
+import pandas as pd
+from pymoo.core.algorithm import Algorithm
+from pymoo.core.callback import Callback
 from pymoo.core.result import Result
-from backend.get import get_performance_indicator
+from pymoo.optimize import minimize
+
+from utils.debug import debug_print
+
 
 class MyCallback(Callback):
 
@@ -23,7 +23,7 @@ class MyCallback(Callback):
             self.n_evals.append(algo.evaluator.n_eval)
             self.n_gen.append(algo.n_gen)
 
-class RunArgs():
+class SingleRunArgs():
     def __init__(self, prob_id: str, prob_object, algo_id: str, algo_object, pi_ids: list, pi_objects: list): 
         self.prob_id = prob_id
         self.prob_object = prob_object
@@ -31,44 +31,44 @@ class RunArgs():
         self.algo_object = algo_object
         self.pi_ids = pi_ids
         self.pi_object = pi_objects                
-
+        
 class Run():
-    def __init__(self, run_args: list, term_id, term_object, n_seeds: int, moo: bool):
+    def __init__(self, single_run_args: list, term_id, term_object, n_seeds: int, moo: bool):
         self.n_seeds = n_seeds
         self.term_id = term_id
         self.term_object = term_object
-        self.run_args = run_args
+        self.single_run_args_list = single_run_args
         self.moo = moo
         self.data = pd.DataFrame()
+        self.dfs_dict = {}
         
     def run(self):
-        for run_id, run_args in enumerate(self.run_args):
+        for run_id, run_args in enumerate(self.single_run_args_list):
             for seed in range(self.n_seeds):
-                self.single_run(run_args, seed, self.term_object, run_id)
                 debug_print(run_id, run_args.algo_id, run_args.prob_id, seed)
-                
-        self.printData()
-
-    def single_run(self, run_args: RunArgs, seed: int, termination, run_id: int):
+                res = self.single_run(run_args, seed, self.term_object)
+                self.data = self.update_data(run_args, res, res.algorithm.callback, run_id)
+        
+        self.dfs_dict = self.getDFsdict(self.single_run_args_list[0].pi_ids)
+        
+    def single_run(self, run_args: SingleRunArgs, seed: int, termination) -> Result:
         res = minimize(algorithm=run_args.algo_object,
                        problem=run_args.prob_object,
                        termination=termination,
                        seed=seed,
-                       verbose=True,
+                       verbose=False,
                        save_history=False,
                        progress_bar=True,
                        callback=MyCallback())
+        
+        return res
 
-        # update data with the result of the run
-        self.data = self.update_data(run_args, res, res.algorithm.callback, run_id)
-
-    def update_data(self, run_args: RunArgs, res: Result, callback: MyCallback, run_id: int):
+    def update_data(self, run_args: SingleRunArgs, res: Result, callback: MyCallback, run_id: int):
         data = self.data
 
         run_length = len(callback.n_evals)
 
-        single_run = {'run_id': [run_id] * run_length,
-                      'seed': [res.algorithm.seed] * run_length,
+        single_run = {'seed': [res.algorithm.seed] * run_length,
                       'problem_id': [run_args.prob_id] * run_length,
                       'algorithm_id': [run_args.algo_id] * run_length,
                       'n_eval': callback.n_evals,
@@ -83,10 +83,35 @@ class Run():
             # add the data to the data frame    
             single_run[pi_id] = pi_data
         
-        # create data frame with columns ['run_id', 'seed', 'Problem','Algorithm', 'n_evals', 'n_gen', 'PM1', 'PM2', 'PM3']
         single_run = pd.DataFrame(single_run)
 
         return pd.concat([data, single_run])
 
     def printData(self):
         print(self.data)
+        
+    def getDFsdict(self, pi_ids: list):
+        """ returns a dictionary of pi_ids, where each entry is a dataframe
+        where the columns are the different problems and the rows the different 
+        algorithms, and each cell is the mean of the performance indicator
+        of that combination across the different seeds"""
+        
+        # first get only the last generation for each combination of problem, algorithm and seed
+        last_gen = self.data.groupby(['problem_id', 'algorithm_id', 'seed']).last()
+        
+        # then get the mean of the performance indicator across the different seeds
+        result = last_gen.groupby(['problem_id', 'algorithm_id'])[pi_ids].mean()
+        
+        dfs_dict = {}
+        for pi_id in pi_ids:
+            dfs_dict[pi_id] = result[pi_id].unstack().T      
+            
+            # add another column with the sum of all the instances where the algorithm was the best for each problem 
+            if pi_id == "hv":
+                dfs_dict[pi_id]['voting'] = dfs_dict[pi_id].idxmax(axis=0).value_counts()
+                dfs_dict[pi_id]['voting'] = dfs_dict[pi_id]['voting'].fillna(0).astype(int)
+            else:
+                dfs_dict[pi_id]['voting'] = dfs_dict[pi_id].idxmin(axis=0).value_counts()
+                dfs_dict[pi_id]['voting'] = dfs_dict[pi_id]['voting'].fillna(0).astype(int)
+            
+        return dfs_dict
