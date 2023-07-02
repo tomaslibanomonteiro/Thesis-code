@@ -1,4 +1,3 @@
-import typing
 from numpy import inf
 from PyQt5.QtCore import QThread
 from PyQt5.QtGui import QColor
@@ -13,8 +12,8 @@ from frontend.my_widgets import (MyComboBox, ScientificDoubleSpinBox,
                                  ScientificSpinBox)
 from utils.debug import debug_print
 from utils.defines import (DESIGNER_ALGO_WINDOW, DESIGNER_EDIT_WINDOW,
-                           DESIGNER_RUN_WINDOW)
-
+                           DESIGNER_RUN_WINDOW, DEBUG_MODE)
+import pydevd
 
 def ArgsAreSet(dic: dict) -> bool:
     # check if any of the values in the list is == NO_DEFAULT
@@ -239,32 +238,38 @@ class MyThread(QThread):
     def __init__(self, run_obj: Run):
         super().__init__()
         self.run_obj = run_obj 
+        
     def run(self):
+        if DEBUG_MODE:
+            import pydevd
+            pydevd.settrace(suspend=False)
         self.run_obj.run()
         
 class RunWindow(QDialog):
-    def __init__(self, run_obj: Run, window_title = 'Run Window', ui_file=DESIGNER_RUN_WINDOW):
+    def __init__(self, run: Run, window_title: str, ui_file=DESIGNER_RUN_WINDOW, save_path=None):
         super().__init__()
         loadUi(ui_file, self)
 
         self.setWindowTitle(window_title)
         self.label.setText(window_title)
-        self.run = None # updated in afterRun
+        self.run = run 
+        self.save_path = save_path
         
         # make the run in a separate thread (has to be called in another class)
-        self.my_thread = MyThread(run_obj)
+        self.my_thread = MyThread(self.run)
         self.my_thread.finished.connect(self.afterRun)
+        
+    def startRun(self):
         self.my_thread.start()
          
-    def afterRun(self):    
-        self.run = self.my_thread.run_obj
+    def afterRun(self):                
         # update the combo box with the performance indicators
         pi_ids = [key for key in self.run.dfs_dict.keys()]
         self.comboBox_pi.addItems(pi_ids)
         self.comboBox_pi.currentIndexChanged.connect(self.changeTable)
         self.comboBox_pi.setCurrentIndex(0)
-
-        # update table widget and show the window 
+        
+        # update table widget and show the window
         self.changeTable()
         self.show()
                                 
@@ -291,3 +296,4 @@ class RunWindow(QDialog):
                     nice_string = "{:.3e}".format(df.iloc[i, j]) 
                     item = QTableWidgetItem(nice_string)
                 self.tableWidget.setItem(i, j, item)
+    

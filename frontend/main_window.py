@@ -9,31 +9,38 @@ from backend.run import Run, SingleRunArgs
 from frontend.my_widgets import MyComboBox
 from frontend.other_windows import (AlgoWindow, ArgsAreSet, RunWindow,
                                     setEditWindow)
-from utils.defines import DESIGNER_MAIN, NO_DEFAULT
+from utils.defines import DESIGNER_MAIN, RUN_OPTIONS_KEYS
 
 class MyMainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, moo = True, options = {}, defaults_soo = Defaults('soo'), defaults_moo = Defaults('moo')) -> None:
+        super().__init__()        
         
         loadUi(DESIGNER_MAIN, self)
         
+        # set run button
+        self.PushButton_Run.clicked.connect(self.runButton)
+
         # connect button to single or multi objective optimization
-        self.defaults_single = Defaults('soo')
-        self.defaults_multi = Defaults('moo')
-        self.defaults = self.defaults_single
+        self.defaults_soo = defaults_soo
+        self.defaults_moo = defaults_moo
+        self.defaults = self.defaults_moo if moo else self.defaults_soo
         self.radioButton_moo.toggled.connect(self.objectivesButton)
         
+        # set window variables
         self.algo_window = None
         self.prob_window = None
         self.pi_window = None
         self.term_window = None
         self.window_combobox_items = None
         self.run_windows = []
-        self.initialize()        
+        
+        # set run options
+        if options != {} and list(options.keys()) != RUN_OPTIONS_KEYS:
+            raise Exception('Invalid options keys, expected: ' + str(RUN_OPTIONS_KEYS) + ', got: ' + str(options.keys()))
+        self.options = options
 
-        # set run button
-        self.PushButton_Run.clicked.connect(self.runButton)
-    
+        self.initialize()        
+                    
     def initialize(self):
         """Initialize the main window regarding the default values in the comboboxes and the edit windows."""
         
@@ -46,7 +53,9 @@ class MyMainWindow(QMainWindow):
         self.pushButton_edit_algo.clicked.connect(self.algo_window.show)
                             
         self.setComboBoxes()
-    
+            
+        self.SetDefaultRunOptions()
+
     def setComboBoxes(self):
         
         # set comboboxes from main window
@@ -73,20 +82,32 @@ class MyMainWindow(QMainWindow):
     def enableTableComboBox(self, table, row, col, enabled=True):
         if row < table.rowCount() and col < table.columnCount():
             table.cellWidget(row, col).setEnabled(enabled)
+
+    def setTableWidgetItems(self, tableWidget, items):
+        for i, item in enumerate(items):
+            index = tableWidget.cellWidget(i, 0).findText(item)
+            tableWidget.cellWidget(i, 0).setCurrentIndex(index)
+            
+    def SetDefaultRunOptions(self):
+        if self.options == {}:
+            return
+        
+        self.radioButton_moo.setChecked(self.options['moo'])
+        self.SpinBox_n_seeds.setValue(self.options['n_seeds'])
+        
+        self.setTableWidgetItems(self.tableWidget_run_term, self.options['term'])
+        self.setTableWidgetItems(self.tableWidget_run_pi, self.options['pi'])
+        self.setTableWidgetItems(self.tableWidget_run_algo, self.options['algo'])
+        self.setTableWidgetItems(self.tableWidget_run_prob, self.options['prob'])
     
     def objectivesButton(self):
         if self.radioButton_moo.isChecked():
-            self.defaults = self.defaults_multi
+            self.defaults = self.defaults_moo
         else:
-            self.defaults = self.defaults_single
+            self.defaults = self.defaults_soo
         self.initialize()
     
-    def runButton(self):
-        """Get the objects for each column in main window, by matching their ids, with the respective 
-        ids in their windows, and instantiating the class with the arguments in the row.
-        
-        After having the objects, create a run window"""
-        
+    def getRunObject(self):
         # get if it is single or multi objective optimization
         moo = self.radioButton_moo.isChecked()
         
@@ -127,6 +148,13 @@ class MyMainWindow(QMainWindow):
                 run_args.append(SingleRunArgs(prob_id, prob_object, algo_id, algo_object, pi_ids, pi_objects))
                     
         # get the run objects and create the run window
-        run = Run(run_args, term_id, term_object, n_seeds, moo)
-        self.run_windows.append(RunWindow(run,'Run ' + str(len(self.run_windows)+1)))
+        return Run(run_args, term_id, term_object, n_seeds, moo)
         
+    def runButton(self):
+        """First start the run window, then start the run. The two are separated 
+        so that in a test scenario the threads from this window can be trailed 
+        so it waits for them to finish before checking results."""
+        run = self.getRunObject()
+        run_window = RunWindow(run,'Run ' + str(len(self.run_windows)+1))
+        self.run_windows.append(run_window)
+        self.run_windows[-1].startRun()

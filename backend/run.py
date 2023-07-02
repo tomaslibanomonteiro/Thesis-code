@@ -43,11 +43,11 @@ class Run():
         self.dfs_dict = {}
         
     def run(self):
-        for run_id, run_args in enumerate(self.single_run_args_list):
+        for run_args in self.single_run_args_list:
             for seed in range(self.n_seeds):
-                debug_print(run_id, run_args.algo_id, run_args.prob_id, seed)
+                debug_print(run_args.algo_id, run_args.prob_id, seed)
                 res = self.single_run(run_args, seed, self.term_object)
-                self.data = self.update_data(run_args, res, res.algorithm.callback, run_id)
+                self.data = self.update_data(run_args, res, res.algorithm.callback)
         
         self.dfs_dict = self.getDFsdict(self.single_run_args_list[0].pi_ids)
         
@@ -63,7 +63,7 @@ class Run():
         
         return res
 
-    def update_data(self, run_args: SingleRunArgs, res: Result, callback: MyCallback, run_id: int):
+    def update_data(self, run_args: SingleRunArgs, res: Result, callback: MyCallback):
         data = self.data
 
         run_length = len(callback.n_evals)
@@ -77,7 +77,8 @@ class Run():
         # get the performance indicators values
         for pi_id, pi_object in zip(run_args.pi_ids, run_args.pi_object):
             if pi_id == "best_default":
-                pi_data = callback.best
+                # get the float values in the callback.best list
+                pi_data = [None if len(item) == 0 else float(item[0]) for item in callback.best]                    
             else:
                 pi_data = [pi_object.do(pf) for pf in callback.best]
             # add the data to the data frame    
@@ -115,3 +116,6 @@ class Run():
                 dfs_dict[pi_id]['voting'] = dfs_dict[pi_id]['voting'].fillna(0).astype(int)
             
         return dfs_dict
+    
+    def saveData(self, filename: str):
+        self.data.to_csv(filename)
