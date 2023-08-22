@@ -15,8 +15,7 @@ class Test():
         self.main_window = None
         self.run = None
         self.my_thread = Thread(target=self.runTestThread)
-
-                
+      
     def isOfType(self, test_types: list) -> bool:
         return any([t in self.test_types for t in test_types])
     

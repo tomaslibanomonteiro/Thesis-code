@@ -1,37 +1,34 @@
-import sys
-from PyQt5.QtCore import QThread, pyqtSignal
-from PyQt5.QtWidgets import QApplication, QMainWindow
-import pydevd
-class MyThread(QThread):
-    finished_signal = pyqtSignal()
+import pandas as pd
+from pymoo.algorithms.soo.nonconvex.ga import GA
+from pymoo.factory import get_problem
+from pymoo.optimize import minimize
 
-    def __init__(self):
-        super().__init__()
+# define the problem
+problem = get_problem("ackley", n_var=10)
 
-    def run(self):
-        # do some work here 
-        pydevd.settrace(suspend=False)
-        print('hello')
-        print('hello 2')
-        for i in range(10):
-            print(i)
-            self.sleep(1) # add sleep method to enable stopping at breakpoints
-        self.finished_signal.emit()
+# define the GA algorithm
+algorithm = GA(pop_size=100, eliminate_duplicates=True)
 
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
+# create a DataFrame to store the best solution of each generation
+best_solutions = pd.DataFrame(columns=["gen", "best_obj", "best_var"])
 
-        self.thread = MyThread()
-        self.thread.finished_signal.connect(self.on_thread_finished)
-        self.thread.start()
+# define a callback function to save the best solution of each generation
+def save_best_solution(algorithm):
+    best_idx = algorithm.pop.get("F").argmin()
+    best_obj = algorithm.pop.get("F")[best_idx]
+    best_var = algorithm.pop.get("X")[best_idx]
+    best_solutions.loc[len(algorithm.callback.data["gen"]) - 1] = [len(algorithm.callback.data["gen"]) - 1, best_obj, best_var]
 
-    def on_thread_finished(self):
-        # do something when the thread finishes
-        self.close()
+# run the optimization
+res = minimize(problem,
+               algorithm,
+               ('n_gen', 50),
+               seed=1,
+               callback=save_best_solution)
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec_())
+# print the best solution found
+print("Best solution: ", res.X)
+print("Best objective value: ", res.F)
+
+# print the DataFrame of best solutions
+print(best_solutions)

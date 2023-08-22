@@ -2,11 +2,13 @@ import os
 import filecmp
 
 # import all tests and declare them in ALL_TESTS
-from tests.tests_declaration import test1, test2, test3
+from tests.tests_declaration import test1, test2, test3, test_de
 from utils.defines import RESULTS_FOLDER, EXPECTED_RESULTS_FOLDER
 from PyQt5.QtWidgets import QApplication
 
-ALL_TESTS = [test1, test2, test3]
+ALL_TESTS = [test1, test2, test3, test_de]
+
+TESTS_TO_RUN = [test_de]
 
 # choose the type of tests to run from the list below
 # ['soo' / 'moo', 'long' / 'short', 'algo' / 'prob' / 'pi' / 'term' / 'n_seeds']
@@ -21,7 +23,7 @@ def main():
         shutil.rmtree(RESULTS_FOLDER)    
     os.mkdir(RESULTS_FOLDER)
     
-    tests = [test for test in ALL_TESTS if test.isOfType(RUN_TYPES)]    
+    tests = [test for test in TESTS_TO_RUN if test.isOfType(RUN_TYPES)]    
     
     # create a QApplication to instatiate the QWidgets
     app = QApplication([]) 
