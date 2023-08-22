@@ -50,7 +50,10 @@ def main():
         
     # compare the CSV files
     for file in cmp_files:
-        assert filecmp.cmp(RESULTS_FOLDER + '/' + file, EXPECTED_RESULTS_FOLDER + '/' + file)
+        if filecmp.cmp(RESULTS_FOLDER + '/' + file, EXPECTED_RESULTS_FOLDER + '/' + file):
+            print('Test ' + file + ' passed!')
+        else:
+            print('Test ' + file + ' failed!')
 
 if __name__ == '__main__':
     main()

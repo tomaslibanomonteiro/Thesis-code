@@ -118,4 +118,4 @@ class Run():
         return dfs_dict
     
     def saveData(self, filename: str):
-        self.data.to_csv(filename)
+        self.data.to_csv(filename, index=False)

@@ -32,6 +32,17 @@ class Test():
         self.run.run()
         self.run.saveData(RESULTS_FOLDER + '/' + self.test_name)
 
+options_test_de = {
+    'moo': False,
+    'n_seeds': 2,
+    'term': ['n_gen_default'],
+    'pi': ['best_default'],
+    'algo': ['de_default'],
+    'prob': ['ackley_default']
+}
+
+test_de = Test('de', ['soo', 'short'], options_test_de)
+
 options_test1 = {
     'moo': True,
     'n_seeds': 2,
