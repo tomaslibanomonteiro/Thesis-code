@@ -1,5 +1,5 @@
 from numpy import inf
-from PyQt5.QtCore import QThread
+from PyQt5.QtCore import QThread, Qt
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QCheckBox, QDialog, QTableWidget, QTableWidgetItem
 from PyQt5.uic import loadUi
@@ -284,16 +284,37 @@ class RunWindow(QDialog):
         self.tableWidget.setEditTriggers(QTableWidget.NoEditTriggers) # make table non-editable
         self.tableWidget.setColumnCount(len(df.columns))
         self.tableWidget.setRowCount(len(df.index))
-    
+        
+        # set the horizontal headers
+        self.tableWidget.horizontalHeader().sectionDoubleClicked.connect(lambda col: self.horizontalHeaderClick(col))
+        for j in range(len(df.columns)):
+            header_item = QTableWidgetItem(df.columns[j])
+            self.tableWidget.setHorizontalHeaderItem(j, header_item)
+
+        # set the rest of the table    
+        self.tableWidget.verticalHeader().sectionDoubleClicked.connect(lambda row: self.handleVerticalHeaderClick(row))
         for i in range(len(df.index)):
             self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(df.index[i]))
-            for j in range(len(df.columns)):
-                self.tableWidget.setHorizontalHeaderItem(j, QTableWidgetItem(df.columns[j]))           
-                # get the float into str representation, last column is voting (int)
+            # get the float into str representation, last column is voting (int)
+            for j in range(len(df.columns)):                
                 if j == len(df.columns)-1:
                     item = QTableWidgetItem(str(df.iloc[i, -1]))
                 else:
                     nice_string = "{:.3e}".format(df.iloc[i, j]) 
                     item = QTableWidgetItem(nice_string)
                 self.tableWidget.setItem(i, j, item)
+
+    def horizontalHeaderClick(self, col):
+        """Handle a click on a horizontal header item"""
+        item = self.tableWidget.horizontalHeaderItem(col)
+        if item is not None:
+            print(f"Header {col} clicked, content: {item.text()}")
+        text = item.text()
+        pi_id = self.comboBox_pi.currentText()
+        self.run.plot_prob(text, pi_id)
     
+    def handleVerticalHeaderClick(self, row):
+        """Handle a click on a vertical header cell"""
+        item = self.tableWidget.verticalHeaderItem(row)
+        if item is not None:
+            print(f"Header {row} clicked, content: {item.text()}")

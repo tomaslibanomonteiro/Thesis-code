@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QApplication
 
 ALL_TESTS = [test1, test2, test3, test_de]
 
-TESTS_TO_RUN = [test_de]
+TESTS_TO_RUN = [test_de, test1]
 
 # choose the type of tests to run from the list below
 # ['soo' / 'moo', 'long' / 'short', 'algo' / 'prob' / 'pi' / 'term' / 'n_seeds']

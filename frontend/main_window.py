@@ -40,7 +40,8 @@ class MyMainWindow(QMainWindow):
         self.options = options
 
         self.initialize()        
-                    
+        self.SetDefaultRunOptions()
+
     def initialize(self):
         """Initialize the main window regarding the default values in the comboboxes and the edit windows."""
         
@@ -54,8 +55,6 @@ class MyMainWindow(QMainWindow):
                             
         self.setComboBoxes()
             
-        self.SetDefaultRunOptions()
-
     def setComboBoxes(self):
         
         # set comboboxes from main window
