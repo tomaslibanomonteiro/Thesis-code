@@ -34,7 +34,7 @@ class Test():
 options_test_de = {
     'moo': False,
     'n_seeds': 2,
-    'term': ['n_gen_default'],
+    'term': ['n_evals_default'],
     'pi': ['best_default'],
     'algo': ['de_default'],
     'prob': ['ackley_default']
@@ -45,7 +45,7 @@ test_de = Test('de', ['soo', 'short'], options_test_de)
 options_test1 = {
     'moo': True,
     'n_seeds': 2,
-    'term': ['n_gen_default'],
+    'term': ['n_evals_default'],
     'pi': ['gd_default', 'gd+_default', 'igd+_default'],
     'algo': ['nsga2_default', 'nsga3_default'],
     'prob': ['bnh_default','ctp1_default']
@@ -56,7 +56,7 @@ test1 = Test('moo_mixed', ['moo', 'short'], options_test1)
 options_test2 = {
     'moo': True,
     'n_seeds': 2,
-    'term': ['n_gen_default'],
+    'term': ['n_evals_default'],
     'pi': ['gd_default', 'gd+_default'],
     'algo': ['nsga2_default'],
     'prob': ['bnh_default','ctp1_default', 'ctp2_default', 'ctp3_default']
@@ -67,7 +67,7 @@ test2 = Test('moo_prob', ['moo', 'short', 'prob'], options_test2)
 options_test3 = {
     'moo': False,
     'n_seeds': 2,
-    'term': ['n_gen_default'],
+    'term': ['n_evals_default'],
     'pi': ['best_default'],
     'algo': ['ga_default', 'pso_default', 'de_default'],
     'prob': ['ackley_default','g1_default','griewank_default','rastrigin_default','rosenbrock_default']

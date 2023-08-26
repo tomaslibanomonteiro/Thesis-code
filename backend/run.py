@@ -121,23 +121,3 @@ class Run():
     def save_data(self, filename: str):
         self.data.to_csv(filename, index=False)
         
-    def plot_prob(self, prob_id: str, pi_id: str):
-        df = self.data[self.data['problem_id'] == prob_id]
-
-        # get df with columns: algorithm_id, seed, n_eval, n_gen, pi_id
-        df = df[['algorithm_id', 'seed', 'n_eval', 'n_gen', pi_id]]
-
-        # average across seeds
-        df = df.groupby(['algorithm_id', 'n_eval', 'n_gen']).mean()
-
-        # plot by algorithm, with n_eval on the x axis and pi_id on the y axis using matplotlib
-        for var in ['n_gen', 'n_eval']:
-            plt.figure()
-            for algo_id in df.index.levels[0]:
-                df_algo = df.loc[algo_id]
-                plt.plot(df_algo.index.get_level_values(var), df_algo[pi_id], label=algo_id)
-
-            plt.legend()
-            plt.xlabel(var)
-            plt.ylabel(pi_id)
-            plt.show()

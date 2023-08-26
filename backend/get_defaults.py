@@ -40,8 +40,8 @@ class Defaults():
             self.algo['ctaea_default']['selection'] = 'restricted_mating_ctaea_default'
             self.algo['rnsga3_default']['selection'] = 'tournament_by_cv_then_random_default'
         
-        self.term['n_evals_default']['n_max_evals'] = '1000'  
-        self.term['n_gen_default']['n_max_gen'] = '20' 
+        self.term['n_evals_default']['n_max_evals'] = '2000'  
+        self.term['n_gen_default']['n_max_gen'] = '40' 
         self.term['fmin_default']['fmin'] = '1' 
         self.term['time_default']['max_time'] = '10'  
         
@@ -61,7 +61,6 @@ class Defaults():
             self.pi['gd+_default']['pf'] = 'get from problem'
             self.pi['hv_default']['pf'] = 'get from problem'
             self.pi['hv_default']['ref_point'] = NO_DEFAULT
-        
         
     def get_table_dict(self, options_list):
         return {name + '_default' : self.get_class_dict(name, obj) for name, obj in options_list}

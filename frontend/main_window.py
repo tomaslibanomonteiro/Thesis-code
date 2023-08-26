@@ -7,8 +7,8 @@ from backend.get import (get_algorithm, get_performance_indicator, get_problem,
 from backend.get_defaults import Defaults
 from backend.run import Run, SingleRunArgs
 from frontend.my_widgets import MyComboBox
-from frontend.other_windows import (AlgoWindow, ArgsAreSet, RunWindow,
-                                    setEditWindow)
+from frontend.edit_windows import (AlgoWindow, ArgsAreSet, setEditWindow)
+from frontend.run_window import RunWindow
 from utils.defines import DESIGNER_MAIN, RUN_OPTIONS_KEYS
 
 class MyMainWindow(QMainWindow):
