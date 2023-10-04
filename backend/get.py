@@ -289,7 +289,7 @@ def get_termination_options(objectives = 'all'):
     from pymoo.termination.max_time import TimeBasedTermination
         
     TERMINATION_SINGLE = [
-        ("n_evals", MaximumFunctionCallTermination),
+        ("n_eval", MaximumFunctionCallTermination),
         ("n_gen", MaximumGenerationTermination),
         ("fmin", MinimumFunctionValueTermination),
         ("time", TimeBasedTermination),
@@ -297,7 +297,7 @@ def get_termination_options(objectives = 'all'):
         ]
 
     TERMINATION_MULTI = [
-        ("n_evals", MaximumFunctionCallTermination),
+        ("n_eval", MaximumFunctionCallTermination),
         ("n_gen", MaximumGenerationTermination),
         ("fmin", MinimumFunctionValueTermination),
         ("time", TimeBasedTermination),

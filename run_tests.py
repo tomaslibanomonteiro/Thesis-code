@@ -2,18 +2,12 @@ import os
 import filecmp
 
 # import all tests and declare them in ALL_TESTS
-from tests.tests_declaration import test1, test2, test3, test_de
 from utils.defines import RESULTS_FOLDER, EXPECTED_RESULTS_FOLDER
 from PyQt5.QtWidgets import QApplication
 
-ALL_TESTS = [test1, test2, test3, test_de]
+from tests.tests_declaration import soo_algos, soo_probs, soo_mixed, moo_algos, moo_probs, moo_mixed
 
-TESTS_TO_RUN = [test_de, test1]
-
-# choose the type of tests to run from the list below
-# ['soo' / 'moo', 'long' / 'short', 'algo' / 'prob' / 'pi' / 'term' / 'n_seeds']
-RUN_TYPES = ['soo', 'moo', 'short', 'long', 'algo', 'prob', 'pi', 'term', 'n_seeds']
-
+TESTS_TO_RUN = [soo_algos, soo_probs, soo_mixed, moo_algos, moo_probs, moo_mixed]
 
 def main():
 
@@ -22,19 +16,17 @@ def main():
         import shutil
         shutil.rmtree(RESULTS_FOLDER)    
     os.mkdir(RESULTS_FOLDER)
-    
-    tests = [test for test in TESTS_TO_RUN if test.isOfType(RUN_TYPES)]    
-    
+        
     # create a QApplication to instatiate the QWidgets
     app = QApplication([]) 
     
     # run the tests
-    for test in tests: 
+    for test in TESTS_TO_RUN: 
         print('Running test ' + test.test_name + '...')
         test.runTest()
 
     # wait for all threads to finish
-    for my_thread in [test.my_thread for test in tests]:
+    for my_thread in [test.my_thread for test in TESTS_TO_RUN]:
         print('Waiting for thread ' + str(my_thread) + ' to finish...')
         my_thread.join() 
     

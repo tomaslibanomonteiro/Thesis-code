@@ -9,7 +9,7 @@ from backend.run import Run, SingleRunArgs
 from frontend.my_widgets import MyComboBox
 from frontend.edit_windows import (AlgoWindow, ArgsAreSet, setEditWindow)
 from frontend.run_window import RunWindow
-from utils.defines import DESIGNER_MAIN, RUN_OPTIONS_KEYS
+from utils.defines import DESIGNER_MAIN, RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS
 
 class MyMainWindow(QMainWindow):
     def __init__(self, moo = True, options = {}, defaults_soo = Defaults('soo'), defaults_moo = Defaults('moo')) -> None:
@@ -57,31 +57,36 @@ class MyMainWindow(QMainWindow):
             
     def setComboBoxes(self):
         
-        # set comboboxes from main window
-        tables_list = [self.tableWidget_run_pi, self.tableWidget_run_algo, self.tableWidget_run_prob, self.tableWidget_run_term]
+       
+        # options for each combobox
         pi_options = [key for key in self.defaults.pi.keys() if ArgsAreSet(self.defaults.pi[key])]
         algo_options = [key for key in self.defaults.algo.keys() if ArgsAreSet(self.defaults.algo[key])]
-        prob_options = [key for key in self.defaults.prob.keys() if ArgsAreSet(self.defaults.prob[key])]
+        prob_options = [key for key in self.defaults.prob.keys() if ArgsAreSet(self.defaults.prob[key])] 
         term_options = [key for key in self.defaults.term.keys() if ArgsAreSet(self.defaults.term[key])]
-        self.window_combobox_items = [pi_options, algo_options, prob_options, term_options]
         
-        for table, items in zip(tables_list, self.window_combobox_items): 
+        self.window_combobox_items = [prob_options, algo_options, pi_options, term_options]
+        
+        # row numbers are the max between the default row numbers and the number of options given to start the app
+        start_rows = [len(self.options['prob']), len(self.options['algo']), len(self.options['pi']), len(self.options['term'])]
+        row_numbers = [max(x, y) for x, y in zip(DEFAULT_ROW_NUMBERS, start_rows)]
+
+        # columns with comboboxes
+        tables_list = [self.tableWidget_run_prob, self.tableWidget_run_algo, self.tableWidget_run_pi, self.tableWidget_run_term]
+        
+        for table, n_rows, items in zip(tables_list, row_numbers, self.window_combobox_items): 
+            
+            # add rows to the table
+            table.setRowCount(n_rows)
+            
             # strech the table to fit the window
             table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
             table.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
             for row in range(table.rowCount()):
                 initial_text = table.item(row, 0).text() if table.item(row, 0) else ""
-                enabled = True if row == 0 else False
-                combobox = MyComboBox(items, initial_text=initial_text, enabled=enabled)
+                combobox = MyComboBox(items, initial_text=initial_text)
                 table.setCellWidget(row, 0, combobox)
-                if row < table.rowCount() - 1:
-                    combobox.currentIndexChanged.connect(lambda i, table=table, row=row+1: self.enableTableComboBox(table, row, 0))
     
-    def enableTableComboBox(self, table, row, col, enabled=True):
-        if row < table.rowCount() and col < table.columnCount():
-            table.cellWidget(row, col).setEnabled(enabled)
-
     def setTableWidgetItems(self, tableWidget, items):
         for i, item in enumerate(items):
             index = tableWidget.cellWidget(i, 0).findText(item)

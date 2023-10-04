@@ -3,16 +3,30 @@ from typing import Tuple
 
 from qtpy import QtCore, QtGui, QtWidgets
 
-
 class MyComboBox(QtWidgets.QComboBox):
-    def __init__(self, items = [], initial_index=-1, initial_text="", enabled = True):
+    def __init__(self, items=[], initial_index=-1, initial_text="", enabled=True):
         super().__init__()
-        
+
         for item in items:
             self.addItem(item)
         self.setCurrentIndex(initial_index)
-        self.setEnabled(enabled) # TODO: this is not working
+        self.setEnabled(enabled)
         self.setEditText(initial_text)
+
+        # create a custom context menu
+        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.showContextMenu)
+        self.context_menu = QtWidgets.QMenu(self)
+        self.clear_action = QtWidgets.QAction("Clear Selection", self)
+        self.clear_action.triggered.connect(self.clearSelection)
+        self.context_menu.addAction(self.clear_action)
+
+    def showContextMenu(self, pos):
+        self.context_menu.exec_(self.mapToGlobal(pos))
+
+    def clearSelection(self):
+        self.setCurrentIndex(-1)
+        self.setEditText("")
         
 
 """

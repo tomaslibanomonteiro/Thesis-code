@@ -25,3 +25,6 @@ RUN_OPTIONS_KEYS = ['moo', 'n_seeds', 'term', 'pi', 'algo', 'prob']
 
 # import pydevd and settrace() to activate debug in QThreads 
 DEBUG_MODE = True
+
+# default number of rows in the run window tables
+DEFAULT_ROW_NUMBERS = [7, 7, 7, 1]

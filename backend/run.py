@@ -14,14 +14,14 @@ class MyCallback(Callback):
     def __init__(self) -> None:
         super().__init__()
         self.best = []
-        self.n_evals = []
+        self.n_eval = []
         self.n_gen = []
 
     def notify(self, algo: Algorithm):
         if algo.opt is not None and algo.pop is not None:
             feas = np.where(algo.opt.get("feasible"))[0]
             self.best.append(algo.pop.get("F")[feas])
-            self.n_evals.append(algo.evaluator.n_eval)
+            self.n_eval.append(algo.evaluator.n_eval)
             self.n_gen.append(algo.n_gen)
 
 class SingleRunArgs():
@@ -67,12 +67,12 @@ class Run():
     def update_data(self, run_args: SingleRunArgs, res: Result, callback: MyCallback):
         data = self.data
 
-        run_length = len(callback.n_evals)
+        run_length = len(callback.n_eval)
 
         single_run = {'seed': [res.algorithm.seed] * run_length,
                       'problem_id': [run_args.prob_id] * run_length,
                       'algorithm_id': [run_args.algo_id] * run_length,
-                      'n_eval': callback.n_evals,
+                      'n_eval': callback.n_eval,
                       'n_gen': callback.n_gen}
         
         # get the performance indicators values

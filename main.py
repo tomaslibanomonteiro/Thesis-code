@@ -4,8 +4,8 @@ from frontend.main_window import MyMainWindow
 CLICK_RUN = True
 
 def main():
-    from tests.tests_declaration import options_test1, options_test2, options_test3, options_test_de 
-    options = options_test3
+    from tests.tests_declaration import options_moo_mixed, options_soo_mixed
+    options = options_moo_mixed
     
     # start the QApplication
     app = QApplication([])

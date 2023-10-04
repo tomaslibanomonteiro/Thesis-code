@@ -40,6 +40,10 @@ class RunWindow(QDialog):
         self.comboBox_pi.currentIndexChanged.connect(self.changeTable)
         self.comboBox_pi.setCurrentIndex(0)
         
+        # things to set only once
+        self.tableWidget.horizontalHeader().sectionDoubleClicked.connect(lambda col: self.horizontalHeaderClick(col))
+        self.tableWidget.verticalHeader().sectionDoubleClicked.connect(lambda row: self.VerticalHeaderClick(row))
+        
         # update table widget and show the window
         self.changeTable()
         self.show()
@@ -57,13 +61,11 @@ class RunWindow(QDialog):
         self.tableWidget.setRowCount(len(df.index))
         
         # set the horizontal headers
-        self.tableWidget.horizontalHeader().sectionDoubleClicked.connect(lambda col: self.horizontalHeaderClick(col))
         for j in range(len(df.columns)):
             header_item = QTableWidgetItem(df.columns[j])
             self.tableWidget.setHorizontalHeaderItem(j, header_item)
 
         # set the rest of the table    
-        self.tableWidget.verticalHeader().sectionDoubleClicked.connect(lambda row: self.VerticalHeaderClick(row))
         for i in range(len(df.index)):
             self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(df.index[i]))
             # get the float into str representation, last column is voting (int)

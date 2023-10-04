@@ -40,7 +40,7 @@ class Defaults():
             self.algo['ctaea_default']['selection'] = 'restricted_mating_ctaea_default'
             self.algo['rnsga3_default']['selection'] = 'tournament_by_cv_then_random_default'
         
-        self.term['n_evals_default']['n_max_evals'] = '2000'  
+        self.term['n_eval_default']['n_max_evals'] = '2000'  
         self.term['n_gen_default']['n_max_gen'] = '40' 
         self.term['fmin_default']['fmin'] = '1' 
         self.term['time_default']['max_time'] = '10'  
