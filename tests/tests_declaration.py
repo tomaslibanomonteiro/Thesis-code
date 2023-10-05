@@ -64,7 +64,7 @@ options_soo_mixed = {
     'prob': ['ackley_default','g1_default','griewank_default','rastrigin_default','rosenbrock_default']
 }        
 
-soo_mixed = Test('soo_mixed', ['soo', 'short'], options_soo_mixed)
+soo_mixed = Test('soo_mixed', options_soo_mixed)
     
 ############################################################################################################
 ######################################### MOO TESTS ########################################################
@@ -74,8 +74,8 @@ options_moo_algos = {
     'moo': True,
     'n_seeds': 1,
     'term': ['n_eval_default'],
-    'pi': ['gd+_default'],
-    'algo': ['nsga2_default', 'rnsga2_default', 'nsga3_default', 'unsga3_default', 'rnsga3_default', 'moead_default', 'ctaea_default']
+    'algo': ['nsga2_default', 'rnsga2_default', 'nsga3_default', 'unsga3_default', 'rnsga3_default', 'moead_default', 'ctaea_default'],
+    'pi': ['gd+_default']
 }
 
 moo_algos = Test('moo_algos', options_moo_algos)

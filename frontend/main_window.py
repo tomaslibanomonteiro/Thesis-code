@@ -35,10 +35,16 @@ class MyMainWindow(QMainWindow):
         self.run_windows = []
         
         # set run options
-        if options != {} and list(options.keys()) != RUN_OPTIONS_KEYS:
-            raise Exception('Invalid options keys, expected: ' + str(RUN_OPTIONS_KEYS) + ', got: ' + str(options.keys()))
+        if not set(options.keys()).issubset(set(RUN_OPTIONS_KEYS)):
+            raise ValueError(f"Invalid run options: expected keys {RUN_OPTIONS_KEYS}, got keys {options.keys()}")
+        elif len(options.keys()) != len(set(options.keys())):
+            raise ValueError("Invalid run options: duplicate keys found")
+        
+        missing_keys = set(RUN_OPTIONS_KEYS) - set(options.keys())
+        for key in missing_keys:
+            options[key] = []
         self.options = options
-
+       
         self.initialize()        
         self.SetDefaultRunOptions()
 
@@ -84,7 +90,7 @@ class MyMainWindow(QMainWindow):
 
             for row in range(table.rowCount()):
                 initial_text = table.item(row, 0).text() if table.item(row, 0) else ""
-                combobox = MyComboBox(items, initial_text=initial_text)
+                combobox = MyComboBox(items, initial_text=initial_text, table=table)
                 table.setCellWidget(row, 0, combobox)
     
     def setTableWidgetItems(self, tableWidget, items):
@@ -127,7 +133,7 @@ class MyMainWindow(QMainWindow):
         # get problem object
         for row in range(self.tableWidget_run_prob.rowCount()):
             if self.tableWidget_run_prob.cellWidget(row, 0).currentText() == "":
-                break
+                continue
             prob_id = self.tableWidget_run_prob.cellWidget(row, 0).currentText()
             prob_object = self.prob_window.getObjectFromID(prob_id)
             pf = prob_object.pareto_front() if prob_object.pareto_front else None
@@ -137,14 +143,14 @@ class MyMainWindow(QMainWindow):
             pi_ids, pi_objects = [], []
             for row in range(self.tableWidget_run_pi.rowCount()):
                 if self.tableWidget_run_pi.cellWidget(row, 0).currentText() == "":
-                    break
+                    continue
                 pi_ids.append(self.tableWidget_run_pi.cellWidget(row, 0).currentText())
                 pi_objects.append(self.pi_window.getObjectFromID(pi_ids[-1], pf, n_obj))
                 
             # get algo objects (ref_dirs depends on n_obj) 
             for row in range(self.tableWidget_run_algo.rowCount()):
                 if self.tableWidget_run_algo.cellWidget(row, 0).currentText() == "":
-                    break
+                    continue
                 algo_id = self.tableWidget_run_algo.cellWidget(row, 0).currentText()
                 algo_object = self.algo_window.getObjectFromID(algo_id, pf, n_obj)
                 
