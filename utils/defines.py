@@ -7,6 +7,7 @@ DESIGNER_RUN_WINDOW = 'frontend/designer_templates/run_window.ui'
 # tests folders
 RESULTS_FOLDER = 'tests/results'
 EXPECTED_RESULTS_FOLDER = 'tests/expected_results'      
+RESULTS_FILE = 'tests/results/results.txt'
 
 # to be put in ui table
 NO_DEFAULT = "No def"
@@ -27,4 +28,4 @@ RUN_OPTIONS_KEYS = ['moo', 'n_seeds', 'term', 'pi', 'algo', 'prob']
 DEBUG_MODE = True
 
 # default number of rows in the run window tables
-DEFAULT_ROW_NUMBERS = [7, 7, 7, 1]
+DEFAULT_ROW_NUMBERS = [7, 7, 4, 1]

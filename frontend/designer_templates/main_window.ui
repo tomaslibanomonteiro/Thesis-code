@@ -84,33 +84,17 @@
    <widget class="QWidget" name="gridLayoutWidget_2">
     <property name="geometry">
      <rect>
-      <x>70</x>
-      <y>120</y>
+      <x>100</x>
+      <y>130</y>
       <width>801</width>
       <height>391</height>
      </rect>
     </property>
-    <layout class="QGridLayout" name="gridLayout_2">
-     <property name="sizeConstraint">
-      <enum>QLayout::SetDefaultConstraint</enum>
-     </property>
-     <item row="0" column="0">
-      <widget class="QLabel" name="label_3">
-       <property name="font">
-        <font>
-         <pointsize>10</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="1" column="1">
+      <widget class="QPushButton" name="pushButton_edit_algo">
        <property name="text">
-        <string>Problem</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-       <property name="wordWrap">
-        <bool>true</bool>
+        <string>Edit Algorithms</string>
        </property>
       </widget>
      </item>
@@ -219,15 +203,63 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
-      <widget class="QPushButton" name="pushButton_edit_algo">
-       <property name="text">
-        <string>Edit Algorithms</string>
+     <item row="2" column="3" alignment="Qt::AlignVCenter">
+      <widget class="QTableWidget" name="tableWidget_run_term">
+       <property name="layoutDirection">
+        <enum>Qt::LeftToRight</enum>
        </property>
+       <property name="autoFillBackground">
+        <bool>false</bool>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::NoFrame</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Plain</enum>
+       </property>
+       <property name="lineWidth">
+        <number>0</number>
+       </property>
+       <property name="midLineWidth">
+        <number>0</number>
+       </property>
+       <property name="verticalScrollBarPolicy">
+        <enum>Qt::ScrollBarAsNeeded</enum>
+       </property>
+       <property name="horizontalScrollBarPolicy">
+        <enum>Qt::ScrollBarAsNeeded</enum>
+       </property>
+       <property name="sizeAdjustPolicy">
+        <enum>QAbstractScrollArea::AdjustToContents</enum>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+       <attribute name="horizontalHeaderVisible">
+        <bool>false</bool>
+       </attribute>
+       <attribute name="verticalHeaderVisible">
+        <bool>true</bool>
+       </attribute>
+       <row>
+        <property name="text">
+         <string>0</string>
+        </property>
+       </row>
+       <column>
+        <property name="text">
+         <string>0</string>
+        </property>
+       </column>
+       <item row="0" column="0">
+        <property name="text">
+         <string>Choose Term</string>
+        </property>
+       </item>
       </widget>
      </item>
-     <item row="0" column="4">
-      <widget class="QLabel" name="label">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_3">
        <property name="font">
         <font>
          <pointsize>10</pointsize>
@@ -236,13 +268,40 @@
         </font>
        </property>
        <property name="text">
-        <string>Number of seeds</string>
+        <string>Problem</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
        </property>
        <property name="wordWrap">
         <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="3">
+      <widget class="QLabel" name="label_2">
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>Termination</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QPushButton" name="pushButton_edit_prob">
+       <property name="text">
+        <string>Edit Problems</string>
        </property>
       </widget>
      </item>
@@ -331,16 +390,6 @@
        </item>
       </widget>
      </item>
-     <item row="2" column="4">
-      <widget class="QSpinBox" name="SpinBox_n_seeds">
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-       <property name="minimum">
-        <number>1</number>
-       </property>
-      </widget>
-     </item>
      <item row="0" column="2">
       <widget class="QLabel" name="label_5">
        <property name="font">
@@ -361,72 +410,23 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="3">
-      <widget class="QPushButton" name="pushButton_edit_term">
+     <item row="0" column="4">
+      <widget class="QLabel" name="label">
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
        <property name="text">
-        <string>Edit Terminations</string>
+        <string>Number of seeds</string>
        </property>
-      </widget>
-     </item>
-     <item row="2" column="3">
-      <widget class="QTableWidget" name="tableWidget_run_term">
-       <property name="layoutDirection">
-        <enum>Qt::LeftToRight</enum>
-       </property>
-       <property name="autoFillBackground">
-        <bool>false</bool>
-       </property>
-       <property name="frameShape">
-        <enum>QFrame::NoFrame</enum>
-       </property>
-       <property name="frameShadow">
-        <enum>QFrame::Plain</enum>
-       </property>
-       <property name="lineWidth">
-        <number>0</number>
-       </property>
-       <property name="midLineWidth">
-        <number>0</number>
-       </property>
-       <property name="verticalScrollBarPolicy">
-        <enum>Qt::ScrollBarAsNeeded</enum>
-       </property>
-       <property name="horizontalScrollBarPolicy">
-        <enum>Qt::ScrollBarAsNeeded</enum>
-       </property>
-       <property name="sizeAdjustPolicy">
-        <enum>QAbstractScrollArea::AdjustToContents</enum>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
        <property name="wordWrap">
         <bool>true</bool>
-       </property>
-       <attribute name="horizontalHeaderVisible">
-        <bool>false</bool>
-       </attribute>
-       <attribute name="verticalHeaderVisible">
-        <bool>true</bool>
-       </attribute>
-       <row>
-        <property name="text">
-         <string>0</string>
-        </property>
-       </row>
-       <column>
-        <property name="text">
-         <string>0</string>
-        </property>
-       </column>
-       <item row="0" column="0">
-        <property name="text">
-         <string>Choose Term</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QPushButton" name="pushButton_edit_prob">
-       <property name="text">
-        <string>Edit Problems</string>
        </property>
       </widget>
      </item>
@@ -437,23 +437,10 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="3">
-      <widget class="QLabel" name="label_2">
-       <property name="font">
-        <font>
-         <pointsize>10</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
+     <item row="1" column="3">
+      <widget class="QPushButton" name="pushButton_edit_term">
        <property name="text">
-        <string>Termination</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-       <property name="wordWrap">
-        <bool>true</bool>
+        <string>Edit Terminations</string>
        </property>
       </widget>
      </item>
@@ -542,6 +529,16 @@
        </item>
       </widget>
      </item>
+     <item row="2" column="4">
+      <widget class="QSpinBox" name="SpinBox_n_seeds">
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
+      </widget>
+     </item>
     </layout>
    </widget>
   </widget>
@@ -551,7 +548,7 @@
      <x>0</x>
      <y>0</y>
      <width>1030</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

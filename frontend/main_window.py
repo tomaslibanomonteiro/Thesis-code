@@ -6,7 +6,7 @@ from backend.get import (get_algorithm, get_performance_indicator, get_problem,
                          get_termination)
 from backend.get_defaults import Defaults
 from backend.run import Run, SingleRunArgs
-from frontend.my_widgets import MyComboBox
+from frontend.my_widgets import MyComboBox, MyMessageBox
 from frontend.edit_windows import (AlgoWindow, ArgsAreSet, setEditWindow)
 from frontend.run_window import RunWindow
 from utils.defines import DESIGNER_MAIN, RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS
@@ -37,8 +37,6 @@ class MyMainWindow(QMainWindow):
         # set run options
         if not set(options.keys()).issubset(set(RUN_OPTIONS_KEYS)):
             raise ValueError(f"Invalid run options: expected keys {RUN_OPTIONS_KEYS}, got keys {options.keys()}")
-        elif len(options.keys()) != len(set(options.keys())):
-            raise ValueError("Invalid run options: duplicate keys found")
         
         missing_keys = set(RUN_OPTIONS_KEYS) - set(options.keys())
         for key in missing_keys:
@@ -81,16 +79,18 @@ class MyMainWindow(QMainWindow):
         
         for table, n_rows, items in zip(tables_list, row_numbers, self.window_combobox_items): 
             
+            is_termination = True if table == self.tableWidget_run_term else False
+            
             # add rows to the table
             table.setRowCount(n_rows)
             
             # strech the table to fit the window
-            table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+            table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch) 
             table.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
             for row in range(table.rowCount()):
                 initial_text = table.item(row, 0).text() if table.item(row, 0) else ""
-                combobox = MyComboBox(items, initial_text=initial_text, table=table)
+                combobox = MyComboBox(items, initial_text=initial_text, table=table, add_combobox_option=not is_termination)
                 table.setCellWidget(row, 0, combobox)
     
     def setTableWidgetItems(self, tableWidget, items):
@@ -126,37 +126,52 @@ class MyMainWindow(QMainWindow):
         
         # get the termination object
         term_id = self.tableWidget_run_term.cellWidget(0, 0).currentText()
+        if term_id == "":
+            warning = MyMessageBox("Please select a Termination Criteria.")
+            return None
         term_object = self.term_window.getObjectFromID(term_id)
         
-        # get run args
+        # get run args, a list with the arguments for each individual run
         run_args =  []
+        algo_id = None
         # get problem object
         for row in range(self.tableWidget_run_prob.rowCount()):
-            if self.tableWidget_run_prob.cellWidget(row, 0).currentText() == "":
-                continue
             prob_id = self.tableWidget_run_prob.cellWidget(row, 0).currentText()
-            prob_object = self.prob_window.getObjectFromID(prob_id)
-            pf = prob_object.pareto_front() if prob_object.pareto_front else None
-            n_obj = prob_object.n_obj
-            
-            # get pi objects (pi depends on prob pf)
-            pi_ids, pi_objects = [], []
-            for row in range(self.tableWidget_run_pi.rowCount()):
-                if self.tableWidget_run_pi.cellWidget(row, 0).currentText() == "":
-                    continue
-                pi_ids.append(self.tableWidget_run_pi.cellWidget(row, 0).currentText())
-                pi_objects.append(self.pi_window.getObjectFromID(pi_ids[-1], pf, n_obj))
+            if prob_id != "":
+                prob_object = self.prob_window.getObjectFromID(prob_id)
+                pf = prob_object.pareto_front() if prob_object.pareto_front else None
+                n_obj = prob_object.n_obj
                 
-            # get algo objects (ref_dirs depends on n_obj) 
-            for row in range(self.tableWidget_run_algo.rowCount()):
-                if self.tableWidget_run_algo.cellWidget(row, 0).currentText() == "":
-                    continue
-                algo_id = self.tableWidget_run_algo.cellWidget(row, 0).currentText()
-                algo_object = self.algo_window.getObjectFromID(algo_id, pf, n_obj)
-                
-                # append the arguments for this run
-                run_args.append(SingleRunArgs(prob_id, prob_object, algo_id, algo_object, pi_ids, pi_objects))
+                # get algo objects (ref_dirs depends on n_obj) 
+                for row in range(self.tableWidget_run_algo.rowCount()):
+                    algo_id = self.tableWidget_run_algo.cellWidget(row, 0).currentText()
+                    if algo_id != "":
+                        algo_id = self.tableWidget_run_algo.cellWidget(row, 0).currentText()
+                        algo_object = self.algo_window.getObjectFromID(algo_id, pf, n_obj)
+                        
+                        # get pi objects (pi depends on prob pf)
+                        pi_ids, pi_objects = [], []
+                        for row in range(self.tableWidget_run_pi.rowCount()):
+                            pi_id = self.tableWidget_run_pi.cellWidget(row, 0).currentText()
+                            if pi_id != "":
+                                pi_ids.append(pi_id)
+                                pi_objects.append(self.pi_window.getObjectFromID(pi_id, pf, n_obj))
                     
+                        # check if any of the arguments is not set
+                        if pi_ids == []:
+                            warning = MyMessageBox("Please select at least one Performance Indicator.")
+                            return None
+                    
+                        # append the arguments for this run
+                        run_args.append(SingleRunArgs(prob_id, prob_object, algo_id, algo_object, pi_ids, pi_objects))
+        
+        if algo_id is None:
+            warning = MyMessageBox("Please select at least one Problem.")   
+            return None      
+        elif run_args == []:
+            warning = MyMessageBox("Please select at least one Algorithm.")
+            return None
+        
         # get the run objects and create the run window
         return Run(run_args, term_id, term_object, n_seeds, moo)
         
@@ -165,6 +180,8 @@ class MyMainWindow(QMainWindow):
         so that in a test scenario the threads from this window can be trailed 
         so it waits for them to finish before checking results."""
         run = self.getRunObject()
+        if run is None:
+            return
         run_window = RunWindow(run,'Run ' + str(len(self.run_windows)+1))
         self.run_windows.append(run_window)
         self.run_windows[-1].startRun()

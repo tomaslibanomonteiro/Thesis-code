@@ -1,55 +1,44 @@
-# import pandas as pd
-# from pymoo.algorithms.soo.nonconvex.ga import GA
-# from pymoo.factory import get_problem
-# from pymoo.optimize import minimize
+import sys
+from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QPushButton, QWidget, QSizePolicy
 
-# # define the problem
-# problem = get_problem("ackley", n_var=10)
+class MyWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
 
-# # define the GA algorithm
-# algorithm = GA(pop_size=100, eliminate_duplicates=True)
+        self.initUI()
 
-# # create a DataFrame to store the best solution of each generation
-# best_solutions = pd.DataFrame(columns=["gen", "best_obj", "best_var"])
+    def initUI(self):
+        # Create a central widget and set it as the central widget of the main window
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
 
-# # define a callback function to save the best solution of each generation
-# def save_best_solution(algorithm):
-#     best_idx = algorithm.pop.get("F").argmin()
-#     best_obj = algorithm.pop.get("F")[best_idx]
-#     best_var = algorithm.pop.get("X")[best_idx]
-#     best_solutions.loc[len(algorithm.callback.data["gen"]) - 1] = [len(algorithm.callback.data["gen"]) - 1, best_obj, best_var]
+        # Create a vertical layout
+        layout = QVBoxLayout(central_widget)
 
-# # run the optimization
-# res = minimize(problem,
-#                algorithm,
-#                ('n_gen', 50),
-#                seed=1,
-#                callback=save_best_solution)
+        # Create widgets to add to the layout
+        button1 = QPushButton("Button 1")
+        button2 = QPushButton("Button 2")
 
-# # print the best solution found
-# print("Best solution: ", res.X)
-# print("Best objective value: ", res.F)
+        # Set the size policy for the widgets to expand horizontally and vertically
+        button1.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        button2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-# # print the DataFrame of best solutions
-# print(best_solutions)
+        # Add widgets to the layout
+        layout.addWidget(button1)
+        layout.addWidget(button2)
 
-import matplotlib.pyplot as plt
+        # Set the layout for the central widget
+        central_widget.setLayout(layout)
 
-# create some sample data
-x = [1, 2, 3, 4, 5]
-y1 = [10, 20, 30, 40, 50]
-y2 = [10000, 20000, 30000, 40000, 50000]
+        # Set the main window properties
+        self.setWindowTitle("Automatic Stretch Layout Example")
+        self.setGeometry(100, 100, 400, 300)
 
-# create the first plot
-fig, ax1 = plt.subplots()
-ax1.plot(x, y1, 'b-')
-ax1.set_xlabel('X-axis (km)')
-ax1.set_ylabel('Y-axis (km)', color='b')
+def main():
+    app = QApplication(sys.argv)
+    window = MyWindow()
+    window.show()
+    sys.exit(app.exec_())
 
-# create the second plot
-ax2 = ax1.twinx()
-ax2.plot(x, y2, 'r-')
-ax2.set_ylabel('Y-axis (m)', color='r')
-
-# show the plot
-plt.show()
+if __name__ == '__main__':
+    main()

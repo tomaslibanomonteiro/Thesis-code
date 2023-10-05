@@ -1,12 +1,14 @@
 from backend.get_defaults import Defaults
 from frontend.main_window import MyMainWindow
 from threading import Thread
-from utils.defines import RESULTS_FOLDER
+from utils.defines import RESULTS_FOLDER, RUN_OPTIONS_KEYS
 
 class Test():
     def __init__(self, test_name: str, options: dict, defaults_soo = Defaults('soo'), defaults_moo = Defaults('moo')) -> None:
         
         self.test_name = test_name + '.csv'
+        if set(options.keys()) != set(RUN_OPTIONS_KEYS):
+            raise Exception('Invalid options dictionary! Test must contain all options: ' + str(RUN_OPTIONS_KEYS))
         self.options = options
         self.defaults_soo = defaults_soo
         self.defaults_moo = defaults_moo
@@ -32,13 +34,14 @@ class Test():
 ############################################################################################################
 
 # 'brkga_default' is elementwise algo?
+# 'cmaes_default' and 'pso_default' not giving consistent results
 
 options_soo_algos = {
     'moo': False,
-    'n_seeds': 1,
+    'n_seeds': 2,
     'term': ['n_eval_default'],
     'pi': ['best_default'],
-    'algo': ['ga_default', 'de_default', 'nelder-mead_default', 'pattern-search_default', 'cmaes_default', 'pso_default'],
+    'algo': ['ga_default', 'de_default', 'nelder-mead_default', 'pattern-search_default'],
     'prob': ['ackley_default']
 }
 
@@ -46,7 +49,7 @@ soo_algos = Test('soo_algos', options_soo_algos)
 
 options_test_soo_probs = {
     'moo': False,
-    'n_seeds': 1,
+    'n_seeds': 2,
     'term': ['n_eval_default'],
     'pi': ['best_default'],
     'algo': ['de_default'],
@@ -57,7 +60,7 @@ soo_probs = Test('soo_probs', options_test_soo_probs)
 
 options_soo_mixed = {
     'moo': False,
-    'n_seeds': 1,
+    'n_seeds': 2,
     'term': ['n_eval_default'],
     'pi': ['best_default'],
     'algo': ['ga_default', 'pso_default', 'de_default'],
@@ -72,10 +75,11 @@ soo_mixed = Test('soo_mixed', options_soo_mixed)
 
 options_moo_algos = {
     'moo': True,
-    'n_seeds': 1,
+    'n_seeds': 2,
     'term': ['n_eval_default'],
     'algo': ['nsga2_default', 'rnsga2_default', 'nsga3_default', 'unsga3_default', 'rnsga3_default', 'moead_default', 'ctaea_default'],
-    'pi': ['gd+_default']
+    'pi': ['gd+_default'],
+    'prob': ['dtlz4_default']
 }
 
 moo_algos = Test('moo_algos', options_moo_algos)

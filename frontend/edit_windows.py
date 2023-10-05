@@ -168,11 +168,11 @@ class EditWindow(QDialog):
                 # try to convert text to int or float
                 try:
                     value = int(value)
-                    debug_print("Converted to int")
+                    debug_print("Arg ", arg, ", with value ", value, " converted to int, from window ", self.windowTitle()) 
                 except:
                     try:
                         value = float(value)
-                        debug_print("Converted to float")
+                        debug_print("Arg ", arg, ", with value ", value, " converted to int, from window ", self.windowTitle()) 
                     except:
                         pass
                 

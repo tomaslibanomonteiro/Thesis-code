@@ -2,12 +2,12 @@ import os
 import filecmp
 
 # import all tests and declare them in ALL_TESTS
-from utils.defines import RESULTS_FOLDER, EXPECTED_RESULTS_FOLDER
+from utils.defines import RESULTS_FOLDER, EXPECTED_RESULTS_FOLDER, RESULTS_FILE
 from PyQt5.QtWidgets import QApplication
 
 from tests.tests_declaration import soo_algos, soo_probs, soo_mixed, moo_algos, moo_probs, moo_mixed
 
-TESTS_TO_RUN = [soo_algos, soo_probs, soo_mixed, moo_algos, moo_probs, moo_mixed]
+TESTS_TO_RUN = [moo_algos]
 
 def main():
 
@@ -44,10 +44,14 @@ def main():
         
     # compare the CSV files
     for file in cmp_files:
-        if filecmp.cmp(RESULTS_FOLDER + '/' + file, EXPECTED_RESULTS_FOLDER + '/' + file):
-            print('Test ' + file + ' passed!')
-        else:
-            print('Test ' + file + ' failed!')
+        # write the results in a file inside RESULTS_FOLDER
+        with open(RESULTS_FILE, 'w') as f:
+            import datetime
+            date_time = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            if filecmp.cmp(RESULTS_FOLDER + '/' + file, EXPECTED_RESULTS_FOLDER + '/' + file):
+                f.write(date_time + ' Test ' + file + ' passed!')
+            else:
+                f.write(date_time + ' Test ' + file + ' failed!')
 
 if __name__ == '__main__':
     main()

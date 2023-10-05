@@ -3,14 +3,25 @@ from typing import Tuple
 
 from qtpy import QtCore, QtGui, QtWidgets
 
+class MyMessageBox(QtWidgets.QMessageBox):
+	def __init__(self, text, title="Warning", warning_icon=True, execute = True):
+		super().__init__()
+
+		self.setIcon(QtWidgets.QMessageBox.Warning) if warning_icon else None
+		self.setText(text)
+		self.setWindowTitle(title)
+		self.setStandardButtons(QtWidgets.QMessageBox.Ok)
+		self.exec_() if execute else None
+  
 class MyComboBox(QtWidgets.QComboBox):
-	def __init__(self, items=[], initial_index=-1, initial_text="", enabled=True, table=None):
+	def __init__(self, items=[], initial_index=-1, initial_text="", enabled=True, table=None, add_combobox_option=False):
 		super().__init__()
 
 		# table in which the combobox is located
 		self.table = table
 		self.items = items
-		
+		self.add_combobox_option = add_combobox_option
+  
 		for item in items:
 			self.addItem(item)
 		self.setCurrentIndex(initial_index)
@@ -25,35 +36,31 @@ class MyComboBox(QtWidgets.QComboBox):
 		self.clear_action.triggered.connect(self.clearSelection)
 		self.context_menu.addAction(self.clear_action)
 
-		# add an option to add another combobox to the table
-		self.add_combobox_action = QtWidgets.QAction("Add Combobox", self)
-		self.add_combobox_action.triggered.connect(self.addComboBoxToTable)
-		self.context_menu.addAction(self.add_combobox_action)
+		if add_combobox_option:
+			# add an option to add another combobox to the table
+			self.add_combobox_action = QtWidgets.QAction("Add Combobox", self)
+			self.add_combobox_action.triggered.connect(self.addComboBoxToTable)
+			self.context_menu.addAction(self.add_combobox_action)
 
-		# add an option to remove the combobox from the table
-		self.remove_combobox_action = QtWidgets.QAction("Remove Combobox", self)
-		self.remove_combobox_action.triggered.connect(self.removeComboBoxFromTable)
-		self.context_menu.addAction(self.remove_combobox_action)
+			# add an option to remove the combobox from the table
+			self.remove_combobox_action = QtWidgets.QAction("Remove Combobox", self)
+			self.remove_combobox_action.triggered.connect(self.removeComboBoxFromTable)
+			self.context_menu.addAction(self.remove_combobox_action)
 
 	def showContextMenu(self, pos):
 		self.context_menu.exec_(self.mapToGlobal(pos))
 
 	def addComboBoxToTable(self):
 		# create a new combobox and add it to the table
-		new_combobox = MyComboBox(items=self.items, table=self.table)
+		new_combobox = MyComboBox(items=self.items, table=self.table, add_combobox_option=self.add_combobox_action)
 		row_count = self.table.rowCount()
 		self.table.setRowCount(row_count + 1)
 		self.table.setCellWidget(row_count, 0, new_combobox)
 
 	def removeComboBoxFromTable(self):
-		# check if the combobox is the only one in the table
-		if self.table.rowCount() == 1:
-			# give a warning
-			msg = QtWidgets.QMessageBox()
-			msg.setIcon(QtWidgets.QMessageBox.Warning)
-			msg.setText("Cannot remove the only combobox in the table")
-			msg.setWindowTitle("Warning")
-			msg.exec_()
+		# check if the combobox is the only one in the table, give warning 
+		if self.table.rowCount() == 1: 
+			warning = MyMessageBox("Cannot remove the only combobox in the table.")			
 		else:
 			# remove the combobox from the table
 			index = self.table.indexAt(self.pos())
