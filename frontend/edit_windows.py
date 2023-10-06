@@ -1,6 +1,6 @@
 from numpy import inf
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QCheckBox, QDialog, QTableWidgetItem
+from PyQt5.QtWidgets import QCheckBox, QDialog, QTableWidgetItem, QTextEdit, QTableWidget
 from PyQt5.uic import loadUi
 
 from backend.get import (get_crossover, get_decomposition, get_mutation,
@@ -12,6 +12,8 @@ from frontend.my_widgets import (MyComboBox, ScientificDoubleSpinBox,
 from utils.debug import debug_print
 from utils.defines import (DESIGNER_ALGO_WINDOW, DESIGNER_EDIT_WINDOW)
 import pydevd
+
+from PyQt5.QtCore import Qt
 
 def ArgsAreSet(dic: dict) -> bool:
     # check if any of the values in the list is == NO_DEFAULT
@@ -26,93 +28,94 @@ class EditWindow(QDialog):
         self.setWindowTitle(window_title)
         self.label.setText(window_title)
         self.get_function = get_function
-
-        # set the table items from the table, each row is a list of strings
-        self.setTableItems()
         
-        # strech the table columns to match the size of the items
-        self.tableWidget.resizeColumnsToContents()
-            
-    def setTableItems(self):
+        # set default table from table_dict
+        self.setDefaultTable()
+                            
+    def setDefaultTable(self):
         
         # set number of rows and columns (each element of the list is a tuple (argument, value))
-        self.tableWidget.setRowCount(len(self.table_dict)) 
-        self.tableWidget.setColumnCount(max([len(row) for row in self.table_dict])*2)
+        self.defaults_table.setRowCount(len(self.table_dict) + 1) 
+        self.defaults_table.setColumnCount(max([len(row_dict) for row_dict in self.table_dict.values()]) * 2)
 
         # set col names
-        for i in range(2, self.tableWidget.columnCount(), 2):
-            self.tableWidget.setHorizontalHeaderItem(i, QTableWidgetItem("Arg" + str(int(i-1))))
-            self.tableWidget.setHorizontalHeaderItem(i+1, QTableWidgetItem("Value"))
+        for i in range(2, self.defaults_table.columnCount(), 2):
+            self.defaults_table.setHorizontalHeaderItem(i, QTableWidgetItem("Arg" + str(int(i-1))))
+            self.defaults_table.setHorizontalHeaderItem(i+1, QTableWidgetItem("Value"))
         
         # import deepcopy to avoid changing the original dict
         from copy import deepcopy
         table_dict_copy = deepcopy(self.table_dict)   
         # set the table items from the table, each row is a list of the arguments and values of the class
-        for row, (row_id, row_dict) in zip(range(self.tableWidget.rowCount()), table_dict_copy.items()):
-            self.setTableItem(row, 0, row_id, row_dict.pop("class"))
-            for col, (arg, value) in zip(range(2, self.tableWidget.columnCount(), 2), list(row_dict.items())):
-                self.setTableItem(row, col, arg, value)
-    
-    def setTableItem(self, row, col, arg, value):
+        for row, (row_id, row_dict) in zip(range(self.defaults_table.rowCount()), table_dict_copy.items()):
+            self.setTablePair(self.defaults_table, row, 0, row_id, row_dict.pop("class"), editable=False)
+            for col, (arg, value) in zip(range(2, self.defaults_table.columnCount(), 2), list(row_dict.items())):
+                self.setTablePair(self.defaults_table, row, col, arg, value)
         
-        table = self.tableWidget
-                   
+        # set the last row to add a new object
+    
+    def setTablePair(self, table: QTableWidget, row: int, col: int, arg: str, value, editable: bool = True) -> None:
+
         FAKE_OPERATORS = ['(energy|riesz)', 'red']
         
-        # arg is always a string
-        table.setItem(row, col, QTableWidgetItem(arg))
+        # Set the widget in the arg column (always text)
+        widget = QTextEdit(arg)
+        widget.setReadOnly(True)
+        table.setCellWidget(row, col, widget)    
         
-        # check if is True or False to put a CheckBox
-        if value is True or value is False:
-            table.setCellWidget(row, col+1, QCheckBox())
-            table.cellWidget(row, col+1).setChecked(value)
-        # set table item according to value type 
+        # Set the widget in the value column
+        if isinstance(value, bool):
+            widget = QCheckBox()
+            widget.setChecked(value)
         elif isinstance(value, int):
-            table.setCellWidget(row, col+1, ScientificSpinBox())
-            table.cellWidget(row, col+1).setValue(value)
-        # check if it is float to put a doule SpinBox
+            widget = ScientificSpinBox()
+            widget.setValue(value)
         elif isinstance(value, float):
-            table.setCellWidget(row, col+1, ScientificDoubleSpinBox())
+            widget = ScientificDoubleSpinBox()
             if value == inf:
-                # set the value to the maximum value of the doubleSpinBox
-                table.cellWidget(row, col+1).setValue(table.cellWidget(row, col+1).maximum())
+                widget.setValue(widget.maximum())
             elif value == -inf:
-                table.cellWidget(row, col+1).setValue(table.cellWidget(row, col+1).minimum())
+                widget.setValue(widget.minimum())
             else:
-                table.cellWidget(row, col+1).setValue(value)
-        # if arg is an operator, put a comboBox with the possible operators
-        elif arg in OPERATORS and table.item(row, 1).text() not in FAKE_OPERATORS: 
-            self.setOperatorComboBox(row, col, arg, value)    
-        # check if is None
-        elif value == None:
-            table.setItem(row, col+1, QTableWidgetItem(str(value)))
-            table.item(row, col+1).setBackground(QColor(0, 0, 255))
-        # check if is not a string, color with red (must be a class, something is wrong)
+                widget.setValue(value)
+        elif arg in OPERATORS and table.cellWidget(row, 1).toPlainText() not in FAKE_OPERATORS:
+            self.setOperatorComboBox(table, row, col, arg, value)
+            return
+        elif value is None:
+            widget = QTextEdit(str(value))
+            widget.setStyleSheet("background-color: lightblue;")
+        # only option left is convert to string            
         elif not isinstance(value, str):
-            table.setItem(row, col+1, QTableWidgetItem(str(value)))
-            table.item(row, col+1).setBackground(QColor(255, 0, 0))
-        # check if has no default value, color
+            widget = QTextEdit(str(value))
+            widget.setStyleSheet("background-color: lightred;")
+        # if the value is NO_DEFAULT, set the background to green
         elif value == NO_DEFAULT:
-            table.setItem(row, col+1, QTableWidgetItem(NO_DEFAULT))
-            table.item(row, col+1).setBackground(QColor(0, 255, 0))
+            widget = QTextEdit(NO_DEFAULT)
+            widget.setStyleSheet("background-color: lightyellow;")
         else:
-            table.setItem(row, col+1, QTableWidgetItem(value))
-    
-    def setOperatorComboBox(self, row, col, arg, value):
-        raise NotImplementedError("setOperatorComboBox called from EditWindow")
+            widget = QTextEdit(value)
+            widget.setReadOnly(not editable)
+        
+        table.setCellWidget(row, col+1, widget)    
+                
+    def setOperatorComboBox(self, table: QTableWidget, row, col, arg, value):
+        raise NotImplementedError("setOperatorComboBox called from EditWindow. Must be called from AlgoWindow")
 
     def getObjectFromID(self, object_id, pf=None, n_obj=None):
-        # get the object from the table
-        for row in range(self.tableWidget.rowCount()):
-            if self.tableWidget.item(row, 0).text() == object_id:
-                return self.getObjectFromRow(row, pf, n_obj)
-            
+        # get the object from a table
+        for table in [self.variants_table, self.defaults_table]:
+            for row in range(table.rowCount()):
+                if table.cellWidget(row, 0) is None:
+                    continue
+                if table.cellWidget(row, 0).toPlainText() == object_id:
+                    return self.getObjectFromRow(table, row, pf, n_obj)
+                
         raise Exception("Object ID '", object_id, "' not found in table from window ", self.windowTitle()) 
             
-    def getObjectFromRow(self, row, pf=None, n_obj=None):
+    def getObjectFromRow(self, table: QTableWidget, row, pf=None, n_obj=None):
         # get the object from the table
-        class_name = self.tableWidget.item(row, 1).text()
-        args_dict = self.getArgsFromRow(row, pf, n_obj)
+        class_name = table.cellWidget(row, 1).toPlainText()
+        args_dict = self.getArgsFromRow(table, row, pf, n_obj)
         
         # get the n_dim from the problem n_obj    
         if self.windowTitle() == "Edit Ref_dirs":
@@ -126,7 +129,7 @@ class EditWindow(QDialog):
         obj = self.get_function(class_name, **args_dict)
         
         if obj is None:
-            raise Exception("Object ID matched, but problem getting it from the class", self.tableWidget.item(row, 0).text(), "in table from window ", self.windowTitle())
+            raise Exception("Object ID matched, but problem getting it from the class", class_name, "in table from window ", self.windowTitle())
         else:
             return obj
         
@@ -139,43 +142,42 @@ class EditWindow(QDialog):
                 raise ValueError("Invalid value for n_dim factor:", factor_str)
             args_dict[arg] = n_obj * factor if n_obj is not None else None
     
-    def getArgsFromRow(self, row: int, pf = None, n_obj=None):
+    def getArgsFromRow(self, table: QTableWidget, row: int, pf = None, n_obj=None):
         # get the args from the table
         args_dict = {}
-        for col in range(2, self.tableWidget.columnCount(), 2):
+        for col in range(2, table.columnCount(), 2):
             
-            if self.tableWidget.item(row, col) is None:
+            if table.cellWidget(row, col) in [None, ""]:
                 break
-            arg = self.tableWidget.item(row, col).text()
+            arg = table.cellWidget(row, col).toPlainText()
+            widget = table.cellWidget(row, col+1)
             
-            value = None
-            if arg == "":
-                break
-            elif arg in OPERATORS and self.windowTitle() == "Edit Algorithms":
-                value = self.getOperator(arg, self.tableWidget.cellWidget(row, col+1).currentText(), pf, n_obj)
-            elif isinstance(self.tableWidget.cellWidget(row, col+1), (ScientificSpinBox, ScientificDoubleSpinBox)):
-                value = self.tableWidget.cellWidget(row, col+1).value()       
-            elif isinstance(self.tableWidget.cellWidget(row, col+1), QCheckBox):
-                value = self.tableWidget.cellWidget(row, col+1).isChecked()
-            elif isinstance(self.tableWidget.cellWidget(row, col+1), MyComboBox):
-                value = self.tableWidget.cellWidget(row, col+1).currentText()
-            elif self.tableWidget.item(row, col+1).text() == NO_DEFAULT:
-                raise Exception("No default -> need to set value for arg ", arg, " in row ", row, " of window ", self.windowTitle())
-            elif self.tableWidget.item(row, col+1).text() == "None":
-                value = None
-            else:
-                value = self.tableWidget.item(row, col+1).text()
+            if arg in OPERATORS and self.windowTitle() == "Edit Algorithms":
+                value = self.getOperator(arg, widget.currentText(), pf, n_obj)
+            elif isinstance(widget, (ScientificSpinBox, ScientificDoubleSpinBox)):
+                value = widget.value()       
+            elif isinstance(widget, QCheckBox):
+                value = widget.isChecked()
+            elif isinstance(widget, MyComboBox):
+                value = widget.currentText()
+            elif isinstance(widget, QTextEdit):
+                value = widget.toPlainText() if widget.toPlainText() != "None" else None
+                if widget.toPlainText() == NO_DEFAULT:
+                    raise Exception("No default -> need to set value for arg ", arg, " in row ", row, " of window ", self.windowTitle())
                 # try to convert text to int or float
-                try:
-                    value = int(value)
-                    debug_print("Arg ", arg, ", with value ", value, " converted to int, from window ", self.windowTitle()) 
-                except:
+                else:
                     try:
-                        value = float(value)
+                        value = int(value)
                         debug_print("Arg ", arg, ", with value ", value, " converted to int, from window ", self.windowTitle()) 
                     except:
-                        pass
-                
+                        try:
+                            value = float(value)
+                            debug_print("Arg ", arg, ", with value ", value, " converted to int, from window ", self.windowTitle()) 
+                        except:
+                            pass
+            else:
+                raise Exception("Unknown widget type ", type(widget), " for arg ", arg, " in row ", row, " of window ", self.windowTitle())
+            
             args_dict[arg] = value
         return args_dict    
 
@@ -205,7 +207,7 @@ class AlgoWindow(EditWindow):
         self.decomposition_window = setEditWindow(self.pushButton_decomposition, "Edit Decompositions", self.defaults.decomposition, get_decomposition, defaults)
         self.ref_dirs_window = setEditWindow(self.pushButton_ref_dirs, "Edit Ref_dirs", self.defaults.ref_dirs, get_reference_directions, defaults)
         
-    def setOperatorComboBox(self, row, col, arg, value):
+    def setOperatorComboBox(self, table: QTableWidget, row, col, arg, value):
 
         items = self.operator_comboBox_items[arg]
                 
@@ -213,7 +215,7 @@ class AlgoWindow(EditWindow):
             index = items.index(value)
         else:
             index = -1
-        self.tableWidget.setCellWidget(row, col+1, MyComboBox(items, index))
+        table.setCellWidget(row, col+1, MyComboBox(items, index))
                 
     def getOperator(self, op_name: str, op_id: str, pf = None, n_obj=None):
         
