@@ -14,13 +14,14 @@ class MyMessageBox(QtWidgets.QMessageBox):
 		self.exec_() if execute else None
   
 class MyComboBox(QtWidgets.QComboBox):
-	def __init__(self, items=[], initial_index=-1, initial_text="", enabled=True, table=None, add_combobox_option=False):
+	def __init__(self, items=[], initial_index=-1, initial_text="", enabled=True, table=None, add_rows=False, col = 0):
 		super().__init__()
 
 		# table in which the combobox is located
 		self.table = table
 		self.items = items
-		self.add_combobox_option = add_combobox_option
+		self.add_rows = add_rows
+		self.col = col 
   
 		for item in items:
 			self.addItem(item)
@@ -32,42 +33,42 @@ class MyComboBox(QtWidgets.QComboBox):
 		self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
 		self.customContextMenuRequested.connect(self.showContextMenu)
 		self.context_menu = QtWidgets.QMenu(self)
-		self.clear_action = QtWidgets.QAction("Clear Selection", self)
-		self.clear_action.triggered.connect(self.clearSelection)
+		self.clear_action = QtWidgets.QAction("Clear Row", self)
+		self.clear_action.triggered.connect(self.clearRow)
 		self.context_menu.addAction(self.clear_action)
 
-		if add_combobox_option:
+		if add_rows:
 			# add an option to add another combobox to the table
-			self.add_combobox_action = QtWidgets.QAction("Add Combobox", self)
-			self.add_combobox_action.triggered.connect(self.addComboBoxToTable)
-			self.context_menu.addAction(self.add_combobox_action)
+			self.add_rows = QtWidgets.QAction("Add Row", self)
+			self.add_rows.triggered.connect(self.addRowToTable)
+			self.context_menu.addAction(self.add_rows)
 
 			# add an option to remove the combobox from the table
-			self.remove_combobox_action = QtWidgets.QAction("Remove Combobox", self)
-			self.remove_combobox_action.triggered.connect(self.removeComboBoxFromTable)
+			self.remove_combobox_action = QtWidgets.QAction("Remove Row", self)
+			self.remove_combobox_action.triggered.connect(self.removeRowFromTable)
 			self.context_menu.addAction(self.remove_combobox_action)
 
 	def showContextMenu(self, pos):
 		self.context_menu.exec_(self.mapToGlobal(pos))
 
-	def addComboBoxToTable(self):
+	def addRowToTable(self):
 		# create a new combobox and add it to the table
-		new_combobox = MyComboBox(items=self.items, table=self.table, add_combobox_option=self.add_combobox_action)
-		row_count = self.table.rowCount()
+		new_combobox = MyComboBox(items=self.items, table=self.table, add_rows=self.add_rows, col = self.col)
+		row_count = self.table.rowCount() 
 		self.table.setRowCount(row_count + 1)
-		self.table.setCellWidget(row_count, 0, new_combobox)
+		self.table.setCellWidget(row_count, self.col, new_combobox)
 
-	def removeComboBoxFromTable(self):
+	def removeRowFromTable(self):
 		# check if the combobox is the only one in the table, give warning 
 		if self.table.rowCount() == 1: 
-			warning = MyMessageBox("Cannot remove the only combobox in the table.")			
+			warning = MyMessageBox("Cannot remove the only row in the table.")			
 		else:
 			# remove the combobox from the table
 			index = self.table.indexAt(self.pos())
 			if index.isValid():
 				self.table.removeRow(index.row())
 
-	def clearSelection(self):
+	def clearRow(self):
 		self.setCurrentIndex(-1)
 		self.setEditText("")
 
