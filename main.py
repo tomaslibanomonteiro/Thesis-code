@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QApplication
 from frontend.main_window import MyMainWindow
 
-CLICK_RUN = True
+CLICK_RUN = False
 
 def main():
     from tests.tests_declaration import options_moo_mixed, options_soo_mixed

@@ -89,8 +89,7 @@ class MyMainWindow(QMainWindow):
             table.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
             for row in range(table.rowCount()):
-                initial_text = table.item(row, 0).text() if table.item(row, 0) else ""
-                combobox = MyComboBox(items, initial_text=initial_text, table=table, add_combobox_option=not is_termination)
+                combobox = MyComboBox(items, table=table, add_rows=not is_termination)
                 table.setCellWidget(row, 0, combobox)
     
     def setTableWidgetItems(self, tableWidget, items):

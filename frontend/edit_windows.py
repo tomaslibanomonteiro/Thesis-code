@@ -1,19 +1,13 @@
 from numpy import inf
-from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QCheckBox, QDialog, QTableWidgetItem, QTextEdit, QTableWidget
+from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QTableWidget
 from PyQt5.uic import loadUi
 
 from backend.get import (get_crossover, get_decomposition, get_mutation,
                          get_reference_directions, get_sampling, get_selection)
 from backend.get_defaults import NO_DEFAULT, OPERATORS, Defaults
-from backend.run import Run
-from frontend.my_widgets import (MyComboBox, ScientificDoubleSpinBox,
-                                 ScientificSpinBox)
+from frontend.my_widgets import MyTextEdit, MyComboBox, ScientificDoubleSpinBox, ScientificSpinBox, MyCheckBox, MyMessageBox
 from utils.debug import debug_print
-from utils.defines import (DESIGNER_ALGO_WINDOW, DESIGNER_EDIT_WINDOW)
-import pydevd
-
-from PyQt5.QtCore import Qt
+from utils.defines import DESIGNER_ALGO_WINDOW, DESIGNER_EDIT_WINDOW, VARIANTS_HELP_MSG
 
 def ArgsAreSet(dic: dict) -> bool:
     # check if any of the values in the list is == NO_DEFAULT
@@ -28,14 +22,18 @@ class EditWindow(QDialog):
         self.setWindowTitle(window_title)
         self.label.setText(window_title)
         self.get_function = get_function
+        self.variants_interrogation.clicked.connect(self.variantsHelp)
         
-        # set default table from table_dict
+        # set default table from table_dict and variant table 
         self.setDefaultTable()
-                            
-    def setDefaultTable(self):
+        self.setVariantTable(self.defaults_table)
+    
+    def variantsHelp(self):
+        helpbox = MyMessageBox(VARIANTS_HELP_MSG, "Variants Help", warning_icon=False)
         
+    def setDefaultTable(self):
         # set number of rows and columns (each element of the list is a tuple (argument, value))
-        self.defaults_table.setRowCount(len(self.table_dict) + 1) 
+        self.defaults_table.setRowCount(len(self.table_dict)) 
         self.defaults_table.setColumnCount(max([len(row_dict) for row_dict in self.table_dict.values()]) * 2)
 
         # set col names
@@ -51,22 +49,18 @@ class EditWindow(QDialog):
             self.setTablePair(self.defaults_table, row, 0, row_id, row_dict.pop("class"), editable=False)
             for col, (arg, value) in zip(range(2, self.defaults_table.columnCount(), 2), list(row_dict.items())):
                 self.setTablePair(self.defaults_table, row, col, arg, value)
-        
-        # set the last row to add a new object
     
     def setTablePair(self, table: QTableWidget, row: int, col: int, arg: str, value, editable: bool = True) -> None:
 
         FAKE_OPERATORS = ['(energy|riesz)', 'red']
         
         # Set the widget in the arg column (always text)
-        widget = QTextEdit(arg)
-        widget.setReadOnly(True)
+        widget = MyTextEdit(arg, read_only=True)
         table.setCellWidget(row, col, widget)    
         
         # Set the widget in the value column
         if isinstance(value, bool):
-            widget = QCheckBox()
-            widget.setChecked(value)
+            widget = MyCheckBox(value)
         elif isinstance(value, int):
             widget = ScientificSpinBox()
             widget.setValue(value)
@@ -78,43 +72,56 @@ class EditWindow(QDialog):
                 widget.setValue(widget.minimum())
             else:
                 widget.setValue(value)
-        elif arg in OPERATORS and table.cellWidget(row, 1).toPlainText() not in FAKE_OPERATORS:
+        elif arg in OPERATORS and table.cellWidget(row, 1).text() not in FAKE_OPERATORS:
             self.setOperatorComboBox(table, row, col, arg, value)
             return
         elif value is None:
-            widget = QTextEdit(str(value))
+            widget = MyTextEdit(str(value))
             widget.setStyleSheet("background-color: lightblue;")
         # only option left is convert to string            
         elif not isinstance(value, str):
-            widget = QTextEdit(str(value))
+            widget = MyTextEdit(str(value))
             widget.setStyleSheet("background-color: lightred;")
         # if the value is NO_DEFAULT, set the background to green
         elif value == NO_DEFAULT:
-            widget = QTextEdit(NO_DEFAULT)
+            widget = MyTextEdit(NO_DEFAULT)
             widget.setStyleSheet("background-color: lightyellow;")
         else:
-            widget = QTextEdit(value)
-            widget.setReadOnly(not editable)
+            widget = MyTextEdit(value, read_only=not editable)
         
         table.setCellWidget(row, col+1, widget)    
-                
+                    
     def setOperatorComboBox(self, table: QTableWidget, row, col, arg, value):
         raise NotImplementedError("setOperatorComboBox called from EditWindow. Must be called from AlgoWindow")
 
+    def setVariantTable(self, defaults_table: QTableWidget):
+        
+        classes = [defaults_table.cellWidget(row, 1).text() for row in range(defaults_table.rowCount())]
+        
+        # copy first row of defaults_table to variants_table
+        self.variants_table.setRowCount(1)
+        self.variants_table.setColumnCount(defaults_table.columnCount())
+        
+        widget = MyComboBox(classes, table=self.variants_table, copy_table=self.defaults_table, add_rows=True, col=1)
+        self.variants_table.setCellWidget(0, 1, widget)
+        
     def getObjectFromID(self, object_id, pf=None, n_obj=None):
         # get the object from a table
         for table in [self.variants_table, self.defaults_table]:
             for row in range(table.rowCount()):
                 if table.cellWidget(row, 0) is None:
                     continue
-                if table.cellWidget(row, 0).toPlainText() == object_id:
+                if table.cellWidget(row, 0).text() == object_id:
                     return self.getObjectFromRow(table, row, pf, n_obj)
                 
         raise Exception("Object ID '", object_id, "' not found in table from window ", self.windowTitle()) 
             
     def getObjectFromRow(self, table: QTableWidget, row, pf=None, n_obj=None):
         # get the object from the table
-        class_name = table.cellWidget(row, 1).toPlainText()
+        if isinstance(table.cellWidget(row, 1), MyTextEdit):
+            class_name = table.cellWidget(row, 1).text()
+        else:
+            class_name = table.cellWidget(row, 1).currentText()
         args_dict = self.getArgsFromRow(table, row, pf, n_obj)
         
         # get the n_dim from the problem n_obj    
@@ -149,20 +156,20 @@ class EditWindow(QDialog):
             
             if table.cellWidget(row, col) in [None, ""]:
                 break
-            arg = table.cellWidget(row, col).toPlainText()
+            arg = table.cellWidget(row, col).text()
             widget = table.cellWidget(row, col+1)
             
             if arg in OPERATORS and self.windowTitle() == "Edit Algorithms":
                 value = self.getOperator(arg, widget.currentText(), pf, n_obj)
             elif isinstance(widget, (ScientificSpinBox, ScientificDoubleSpinBox)):
                 value = widget.value()       
-            elif isinstance(widget, QCheckBox):
+            elif isinstance(widget, MyCheckBox):
                 value = widget.isChecked()
             elif isinstance(widget, MyComboBox):
                 value = widget.currentText()
-            elif isinstance(widget, QTextEdit):
-                value = widget.toPlainText() if widget.toPlainText() != "None" else None
-                if widget.toPlainText() == NO_DEFAULT:
+            elif isinstance(widget, MyTextEdit):
+                value = widget.text() if widget.text() != "None" else None
+                if widget.text() == NO_DEFAULT:
                     raise Exception("No default -> need to set value for arg ", arg, " in row ", row, " of window ", self.windowTitle())
                 # try to convert text to int or float
                 else:

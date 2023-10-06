@@ -29,3 +29,6 @@ DEBUG_MODE = True
 
 # default number of rows in the run window tables
 DEFAULT_ROW_NUMBERS = [7, 7, 4, 1]
+
+# help message displayed when help button is clicked on the variants table
+VARIANTS_HELP_MSG = "To create variants of the default Objects, choose a class from the comboBox. The arguments will be inherited from the defaults table. Righclick the comboBox to add or remove lines"

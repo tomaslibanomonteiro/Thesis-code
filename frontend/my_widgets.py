@@ -3,6 +3,21 @@ from typing import Tuple
 
 from qtpy import QtCore, QtGui, QtWidgets
 
+class MyTextEdit(QtWidgets.QTextEdit):
+	def __init__(self, text="", read_only=False):
+		super().__init__()
+
+		self.setText(text)
+		self.setReadOnly(read_only)
+
+	def text(self):
+		return self.toPlainText()
+
+	def copy(self):
+		copy = MyTextEdit(self.text(), self.isReadOnly())
+		copy.setStyleSheet(self.styleSheet())
+		return copy
+  
 class MyMessageBox(QtWidgets.QMessageBox):
 	def __init__(self, text, title="Warning", warning_icon=True, execute = True):
 		super().__init__()
@@ -14,26 +29,26 @@ class MyMessageBox(QtWidgets.QMessageBox):
 		self.exec_() if execute else None
   
 class MyComboBox(QtWidgets.QComboBox):
-	def __init__(self, items=[], initial_index=-1, initial_text="", enabled=True, table=None, add_rows=False, col = 0):
+	def __init__(self, items=[], initial_index=-1, enabled=True, table=None, col=0, add_rows=False, copy_table=None):
 		super().__init__()
 
 		# table in which the combobox is located
 		self.table = table
 		self.items = items
 		self.add_rows = add_rows
-		self.col = col 
+		self.col = col
+		self.copy_table = copy_table
   
 		for item in items:
 			self.addItem(item)
-		self.setCurrentIndex(initial_index)
+		self.setCurrentIndex(initial_index) 
 		self.setEnabled(enabled)
-		self.setEditText(initial_text)
 
 		# create a custom context menu
 		self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
 		self.customContextMenuRequested.connect(self.showContextMenu)
 		self.context_menu = QtWidgets.QMenu(self)
-		self.clear_action = QtWidgets.QAction("Clear Row", self)
+		self.clear_action = QtWidgets.QAction("Clear Selection", self)
 		self.clear_action.triggered.connect(self.clearRow)
 		self.context_menu.addAction(self.clear_action)
 
@@ -48,13 +63,17 @@ class MyComboBox(QtWidgets.QComboBox):
 			self.remove_combobox_action.triggered.connect(self.removeRowFromTable)
 			self.context_menu.addAction(self.remove_combobox_action)
 
+		# connect the currentIndexChanged signal to a slot that updates the table
+		if copy_table is not None:
+			self.currentIndexChanged.connect(self.updateTable)
+
 	def showContextMenu(self, pos):
 		self.context_menu.exec_(self.mapToGlobal(pos))
 
 	def addRowToTable(self):
 		# create a new combobox and add it to the table
-		new_combobox = MyComboBox(items=self.items, table=self.table, add_rows=self.add_rows, col = self.col)
-		row_count = self.table.rowCount() 
+		row_count = self.table.rowCount()
+		new_combobox = MyComboBox(items=self.items, table=self.table, col=self.col, add_rows=self.add_rows, copy_table=self.copy_table)
 		self.table.setRowCount(row_count + 1)
 		self.table.setCellWidget(row_count, self.col, new_combobox)
 
@@ -72,6 +91,36 @@ class MyComboBox(QtWidgets.QComboBox):
 		self.setCurrentIndex(-1)
 		self.setEditText("")
 
+	def updateTable(self):
+
+		if self.currentIndex() == -1:
+			return
+
+		copy_table = self.copy_table
+		# get the current text of the combobox
+		text = self.currentText()
+		index = self.table.indexAt(self.pos())
+		row = index.row()
+  
+		# find the row of the copy table that matches the current text
+		for copy_row in range(copy_table.rowCount()):
+			if copy_table.cellWidget(copy_row, self.col).text() == text:
+				break
+	
+		# update the table with the new row
+		object_id = self.copy_table.cellWidget(copy_row, 0).text().replace("_default", "_variant") 
+		widget = MyTextEdit(object_id, read_only=True)
+		self.table.setCellWidget(row, 0, widget)
+		for col in range(2, copy_table.columnCount()):
+			widget = copy_table.cellWidget(copy_row, col)
+			new_widget = widget.copy() if widget is not None else None
+			self.table.setCellWidget(row, col, new_widget)
+			
+	def copy(self):
+		copy = MyComboBox(self.items, self.currentIndex(), self.isEnabled(), self.table, self.col, self.add_rows, self.copy_table)
+		return copy
+
+
 """
 This code has been adapted from: https://gist.github.com/jdreaver/0be2e44981159d0854f5
 Changes made are support for PyQt5, localisation, better intermediate state detection and better stepping.
@@ -88,7 +137,17 @@ partial_pos_int_re = re.compile(partial_pos_int_regex)
 partial_float_regex = r'([+-]?((\d*' + decimal_point + r'?))?\d*)'
 partial_float_re = re.compile(partial_float_regex)
 
+class MyCheckBox(QtWidgets.QCheckBox):
+	def __init__(self, checked=False, enabled=True):
+		super().__init__()
 
+		self.setChecked(checked)
+		self.setEnabled(enabled)
+	
+	def copy(self):
+		copy = MyCheckBox(self.isChecked(), self.isEnabled())
+		return copy
+  
 class IntValidator(QtGui.QValidator):
 	"""
 	Validates integer inputs for ScientificSpinBox
@@ -276,6 +335,17 @@ class ScientificSpinBox(QtWidgets.QSpinBox):
 
 		new_string = "{:g}".format(val) + (groups[3] if groups[3] else "")
 		self.lineEdit().setText(new_string)
+
+	def copy(self):
+		copy = ScientificSpinBox()
+		copy.setRange(self.minimum(), self.maximum())
+		copy.setValue(self.value())
+		copy.setSingleStep(self.singleStep())
+		copy.setPrefix(self.prefix())
+		copy.setSuffix(self.suffix())
+		copy.setDisplayIntegerBase(self.displayIntegerBase())
+		
+		return copy
 
 from numpy import inf
 
@@ -466,5 +536,13 @@ class ScientificDoubleSpinBox(QtWidgets.QDoubleSpinBox):
 		new_string = "{:g}".format(val) + (groups[3] if groups[3] else "")
 		self.lineEdit().setText(new_string)
 
-
-
+	def copy(self):
+		copy = ScientificDoubleSpinBox()
+		copy.setRange(self.minimum(), self.maximum())
+		copy.setValue(self.value())
+		copy.setSingleStep(self.singleStep())
+		copy.setPrefix(self.prefix())
+		copy.setSuffix(self.suffix())
+		copy.setDecimals(self.decimals())	
+  
+		return copy
