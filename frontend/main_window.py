@@ -3,7 +3,7 @@ from PyQt5.uic import loadUi
 
 from backend.get import (get_algorithm, get_performance_indicator, get_problem,
                          get_termination)
-from backend.get_defaults import Defaults
+from backend.defaults import Defaults
 from backend.run import Run, SingleRunArgs
 from frontend.my_widgets import MyComboBox, MyMessageBox
 from frontend.edit_windows import (AlgoWindow, ArgsAreSet, setEditWindow)
@@ -11,7 +11,7 @@ from frontend.run_window import RunWindow
 from utils.defines import DESIGNER_MAIN, RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS
 
 class MyMainWindow(QMainWindow):
-    def __init__(self, moo = True, options = {}, defaults_soo = Defaults('soo'), defaults_moo = Defaults('moo')) -> None:
+    def __init__(self, options = {}, defaults_soo = Defaults('soo'), defaults_moo = Defaults('moo')) -> None:
         super().__init__()        
         
         loadUi(DESIGNER_MAIN, self)
@@ -22,7 +22,7 @@ class MyMainWindow(QMainWindow):
         # connect button to single or multi objective optimization
         self.defaults_soo = defaults_soo
         self.defaults_moo = defaults_moo
-        self.defaults = self.defaults_moo if moo else self.defaults_soo
+        self.defaults = self.defaults_moo if ('moo' in options.keys() and options['moo']) else self.defaults_soo
         self.radioButton_moo.toggled.connect(self.objectivesButton)
         
         # set window variables
@@ -49,18 +49,17 @@ class MyMainWindow(QMainWindow):
         """Initialize the main window regarding the default values in the comboboxes and the edit windows."""
         
         # set other windows
-        self.prob_window = setEditWindow(self.pushButton_edit_prob, "Edit Problems", self.defaults.prob, get_problem, self.defaults)
-        self.pi_window = setEditWindow(self.pushButton_edit_pi, "Edit Performance Indicators", self.defaults.pi, get_performance_indicator, self.defaults)
-        self.term_window = setEditWindow(self.pushButton_edit_term, "Edit Terminations", self.defaults.term, get_termination, self.defaults)
+        self.prob_window = setEditWindow(self.pushButton_edit_prob, "Edit Problems", self.defaults.prob, get_problem, self.defaults, self.tableWidget_run_prob)
+        self.pi_window = setEditWindow(self.pushButton_edit_pi, "Edit Performance Indicators", self.defaults.pi, get_performance_indicator, self.defaults, self.tableWidget_run_pi)
+        self.term_window = setEditWindow(self.pushButton_edit_term, "Edit Terminations", self.defaults.term, get_termination, self.defaults, self.tableWidget_run_term)
         
-        self.algo_window = AlgoWindow("Edit Algorithms", self.defaults.algo, get_algorithm, self.defaults)
+        self.algo_window = AlgoWindow("Edit Algorithms", self.defaults.algo, get_algorithm, self.defaults, self.tableWidget_run_algo)
         self.pushButton_edit_algo.clicked.connect(self.algo_window.show)
                             
         self.setComboBoxes()
             
     def setComboBoxes(self):
         
-       
         # options for each combobox
         pi_options = [key for key in self.defaults.pi.keys() if ArgsAreSet(self.defaults.pi[key])]
         algo_options = [key for key in self.defaults.algo.keys() if ArgsAreSet(self.defaults.algo[key])]

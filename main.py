@@ -9,7 +9,7 @@ def main():
     
     # start the QApplication
     app = QApplication([])
-    main_window = MyMainWindow(options['moo'], options)
+    main_window = MyMainWindow(options)
     main_window.show()
     
     if CLICK_RUN:

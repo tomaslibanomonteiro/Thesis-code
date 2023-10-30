@@ -1,4 +1,4 @@
-from backend.get_defaults import Defaults
+from backend.defaults import Defaults
 from frontend.main_window import MyMainWindow
 from threading import Thread
 from utils.defines import RESULTS_FOLDER, RUN_OPTIONS_KEYS

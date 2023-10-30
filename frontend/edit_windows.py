@@ -1,33 +1,80 @@
 from numpy import inf
-from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QTableWidget
+from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QTableWidget, QPushButton, QDialogButtonBox
 from PyQt5.uic import loadUi
 
 from backend.get import (get_crossover, get_decomposition, get_mutation,
                          get_reference_directions, get_sampling, get_selection)
-from backend.get_defaults import NO_DEFAULT, OPERATORS, Defaults
+from backend.defaults import NO_DEFAULT, OPERATORS, Defaults
 from frontend.my_widgets import MyTextEdit, MyComboBox, ScientificDoubleSpinBox, ScientificSpinBox, MyCheckBox, MyMessageBox
 from utils.debug import debug_print
 from utils.defines import DESIGNER_ALGO_WINDOW, DESIGNER_EDIT_WINDOW, VARIANTS_HELP_MSG
 
 def ArgsAreSet(dic: dict) -> bool:
-    # check if any of the values in the list is == NO_DEFAULT
+    # check if any of the values in the dict is == NO_DEFAULT
     return not any([value == NO_DEFAULT for value in dic.values()]) 
 
 class EditWindow(QDialog):
-    def __init__(self, window_title: str, table_dict: dict, get_function, defaults: Defaults, ui_file=DESIGNER_EDIT_WINDOW):
+    def __init__(self, window_title: str, table_dict: dict, get_function: callable, defaults: Defaults, parent_window_table: QTableWidget, ui_file=DESIGNER_EDIT_WINDOW, op_name: str=None):
         super().__init__()
         loadUi(ui_file, self)
+
         self.table_dict = table_dict
         self.defaults = defaults
+        self.get_function = get_function
+        self.default_ids = list(table_dict.keys())
+        self.variant_ids = []
+        self.parent_window_table = parent_window_table
+        self.op_name = op_name
+        
+        # modify what the save and help buttons do
+        self.variantsHelpButton.clicked.connect(self.variantsHelp)
+        self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.save)
+        
+        # set window title and label
         self.setWindowTitle(window_title)
         self.label.setText(window_title)
-        self.get_function = get_function
-        self.variants_interrogation.clicked.connect(self.variantsHelp)
         
         # set default table from table_dict and variant table 
         self.setDefaultTable()
         self.setVariantTable(self.defaults_table)
     
+    def save(self):
+        new_variant_ids = []
+        table = self.variants_table
+        # get the variants from the table
+        for row in range(table.rowCount()):
+            if table.cellWidget(row, 0) is not None and ArgsAreSet(self.getArgsFromRow(table, row)):
+                new_variant_ids.append(table.cellWidget(row, 0).text())
+        # if the variant ids have changed, change the respective ComboBoxes 
+        if sorted(new_variant_ids) != sorted(self.variant_ids):
+            self.variant_ids = new_variant_ids
+            items = self.variant_ids + self.default_ids
+            self.updateComboBoxItems(items)
+        # close window
+        self.close()
+        
+    def updateComboBoxItems(self, items: list):
+        # if there is no op_name, is main window, get all the comboboxes from the table
+        if self.op_name is None:
+            comboBoxes = [self.parent_window_table.cellWidget(x,0) for x in range(self.parent_window_table.rowCount()) if self.parent_window_table.cellWidget(x, 0) is not None]     
+        # Else is algo window, check cell by cell for the operator comboboxes    
+        else: 
+            comboBoxes = []
+            for table in self.parent_window_table:
+                for row in range(table.rowCount()):
+                    for col in range(2, table.columnCount(), 2):
+                        arg = table.cellWidget(row, col)
+                        if arg is not None and arg.text() == self.op_name:
+                            comboBoxes.append(table.cellWidget(row, col+1))
+        
+        # update the comboboxes in the respective MainWindow table widget
+        for comboBox in comboBoxes:
+            curr_text = comboBox.currentText()
+            comboBox.clear()
+            comboBox.addItems(items)
+            location = items.index(curr_text) if curr_text in items else -1
+            comboBox.setCurrentIndex(location)                  
+        
     def variantsHelp(self):
         helpbox = MyMessageBox(VARIANTS_HELP_MSG, "Variants Help", warning_icon=False)
         
@@ -170,7 +217,8 @@ class EditWindow(QDialog):
             elif isinstance(widget, MyTextEdit):
                 value = widget.text() if widget.text() != "None" else None
                 if widget.text() == NO_DEFAULT:
-                    raise Exception("No default -> need to set value for arg ", arg, " in row ", row, " of window ", self.windowTitle())
+                    pass
+                    # raise Exception("No default -> need to set value for arg ", arg, " in row ", row, " of window ", self.windowTitle())
                 # try to convert text to int or float
                 else:
                     try:
@@ -189,30 +237,32 @@ class EditWindow(QDialog):
         return args_dict    
 
     def getOperator(self, operator, operator_name, pf = None, n_obj=None):
-        raise NotImplementedError("getOperator called from EditWindow")
+        raise NotImplementedError("getOperator called from EditWindow")  
     
-def setEditWindow(button, window_title: str, table: dict, get_function, defaults: Defaults, ui_file = DESIGNER_EDIT_WINDOW):
+def setEditWindow(button, window_title: str, table: dict, get_function, defaults: Defaults, parent_window_table: QTableWidget, ui_file = DESIGNER_EDIT_WINDOW, op_name: str=None):
     """Set the edit window to when the button is clicked"""
-    window = EditWindow(window_title, table, get_function, defaults, ui_file)
+    window = EditWindow(window_title, table, get_function, defaults, parent_window_table, ui_file, op_name)
     button.clicked.connect(window.show)
     return window
 
 class AlgoWindow(EditWindow):
-    def __init__(self, window_title: str, table: dict, get_function, defaults: Defaults, ui_file = DESIGNER_ALGO_WINDOW):
+    def __init__(self, window_title: str, table: dict, get_function, defaults: Defaults, parent_window_table: QTableWidget, ui_file = DESIGNER_ALGO_WINDOW):
         
         self.operator_comboBox_items = {} 
         # for each operator, set the combobox items available (only for algo window)
         for op, op_table in [("mutation", defaults.mutation), ("crossover", defaults.crossover), ("selection", defaults.selection), ("sampling", defaults.sampling), ("decomposition", defaults.decomposition), ("ref_dirs", defaults.ref_dirs)]:
             self.operator_comboBox_items[op] = list(op_table.keys())
-        super().__init__(window_title, table, get_function, defaults, ui_file)
+        super().__init__(window_title, table, get_function, defaults, parent_window_table, ui_file)
+        
+        tables = [self.defaults_table, self.variants_table]
         
         # set the edit windows for each operator
-        self.mutation_window = setEditWindow(self.pushButton_mutation, "Edit Mutations", self.defaults.mutation, get_mutation, defaults)
-        self.crossover_window = setEditWindow(self.pushButton_crossover, "Edit Crossovers", self.defaults.crossover, get_crossover, defaults)
-        self.selection_window = setEditWindow(self.pushButton_selection, "Edit Selections", self.defaults.selection, get_selection, defaults)
-        self.sampling_window = setEditWindow(self.pushButton_sampling, "Edit Samplings", self.defaults.sampling, get_sampling, defaults)
-        self.decomposition_window = setEditWindow(self.pushButton_decomposition, "Edit Decompositions", self.defaults.decomposition, get_decomposition, defaults)
-        self.ref_dirs_window = setEditWindow(self.pushButton_ref_dirs, "Edit Ref_dirs", self.defaults.ref_dirs, get_reference_directions, defaults)
+        self.mutation_window = setEditWindow(self.pushButton_mutation, "Edit Mutations", self.defaults.mutation, get_mutation, defaults, tables, op_name="mutation")
+        self.crossover_window = setEditWindow(self.pushButton_crossover, "Edit Crossovers", self.defaults.crossover, get_crossover, defaults, tables, op_name="crossover")
+        self.selection_window = setEditWindow(self.pushButton_selection, "Edit Selections", self.defaults.selection, get_selection, defaults, tables, op_name="selection")
+        self.sampling_window = setEditWindow(self.pushButton_sampling, "Edit Samplings", self.defaults.sampling, get_sampling, defaults, tables, op_name="sampling")
+        self.decomposition_window = setEditWindow(self.pushButton_decomposition, "Edit Decompositions", self.defaults.decomposition, get_decomposition, defaults, tables, op_name="decomposition")
+        self.ref_dirs_window = setEditWindow(self.pushButton_ref_dirs, "Edit Ref_dirs", self.defaults.ref_dirs, get_reference_directions, defaults, tables, op_name="ref_dirs")
         
     def setOperatorComboBox(self, table: QTableWidget, row, col, arg, value):
 
