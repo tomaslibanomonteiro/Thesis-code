@@ -1,4 +1,3 @@
-from PyQt5.QtCore import QThread
 from PyQt5.QtWidgets import QHeaderView, QMainWindow
 from PyQt5.uic import loadUi
 
