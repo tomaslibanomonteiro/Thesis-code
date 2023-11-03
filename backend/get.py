@@ -68,6 +68,7 @@ def get_algorithm_options(objectives = 'all'):
     from pymoo.algorithms.soo.nonconvex.nelder import NelderMead
     from pymoo.algorithms.soo.nonconvex.pattern import PatternSearch
     from pymoo.algorithms.soo.nonconvex.pso import PSO
+    from user_code import MyAlgorithm
 
     ALGORITHMS_SINGLE = [
         ("ga", GA),
@@ -77,6 +78,7 @@ def get_algorithm_options(objectives = 'all'):
         ("pattern-search", PatternSearch),
         ("cmaes", CMAES),
         ("pso", PSO),
+        ("my_algorithm", MyAlgorithm)
     ]
     
     ALGORITHMS_MULTI = [

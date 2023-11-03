@@ -1,48 +1,56 @@
-from PyQt5.QtCore import QThread, QThreadPool
-from PyQt5.QtWidgets import QDialog, QTableWidget, QTableWidgetItem
+from PyQt5.QtWidgets import QFrame, QTableWidget, QTableWidgetItem, QTabWidget
 from PyQt5.uic import loadUi
 from backend.run import Run
-from utils.defines import (DESIGNER_RUN_WINDOW, DEBUG_MODE)
+from utils.defines import DESIGNER_RUN_FRAME, DESIGNER_RESULTS_FRAME
 from matplotlib import pyplot as plt
+from PyQt5.QtCore import QThread
 
 class MyThread(QThread):
     def __init__(self, run_obj: Run):
         super().__init__()
-        self.run_obj = run_obj 
-        
-    def run(self):
-        if DEBUG_MODE:
-            import pydevd
-            pydevd.settrace(suspend=False)
-        self.run_obj.run()
-      
-class RunWindow(QDialog):
-    def __init__(self, run: Run, window_title: str, ui_file=DESIGNER_RUN_WINDOW, save_path=None):
-        super().__init__()
-        loadUi(ui_file, self)
+        self.run_obj = run_obj     
 
-        self.setWindowTitle(window_title)
-        self.label.setText(window_title)
-        self.run = run 
-        self.save_path = save_path
+    def run(self):
+        import pydevd
+        pydevd.settrace(suspend=False)
+        self.run_obj.run()            
+
+class ResultFrame(QFrame):
+    def __init__(self, run: Run, run_name: str, tabWidget: QTabWidget):
+        super().__init__()
+        loadUi(DESIGNER_RESULTS_FRAME, self)
         
+        self.run = run
+        self.run_name = run_name
+        self.tabWidget = tabWidget
         # make the run in a separate thread (has to be called in another class)
-        self.my_thread = MyThread(self.run)
+        self.my_thread = MyThread(run)
         self.my_thread.finished.connect(self.afterRun)
-                
-    def startRun(self):
         self.my_thread.start()
-         
-    def afterRun(self):                
+                
+    def afterRun(self):
+        """After the run is finished, add tabs to the run window and show it"""
+        self.tabWidget.addTab(RunFrame(self.run, self.run_name), self.run_name)
+        self.tabWidget.setCurrentIndex(self.tabWidget.count()-1)
+
+      
+class RunFrame(QFrame):
+    def __init__(self, run: Run, label: str):
+        super().__init__()
+        loadUi(DESIGNER_RUN_FRAME, self)
+        
+        self.label.setText(label)
+        self.run = run 
+                 
         # update the combo box with the performance indicators
         pi_ids = [key for key in self.run.dfs_dict.keys()]
-        self.comboBox_pi.addItems(pi_ids)
-        self.comboBox_pi.currentIndexChanged.connect(self.changeTable)
-        self.comboBox_pi.setCurrentIndex(0)
+        self.pi.addItems(pi_ids)
+        self.pi.currentIndexChanged.connect(self.changeTable)
+        self.pi.setCurrentIndex(0)
         
         # things to set only once
-        self.tableWidget.horizontalHeader().sectionDoubleClicked.connect(lambda col: self.horizontalHeaderClick(col))
-        self.tableWidget.verticalHeader().sectionDoubleClicked.connect(lambda row: self.VerticalHeaderClick(row))
+        self.table.horizontalHeader().sectionDoubleClicked.connect(lambda col: self.horizontalHeaderClick(col))
+        self.table.verticalHeader().sectionDoubleClicked.connect(lambda row: self.VerticalHeaderClick(row))
         
         # update table widget and show the window
         self.changeTable()
@@ -52,22 +60,22 @@ class RunWindow(QDialog):
         """Change the table widget to display the results for the selected performance indicator"""
         
         # get the performance indicator id and the corresponding dataframe
-        pi_id = self.comboBox_pi.currentText()
+        pi_id = self.pi.currentText()
         df = self.run.dfs_dict[pi_id]
         
         # update the table widget
-        self.tableWidget.setEditTriggers(QTableWidget.NoEditTriggers) # make table non-editable
-        self.tableWidget.setColumnCount(len(df.columns))
-        self.tableWidget.setRowCount(len(df.index))
+        self.table.setEditTriggers(QTableWidget.NoEditTriggers) # make table non-editable
+        self.table.setColumnCount(len(df.columns))
+        self.table.setRowCount(len(df.index))
         
         # set the horizontal headers
         for j in range(len(df.columns)):
             header_item = QTableWidgetItem(df.columns[j])
-            self.tableWidget.setHorizontalHeaderItem(j, header_item)
+            self.table.setHorizontalHeaderItem(j, header_item)
 
         # set the rest of the table    
         for i in range(len(df.index)):
-            self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(df.index[i]))
+            self.table.setVerticalHeaderItem(i, QTableWidgetItem(df.index[i]))
             # get the float into str representation, last column is voting (int)
             for j in range(len(df.columns)):                
                 if j == len(df.columns)-1:
@@ -75,20 +83,20 @@ class RunWindow(QDialog):
                 else:
                     nice_string = "{:.3e}".format(df.iloc[i, j]) 
                     item = QTableWidgetItem(nice_string)
-                self.tableWidget.setItem(i, j, item)
+                self.table.setItem(i, j, item)
 
     def horizontalHeaderClick(self, col):
         """Handle a click on a horizontal header item"""
-        item = self.tableWidget.horizontalHeaderItem(col)
+        item = self.table.horizontalHeaderItem(col)
         if item is not None:
             print(f"Header {col} clicked, content: {item.text()}")
         text = item.text()
-        pi_id = self.comboBox_pi.currentText()
+        pi_id = self.pi.currentText()
         self.plot_prob(text, pi_id)
             
     def VerticalHeaderClick(self, row):
         """Handle a click on a vertical header cell"""
-        item = self.tableWidget.verticalHeaderItem(row)
+        item = self.table.verticalHeaderItem(row)
         if item is not None:
             print(f"Header {row} clicked, content: {item.text()}")
 

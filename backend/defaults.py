@@ -18,50 +18,55 @@ class Defaults():
             - the list of specific arguments changed is at the end 
         """                
         self.obj = obj
-
-        self.mutation = self.get_table_dict(get_mutation_options(self.obj))
-        self.crossover = self.get_table_dict(get_crossover_options(self.obj))
-        self.selection = self.get_table_dict(get_selection_options(self.obj))
-        self.decomposition = self.get_table_dict(get_decomposition_options(self.obj))
-        self.sampling = self.get_table_dict(get_sampling_options(self.obj))
-        self.ref_dirs = self.get_table_dict(get_reference_direction_options(self.obj))
-        self.prob = self.get_table_dict(get_problem_options(self.obj))
-        self.term = self.get_table_dict(get_termination_options(self.obj))
-        self.pi = self.get_table_dict(get_performance_indicator_options(self.obj))
-        self.algo = self.get_table_dict(get_algorithm_options(self.obj))
         
+        key_get_pairs = [('mutation', get_mutation_options), ('crossover', get_crossover_options),
+                         ('decomposition', get_decomposition_options), ('sampling', get_sampling_options),
+                         ('selection', get_selection_options), ('ref_dirs', get_reference_direction_options),
+                            
+                         ('termination', get_termination_options), ('pi', get_performance_indicator_options),
+                         ('problem', get_problem_options), ('algorithm', get_algorithm_options)]
+        
+        self.dict = {}
+        self.get_dict = {}
+        for key, get_function in key_get_pairs:
+            self.dict[key] = self.get_table_dict(get_function(self.obj))
+            self.get_dict[key] = get_function
+                            
         # changed defaults
         if obj != 'moo':
-            self.algo['ga_default']['selection'] = 'tournament_by_cv_and_fitness_default'
+            self.dict['algorithm']['ga_default']['selection'] = 'tournament_by_cv_and_fitness_default'
         if obj != 'soo':
-            self.algo['nsga2_default']['selection'] = 'binary_tournament_default'
-            self.algo['nsga3_default']['selection'] = 'tournament_by_cv_then_random_default'
-            self.algo['unsga3_default']['selection'] = 'tournament_by_rank_and_ref_line_dist_default'
-            self.algo['ctaea_default']['selection'] = 'restricted_mating_ctaea_default'
-            self.algo['rnsga3_default']['selection'] = 'tournament_by_cv_then_random_default'
+            self.dict['algorithm']['nsga2_default']['selection'] = 'binary_tournament_default'
+            self.dict['algorithm']['nsga3_default']['selection'] = 'tournament_by_cv_then_random_default'
+            self.dict['algorithm']['unsga3_default']['selection'] = 'tournament_by_rank_and_ref_line_dist_default'
+            self.dict['algorithm']['ctaea_default']['selection'] = 'restricted_mating_ctaea_default'
+            self.dict['algorithm']['rnsga3_default']['selection'] = 'tournament_by_cv_then_random_default'
         
-        self.term['n_eval_default']['n_max_evals'] = '2000'  
-        self.term['n_gen_default']['n_max_gen'] = '40' 
-        self.term['fmin_default']['fmin'] = '1' 
-        self.term['time_default']['max_time'] = '10'  
+        self.dict['termination']['n_eval_default']['n_max_evals'] = 2000
+        self.dict['termination']['n_gen_default']['n_max_gen'] = 40
+        self.dict['termination']['fmin_default']['fmin'] = 1
+        self.dict['termination']['time_default']['max_time'] = 10
         
-        self.ref_dirs['(das-dennis|uniform)_default']['n_dim'] = 'n_obj*1'
-        self.ref_dirs['(das-dennis|uniform)_default']['n_points'] = 'n_obj*2'
-        self.ref_dirs['(energy|riesz)_default']['n_dim'] = 'n_obj*1'
-        self.ref_dirs['(energy|riesz)_default']['n_points'] = 'n_obj*2'
-        self.ref_dirs['(layer-energy|layer-riesz)_default']['n_dim'] = 'n_obj*2'
-        self.ref_dirs['(layer-energy|layer-riesz)_default']['partitions'] = 'n_obj*2'
-        self.ref_dirs['red_default']['n_dim'] = 'n_obj*1'
-        self.ref_dirs['red_default']['n_points'] = 'n_obj*2'
+        self.dict['ref_dirs']['(das-dennis|uniform)_default']['n_dim'] = 'n_obj*1'
+        self.dict['ref_dirs']['(das-dennis|uniform)_default']['n_points'] = 'n_obj*2'
+        self.dict['ref_dirs']['(energy|riesz)_default']['n_dim'] = 'n_obj*1'
+        self.dict['ref_dirs']['(energy|riesz)_default']['n_points'] = 'n_obj*2'
+        self.dict['ref_dirs']['(layer-energy|layer-riesz)_default']['n_dim'] = 'n_obj*2'
+        self.dict['ref_dirs']['(layer-energy|layer-riesz)_default']['partitions'] = 'n_obj*2'
+        self.dict['ref_dirs']['red_default']['n_dim'] = 'n_obj*1'
+        self.dict['ref_dirs']['red_default']['n_points'] = 'n_obj*2'
         
         if self.obj != 'soo':                
-            self.pi['gd_default']['pf'] = 'get from problem'
-            self.pi['igd_default']['pf'] = 'get from problem'
-            self.pi['igd+_default']['pf'] = 'get from problem'
-            self.pi['gd+_default']['pf'] = 'get from problem'
-            self.pi['hv_default']['pf'] = 'get from problem'
-            self.pi['hv_default']['ref_point'] = NO_DEFAULT
-        
+            self.dict['pi']['gd_default']['pf'] = 'get from problem'
+            self.dict['pi']['igd_default']['pf'] = 'get from problem'
+            self.dict['pi']['igd+_default']['pf'] = 'get from problem'
+            self.dict['pi']['gd+_default']['pf'] = 'get from problem'
+            self.dict['pi']['hv_default']['pf'] = 'get from problem'
+            self.dict['pi']['hv_default']['ref_point'] = NO_DEFAULT
+    
+    def return_dict(self):
+        return self.dict
+    
     def get_table_dict(self, options_list):
         return {name + '_default' : self.get_class_dict(name, obj) for name, obj in options_list}
                 
@@ -90,22 +95,13 @@ class Defaults():
         return ret_dict
 
     def getOperators(self, arg: str, obj):
-
-        if arg == "mutation":   
-            return self.getOperator(obj, self.mutation, get_mutation_options(self.obj))
-        elif arg == "crossover":
-            return self.getOperator(obj, self.crossover, get_crossover_options(self.obj))    
-        elif arg == "decomposition":
-            return self.getOperator(obj, self.decomposition, get_decomposition_options(self.obj))
-        elif arg == "sampling":
-            return self.getOperator(obj, self.sampling, get_sampling_options(self.obj))
-        elif arg == "ref_dirs":
-            return self.getOperator(obj, self.ref_dirs, get_reference_direction_options(self.obj))
-        elif arg == "selection": # selection must be 'by hand' because one arg is a function
+        if arg == "selection": # selection must be 'by hand' because one arg is a function
             return 'by hand'                                  
-        else:
+        elif arg not in OPERATORS: 
             raise Exception("unknown operator", arg)
-    
+        else:
+            return self.getOperator(obj, self.dict[arg], self.get_dict[arg](self.obj))
+        
     def getOperator(self, obj: str, op_table: dict, get_list: list):
         
         # if operator has no default value, return the first operator in the list

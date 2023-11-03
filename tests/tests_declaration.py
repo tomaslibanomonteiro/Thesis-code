@@ -4,11 +4,13 @@ from threading import Thread
 from utils.defines import RESULTS_FOLDER, RUN_OPTIONS_KEYS
 
 class Test():
-    def __init__(self, test_name: str, options: dict, defaults_soo = Defaults('soo'), defaults_moo = Defaults('moo')) -> None:
+    def __init__(self, test_name: str, options: dict, defaults_soo = Defaults('soo').dict, defaults_moo = Defaults('moo').dict) -> None:
         
         self.test_name = test_name + '.csv'
-        if set(options.keys()) != set(RUN_OPTIONS_KEYS):
-            raise Exception('Invalid options dictionary! Test must contain all options: ' + str(RUN_OPTIONS_KEYS))
+        
+        if set(options.keys()) != set(RUN_OPTIONS_KEYS + ['moo']):
+            raise Exception('Invalid options dictionary! Test options must contain: ' + str(RUN_OPTIONS_KEYS + ['moo']))
+        self.moo = options.pop('moo') 
         self.options = options
         self.defaults_soo = defaults_soo
         self.defaults_moo = defaults_moo
@@ -19,7 +21,10 @@ class Test():
       
     def runTest(self):
         # get main window, and run object 
-        self.main_window = MyMainWindow(self.options['moo'], self.options, self.defaults_soo, self.defaults_moo)
+        options_soo = self.options if not self.moo else {}
+        options_moo = self.options if self.moo else {}
+        
+        self.main_window = MyMainWindow(options_soo, options_moo, self.defaults_soo, self.defaults_moo)
         self.run = self.main_window.getRunObject()
         
         # start a python thread 
@@ -99,7 +104,7 @@ options_moo_mixed = {
     'moo': True,
     'n_seeds': 2,
     'term': ['n_eval_default'],
-    'pi': ['gd_default', 'gd+_default', 'igd+_default', 'igd_default', 'hv_default', 'hv+_default'],
+    'pi': ['gd_default', 'gd+_default', 'igd+_default', 'igd_default'],
     'algo': ['nsga2_default', 'nsga3_default'],
     'prob': ['bnh_default','ctp1_default']
 }

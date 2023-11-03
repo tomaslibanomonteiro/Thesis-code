@@ -1,5 +1,5 @@
 from numpy import inf
-from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QTableWidget, QPushButton, QDialogButtonBox
+from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QTableWidget, QPushButton, QFrame
 from PyQt5.uic import loadUi
 
 from backend.get import (get_crossover, get_decomposition, get_mutation,
@@ -7,60 +7,98 @@ from backend.get import (get_crossover, get_decomposition, get_mutation,
 from backend.defaults import NO_DEFAULT, OPERATORS, Defaults
 from frontend.my_widgets import MyTextEdit, MyComboBox, ScientificDoubleSpinBox, ScientificSpinBox, MyCheckBox, MyMessageBox
 from utils.debug import debug_print
-from utils.defines import DESIGNER_ALGO_WINDOW, DESIGNER_EDIT_WINDOW, VARIANTS_HELP_MSG
+from utils.defines import DESIGNER_EDIT_WINDOW, VARIANTS_HELP_MSG, DESIGNER_EDIT_FRAME
 
 def ArgsAreSet(dic: dict) -> bool:
     # check if any of the values in the dict is == NO_DEFAULT
     return not any([value == NO_DEFAULT for value in dic.values()]) 
 
-class EditWindow(QDialog):
-    def __init__(self, window_title: str, table_dict: dict, get_function: callable, defaults: Defaults, parent_window_table: QTableWidget, ui_file=DESIGNER_EDIT_WINDOW, op_name: str=None):
+class OperatorWindow(QDialog):
+    def __init__(self, tab_dict, defaults: dict):
+        """ tab_dict is a dictionary with the following structure:
+                {tab_name: (label, get_function, affected_tables)}"""
+        
         super().__init__()
-        loadUi(ui_file, self)
+        loadUi(DESIGNER_EDIT_WINDOW, self)
+        
+        self.frames = {}
+        
+        for key in tab_dict.keys():
+            self.frames[key] = MyFrame(key, tab_dict[key], defaults)
+            self.tabWidget.addTab(self.frames[key], key)
+            
+        self.save_button.clicked.connect(self.save)
+        
+    def save(self):
+        for frame in self.frames.values():
+            frame.updateTables() if frame.isChanged() else None
+        
+        self.close()
 
-        self.table_dict = table_dict
-        self.defaults = defaults
-        self.get_function = get_function
-        self.default_ids = list(table_dict.keys())
+class EditWindow(OperatorWindow):
+    def __init__(self, tab_dict, defaults: dict):
+        """ tab_dict is a dictionary with the following structure:
+                {tab_name: (label, get_function, affected_tables)}"""
+        super().__init__(tab_dict, defaults)
+        
+        # find algorithm frame 
+        algo_frame = self.frames["algorithm"]
+        tables = [algo_frame.defaults_table, algo_frame.variants_table]
+
+        op_tab_dict = { "mutation": ("Edit Mutations", get_mutation, tables),
+                        "crossover": ("Edit Crossovers", get_crossover, tables),
+                        "selection": ("Edit Selections", get_selection, tables),
+                        "sampling": ("Edit Samplings", get_sampling, tables),
+                        "decomposition": ("Edit Decompositions", get_decomposition, tables),
+                        "ref_dirs": ("Edit Ref_dirs", get_reference_directions, tables)}
+                
+        self.operator_window = OperatorWindow(op_tab_dict, defaults)
+        
+        # add the atritbute to the algo frame to get_operator()
+        self.operators_button = QPushButton("Edit Operators")
+        self.operators_button.clicked.connect(self.openOperatorWindow)
+
+        # add and connect the button to open the operators window from the algo frame
+        algo_frame.layout.addWidget(self.operators_button)
+        algo_frame.op_frames = self.operator_window.frames
+        
+    def openOperatorWindow(self):
+        self.operator_window.show()
+    
+class MyFrame(QFrame):
+    def __init__(self, key, args: tuple, defaults: dict):
+        super().__init__()
+        
+        loadUi(DESIGNER_EDIT_FRAME, self)
+        
+        self.key = key
+        label, self.get_function, self.affected_tables = args
+        self.table_dict = defaults[key] 
+        self.default_ids = list(self.table_dict.keys())
         self.variant_ids = []
-        self.parent_window_table = parent_window_table
-        self.op_name = op_name
+        
+        self.label.setText(label)
+        
+        if key == "algorithm":
+            self.op_frames = None
+            self.operator_comboBox_items = {key: [key] + list(defaults[key].keys()) for key in OPERATORS} 
         
         # modify what the save and help buttons do
         self.variantsHelpButton.clicked.connect(self.variantsHelp)
-        self.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.save)
-        
-        # set window title and label
-        self.setWindowTitle(window_title)
-        self.label.setText(window_title)
-        
+                
         # set default table from table_dict and variant table 
         self.setDefaultTable()
         self.setVariantTable(self.defaults_table)
-    
-    def save(self):
-        new_variant_ids = []
-        table = self.variants_table
-        # get the variants from the table
-        for row in range(table.rowCount()):
-            if table.cellWidget(row, 0) is not None and ArgsAreSet(self.getArgsFromRow(table, row)):
-                new_variant_ids.append(table.cellWidget(row, 0).text())
-        # if the variant ids have changed, change the respective ComboBoxes 
-        if sorted(new_variant_ids) != sorted(self.variant_ids):
-            self.variant_ids = new_variant_ids
-            items = self.variant_ids + self.default_ids
-            self.updateComboBoxItems(items)
-        # close window
-        self.close()
-        
+            
     def updateComboBoxItems(self, items: list):
-        # if there is no op_name, is main window, get all the comboboxes from the table
-        if self.op_name is None:
-            comboBoxes = [self.parent_window_table.cellWidget(x,0) for x in range(self.parent_window_table.rowCount()) if self.parent_window_table.cellWidget(x, 0) is not None]     
+        # if there is just one table, is main window, get all the comboboxes from the table
+        if len (self.affected_tables) == 1:
+            table = self.affected_tables[0]
+            comboBoxes = [table.cellWidget(x,0) for x in range(table.rowCount()) if table.cellWidget(x, 0) is not None]     
         # Else is algo window, check cell by cell for the operator comboboxes    
         else: 
             comboBoxes = []
-            for table in self.parent_window_table:
+            for table in self.affected_tables:
                 for row in range(table.rowCount()):
                     for col in range(2, table.columnCount(), 2):
                         arg = table.cellWidget(row, col)
@@ -80,7 +118,7 @@ class EditWindow(QDialog):
         
     def setDefaultTable(self):
         # set number of rows and columns (each element of the list is a tuple (argument, value))
-        self.defaults_table.setRowCount(len(self.table_dict)) 
+        self.defaults_table.setRowCount(len(self.table_dict))
         self.defaults_table.setColumnCount(max([len(row_dict) for row_dict in self.table_dict.values()]) * 2)
 
         # set col names
@@ -138,9 +176,6 @@ class EditWindow(QDialog):
         
         table.setCellWidget(row, col+1, widget)    
                     
-    def setOperatorComboBox(self, table: QTableWidget, row, col, arg, value):
-        raise NotImplementedError("setOperatorComboBox called from EditWindow. Must be called from AlgoWindow")
-
     def setVariantTable(self, defaults_table: QTableWidget):
         
         classes = [defaults_table.cellWidget(row, 1).text() for row in range(defaults_table.rowCount())]
@@ -161,7 +196,7 @@ class EditWindow(QDialog):
                 if table.cellWidget(row, 0).text() == object_id:
                     return self.getObjectFromRow(table, row, pf, n_obj)
                 
-        raise Exception("Object ID '", object_id, "' not found in table from window ", self.windowTitle()) 
+        raise Exception("Object ID '", object_id, "' not found in table from tab ", self.key)
             
     def getObjectFromRow(self, table: QTableWidget, row, pf=None, n_obj=None):
         # get the object from the table
@@ -172,18 +207,18 @@ class EditWindow(QDialog):
         args_dict = self.getArgsFromRow(table, row, pf, n_obj)
         
         # get the n_dim from the problem n_obj    
-        if self.windowTitle() == "Edit Ref_dirs":
+        if self.key == "ref_dirs":
             for arg in ["n_dim", "n_points", "partitions"]:
                 self.check_ref_dirs_dependency(args_dict, arg, n_obj)    
         # get the pf from the problem pf
-        elif self.windowTitle() == "Edit Performance Indicators":
+        elif self.key == "pi":
             if "pf" in args_dict and args_dict["pf"] == 'get from problem':
                 args_dict["pf"] = pf
             
         obj = self.get_function(class_name, **args_dict)
         
         if obj is None:
-            raise Exception("Object ID matched, but problem getting it from the class", class_name, "in table from window ", self.windowTitle())
+            raise Exception("Object ID matched, but problem getting it from the class", class_name, "in table from tab ", self.key)
         else:
             return obj
         
@@ -193,7 +228,7 @@ class EditWindow(QDialog):
             try:
                 factor = int(factor_str)
             except ValueError:
-                raise ValueError("Invalid value for n_dim factor:", factor_str)
+                raise ValueError("Invalid value for n_dim factor: ", factor_str)
             args_dict[arg] = n_obj * factor if n_obj is not None else None
     
     def getArgsFromRow(self, table: QTableWidget, row: int, pf = None, n_obj=None):
@@ -206,7 +241,7 @@ class EditWindow(QDialog):
             arg = table.cellWidget(row, col).text()
             widget = table.cellWidget(row, col+1)
             
-            if arg in OPERATORS and self.windowTitle() == "Edit Algorithms":
+            if arg in OPERATORS and self.key == "algorithm":
                 value = self.getOperator(arg, widget.currentText(), pf, n_obj)
             elif isinstance(widget, (ScientificSpinBox, ScientificDoubleSpinBox)):
                 value = widget.value()       
@@ -218,51 +253,23 @@ class EditWindow(QDialog):
                 value = widget.text() if widget.text() != "None" else None
                 if widget.text() == NO_DEFAULT:
                     pass
-                    # raise Exception("No default -> need to set value for arg ", arg, " in row ", row, " of window ", self.windowTitle())
+                    # raise Exception("No default -> need to set value for arg ", arg, " in row ", row, " of tab ", self.key)
                 # try to convert text to int or float
                 else:
                     try:
                         value = int(value)
-                        debug_print("Arg ", arg, ", with value ", value, " converted to int, from window ", self.windowTitle()) 
+                        debug_print("Arg ", arg, ", with value ", value, " converted to int, from tab ", self.key)
                     except:
                         try:
                             value = float(value)
-                            debug_print("Arg ", arg, ", with value ", value, " converted to int, from window ", self.windowTitle()) 
+                            debug_print("Arg ", arg, ", with value ", value, " converted to int, from tab ", self.key)
                         except:
                             pass
             else:
-                raise Exception("Unknown widget type ", type(widget), " for arg ", arg, " in row ", row, " of window ", self.windowTitle())
+                raise Exception("Unknown widget type ", type(widget), " for arg ", arg, " in row ", row, " of tab ", self.key)
             
             args_dict[arg] = value
         return args_dict    
-
-    def getOperator(self, operator, operator_name, pf = None, n_obj=None):
-        raise NotImplementedError("getOperator called from EditWindow")  
-    
-def setEditWindow(button, window_title: str, table: dict, get_function, defaults: Defaults, parent_window_table: QTableWidget, ui_file = DESIGNER_EDIT_WINDOW, op_name: str=None):
-    """Set the edit window to when the button is clicked"""
-    window = EditWindow(window_title, table, get_function, defaults, parent_window_table, ui_file, op_name)
-    button.clicked.connect(window.show)
-    return window
-
-class AlgoWindow(EditWindow):
-    def __init__(self, window_title: str, table: dict, get_function, defaults: Defaults, parent_window_table: QTableWidget, ui_file = DESIGNER_ALGO_WINDOW):
-        
-        self.operator_comboBox_items = {} 
-        # for each operator, set the combobox items available (only for algo window)
-        for op, op_table in [("mutation", defaults.mutation), ("crossover", defaults.crossover), ("selection", defaults.selection), ("sampling", defaults.sampling), ("decomposition", defaults.decomposition), ("ref_dirs", defaults.ref_dirs)]:
-            self.operator_comboBox_items[op] = list(op_table.keys())
-        super().__init__(window_title, table, get_function, defaults, parent_window_table, ui_file)
-        
-        tables = [self.defaults_table, self.variants_table]
-        
-        # set the edit windows for each operator
-        self.mutation_window = setEditWindow(self.pushButton_mutation, "Edit Mutations", self.defaults.mutation, get_mutation, defaults, tables, op_name="mutation")
-        self.crossover_window = setEditWindow(self.pushButton_crossover, "Edit Crossovers", self.defaults.crossover, get_crossover, defaults, tables, op_name="crossover")
-        self.selection_window = setEditWindow(self.pushButton_selection, "Edit Selections", self.defaults.selection, get_selection, defaults, tables, op_name="selection")
-        self.sampling_window = setEditWindow(self.pushButton_sampling, "Edit Samplings", self.defaults.sampling, get_sampling, defaults, tables, op_name="sampling")
-        self.decomposition_window = setEditWindow(self.pushButton_decomposition, "Edit Decompositions", self.defaults.decomposition, get_decomposition, defaults, tables, op_name="decomposition")
-        self.ref_dirs_window = setEditWindow(self.pushButton_ref_dirs, "Edit Ref_dirs", self.defaults.ref_dirs, get_reference_directions, defaults, tables, op_name="ref_dirs")
         
     def setOperatorComboBox(self, table: QTableWidget, row, col, arg, value):
 
@@ -276,18 +283,29 @@ class AlgoWindow(EditWindow):
                 
     def getOperator(self, op_name: str, op_id: str, pf = None, n_obj=None):
         
-        if op_name ==  "mutation":
-            return self.mutation_window.getObjectFromID(op_id)
-        elif op_name == "crossover":
-            return self.crossover_window.getObjectFromID(op_id)
-        elif op_name == "selection":
-            return self.selection_window.getObjectFromID(op_id)
-        elif op_name == "sampling":
-            return self.sampling_window.getObjectFromID(op_id)
-        elif op_name == "decomposition":
-            return self.decomposition_window.getObjectFromID(op_id)
-        elif op_name == "ref_dirs":
-            return self.ref_dirs_window.getObjectFromID(op_id, pf, n_obj)
-        else:
+        if op_name not in OPERATORS:
             raise Exception("Operator " + op_name + " not found, with id " + op_id)
-        
+        else:
+            return self.op_frames[op_name].getObjectFromID(op_id, pf, n_obj)
+    
+    def isChanged(self):
+        # check if the variant table has changed
+        for row in range(self.variants_table.rowCount()):
+            if self.variants_table.cellWidget(row, 0) is not None and ArgsAreSet(self.getArgsFromRow(self.variants_table, row)):
+                return True
+        return False
+    
+    def updateTables(self):
+        new_variant_ids = []
+        table = self.variants_table
+        # get the variants from the table
+        for row in range(table.rowCount()):
+            if table.cellWidget(row, 0) is not None and ArgsAreSet(self.getArgsFromRow(table, row)):
+                new_variant_ids.append(table.cellWidget(row, 0).text())
+        # if the variant ids have changed, change the respective ComboBoxes 
+        if sorted(new_variant_ids) != sorted(self.variant_ids):
+            self.variant_ids = new_variant_ids
+            items = self.variant_ids + self.default_ids
+            self.updateComboBoxItems(items)
+        # close window
+        self.close()

@@ -2,7 +2,10 @@
 DESIGNER_MAIN = 'frontend/designer_templates/main_window.ui' 
 DESIGNER_EDIT_WINDOW = 'frontend/designer_templates/edit_window.ui'
 DESIGNER_ALGO_WINDOW = 'frontend/designer_templates/algo_window.ui'
-DESIGNER_RUN_WINDOW = 'frontend/designer_templates/run_window.ui'
+DESIGNER_RUN_FRAME = 'frontend/designer_templates/run_frame.ui'
+DESIGNER_MAIN_TABS = 'frontend/designer_templates/main_tabs.ui'
+DESIGNER_EDIT_FRAME = 'frontend/designer_templates/edit_frame.ui'
+DESIGNER_RESULTS_FRAME = 'frontend/designer_templates/results_frame.ui'
 
 # tests folders
 RESULTS_FOLDER = 'tests/results'
@@ -22,7 +25,7 @@ OPERATORS = ["mutation", "crossover", "selection", "decomposition", "sampling", 
 FAKE_OPERATORS = ['ReductionBasedReferenceDirectionFactory', 'RieszEnergyReferenceDirectionFactory']
 
 # keys needed in a dictionary given to start the app
-RUN_OPTIONS_KEYS = ['moo', 'n_seeds', 'term', 'pi', 'algo', 'prob']
+RUN_OPTIONS_KEYS = ['n_seeds', 'term', 'pi', 'algo', 'prob']
 
 # import pydevd and settrace() to activate debug in QThreads 
 DEBUG_MODE = True
