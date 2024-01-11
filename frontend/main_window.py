@@ -1,10 +1,11 @@
 from PyQt5.QtWidgets import QHeaderView, QMainWindow, QTabWidget, QVBoxLayout
+from PyQt5 import QtWidgets
 from PyQt5.uic import loadUi
 
 from backend.get import (get_algorithm, get_performance_indicator, get_problem,
                          get_termination)
 from backend.defaults import Defaults
-from backend.run import Run, SingleRunArgs
+from backend.run import RunThread, SingleRunArgs
 from frontend.my_widgets import MyComboBox, MyMessageBox
 from frontend.edit_windows import (EditWindow, ArgsAreSet)
 from frontend.main_window_frames import ResultFrame
@@ -56,12 +57,24 @@ class MainTabsWidget(QTabWidget):
 
         loadUi(DESIGNER_MAIN_TABS, self)
         
-        self.soo_label.setText(label)
         self.defaults = defaults
         
-        # this property holds the result frames from each run
-        self.result_frames = []                            
+        # create the edit window 
+        tab_dicts = {'problem': ('Edit Problems', get_problem, [self.prob_table]), 
+                     'algorithm': ('Edit Algorithms', get_algorithm, [self.algo_table]), 
+                     'pi': ('Edit Performance Indicators', get_performance_indicator, [self.pi_table]),
+                     'termination': ('Edit Termination Criteria', get_termination, [self.term_table])}
+        self.edit_window = EditWindow(tab_dicts, self.defaults)
         
+        # Make the tabs closable
+        self.setTabsClosable(True)
+        self.tabCloseRequested.connect(self.closeTab)
+        self.tabBar().setTabButton(0, QtWidgets.QTabBar.RightSide, None)
+        self.tabBar().setTabButton(1, QtWidgets.QTabBar.RightSide, None)
+
+        ############################ RUN TAB  #################################
+        self.soo_label.setText(label)
+                
         # set run options
         missing_keys = set(RUN_OPTIONS_KEYS) - set(options.keys())
         for key in missing_keys:
@@ -72,28 +85,25 @@ class MainTabsWidget(QTabWidget):
         self.setComboBoxes()
         self.SetDefaultRunOptions()
         
-        # create the edit window 
-        tab_dicts = {'problem': ('Edit Problems', get_problem, [self.prob_table]), 
-                     'algorithm': ('Edit Algorithms', get_algorithm, [self.algo_table]), 
-                     'pi': ('Edit Performance Indicators', get_performance_indicator, [self.pi_table]),
-                     'termination': ('Edit Termination Criteria', get_termination, [self.term_table])}
-        self.edit_window = EditWindow(tab_dicts, self.defaults)
-        
         # set run button 
         self.run_button.clicked.connect(self.runButton)
+
+        ############################ RESULTS TAB  #################################
+
+        # this property holds the result frames from each run
+        self.result_frames = []
         
-        from PyQt5 import QtWidgets
-        
-        # Make the tabs closable
-        self.setTabsClosable(True)
-        self.tabCloseRequested.connect(self.closeTab)
-        self.tabBar().setTabButton(0, QtWidgets.QTabBar.RightSide, None)
-        self.tabBar().setTabButton(1, QtWidgets.QTabBar.RightSide, None)
+        # open, save and erase buttons                            
+        self.save_button.clicked.connect(self.saveAllResults)
+        self.open_button.clicked.connect(self.openAllResults)
+        self.erase_button.clicked.connect(self.eraseAllResults)
     
+    ### General methods ###        
     def closeTab(self, index):
         """Close the tab at the given index"""
         self.removeTab(index)
-        
+    
+    ### Run tab methods ###
     def setComboBoxes(self):
         
         # options for each combobox
@@ -198,7 +208,7 @@ class MainTabsWidget(QTabWidget):
             return None
         
         # get the run objects and create the run window
-        return Run(run_args, term_id, term_object, n_seeds, moo)
+        return RunThread(run_args, term_id, term_object, n_seeds, moo)
 
     def runButton(self):
         """First start the run window, then start the run. The two are separated 
@@ -220,3 +230,36 @@ class MainTabsWidget(QTabWidget):
         self.results_layout.addWidget(result_frame)  # Add the ResultFrame to the QVBoxLayout.
         
         self.setCurrentIndex(1)
+
+    ### Results tab methods ###
+    def noResults(self):
+        """Return True if there are no results"""
+        if self.results_layout.count() == 0:
+            warning = MyMessageBox("There are no results available.")
+            return True
+        return False
+    
+    def saveAllResults(self):
+        """Save all results"""
+        if self.noResults():
+            return
+        
+        for i in range(self.results_layout.count()):
+            self.results_layout.itemAt(i).widget().saveResults()
+    
+    def openAllResults(self):
+        """Open all results"""
+        if self.noResults():
+            return
+        
+        for i in range(self.results_layout.count()):
+            self.results_layout.itemAt(i).widget().openTab()
+    
+    def eraseAllResults(self):
+        """Erase all results"""
+        if self.noResults():
+            return
+        
+        for i in range(self.results_layout.count()):
+            self.results_layout.itemAt(0).widget().erase()
+            

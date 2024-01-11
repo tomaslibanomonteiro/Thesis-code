@@ -4,10 +4,11 @@ from pymoo.core.algorithm import Algorithm
 from pymoo.core.callback import Callback
 from pymoo.core.result import Result
 from pymoo.optimize import minimize
-import matplotlib.pyplot as plt
 
 from utils.debug import debug_print
 
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import QThread
 
 class MyCallback(Callback):
 
@@ -33,8 +34,11 @@ class SingleRunArgs():
         self.pi_ids = pi_ids
         self.pi_object = pi_objects                
         
-class Run():
-    def __init__(self, single_run_args: list, term_id, term_object, n_seeds: int, moo: bool, thread = None):
+class RunThread(QThread):
+    progressSignal = pyqtSignal(str, int)
+
+    def __init__(self, single_run_args: list, term_id, term_object, n_seeds: int, moo: bool):
+        super().__init__()
         self.n_seeds = n_seeds
         self.term_id = term_id
         self.term_object = term_object
@@ -43,29 +47,33 @@ class Run():
         self.data = pd.DataFrame()
         self.dfs_dict = {}
         self.run_counter = 0
-        self.thread = thread
         self.total_single_runs = len(single_run_args)*n_seeds
-        
+        self.is_running = True  # Add this flag
+
     def run(self):
         for run_args in self.single_run_args_list:
             for seed in range(self.n_seeds):
+                if not self.is_running:  # Check the flag here
+                    return
                 self.progressUpdate(run_args.algo_id, run_args.prob_id, seed)
                 res = self.single_run(run_args, seed, self.term_object)
                 self.data = self.update_data(run_args, res, res.algorithm.callback)
         
-        self.dfs_dict = self.get_DFs_dict(self.single_run_args_list[0].pi_ids)
-    
+        self.get_DFs_dict(run_args.pi_ids)
+        
+    def cancel(self):
+        self.is_running = False    
+        
     def progressUpdate(self, algo_id: str, prob_id: str, seed: int):
         """Update the progress bar and the text in the status bar"""
         
         text = f"Running algo {algo_id} on problem {prob_id}, seed {seed}"
         percentage = self.run_counter/self.total_single_runs*100                
-        
-        if self.thread:    
-            self.thread.progressUpdate(text, percentage)
-        debug_print(f"{percentage}%  - ",text)
         self.run_counter += 1    
-            
+        self.progressSignal.emit(text, percentage)
+        
+        debug_print(f"{percentage:.0f}%  - ",text) #!
+        
     def single_run(self, run_args: SingleRunArgs, seed: int, termination) -> Result:
         res = minimize(algorithm=run_args.algo_object,
                        problem=run_args.prob_object,
@@ -127,7 +135,7 @@ class Run():
                 dfs_dict[pi_id]['voting'] = dfs_dict[pi_id].idxmin(axis=0).value_counts()
                 dfs_dict[pi_id]['voting'] = dfs_dict[pi_id]['voting'].fillna(0).astype(int)
             
-        return dfs_dict
+        self.dfs_dict = dfs_dict
     
     def save_data(self, filename: str):
         self.data.to_csv(filename, index=False)

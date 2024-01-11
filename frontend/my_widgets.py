@@ -259,7 +259,7 @@ class ScientificSpinBox(QtWidgets.QSpinBox):
         # On 64 bit windows, QSpinBox maximum size is limited to 32 bit, so check for this here:
         self.validator = IntValidator()
         try:
-            self.setRange(-int(10e16), int(10e16))
+            self.setRange(-int(10e16), int(10e16)) #@IgnoreException
         except OverflowError:
             self.setRange(-int(2 ** 31 - 1), int(2 ** 31 - 1))
 

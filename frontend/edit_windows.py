@@ -257,11 +257,11 @@ class EditFrame(QFrame):
                 # try to convert text to int or float
                 else:
                     try:
-                        value = int(value)
+                        value = int(value) #@IgnoreException
                         debug_print("Arg ", arg, ", with value ", value, " converted to int, from tab ", self.key)
                     except:
                         try:
-                            value = float(value)
+                            value = float(value) #@IgnoreException
                             debug_print("Arg ", arg, ", with value ", value, " converted to int, from tab ", self.key)
                         except:
                             pass

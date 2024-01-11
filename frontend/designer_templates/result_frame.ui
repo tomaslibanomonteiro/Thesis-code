@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>958</width>
+    <width>860</width>
     <height>127</height>
    </rect>
   </property>
@@ -24,7 +24,7 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>941</width>
+     <width>841</width>
      <height>111</height>
     </rect>
    </property>
@@ -64,16 +64,6 @@
      </widget>
     </item>
     <item>
-     <widget class="QPushButton" name="reproduceRun_button">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-      <property name="text">
-       <string>Reproduce Run</string>
-      </property>
-     </widget>
-    </item>
-    <item>
      <widget class="QPushButton" name="cancel_button">
       <property name="text">
        <string>cancel</string>
@@ -85,7 +75,7 @@
   <widget class="QLabel" name="progress_label">
    <property name="geometry">
     <rect>
-     <x>60</x>
+     <x>30</x>
      <y>20</y>
      <width>491</width>
      <height>30</height>

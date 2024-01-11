@@ -1,61 +1,39 @@
 from PyQt5.QtWidgets import QFrame, QTableWidget, QTableWidgetItem, QTabWidget
 from PyQt5.uic import loadUi
-from backend.run import Run
-from utils.defines import DESIGNER_RUN_FRAME, DESIGNER_RESULTS_FRAME
+from backend.run import RunThread
+from utils.defines import DESIGNER_RUN_FRAME, DESIGNER_RESULT_FRAME
 from matplotlib import pyplot as plt
-from PyQt5.QtCore import QThread
 from PyQt5.QtWidgets import QFileDialog
-from PyQt5.QtCore import pyqtSignal
 
-class MyThread(QThread):
-    progressSignal = pyqtSignal(str, int)
-
-    def __init__(self, run_obj: Run):
-        super().__init__()
-        self.run_obj = run_obj
-        self.run_obj.thread = self
-
-    def run(self):
-        import pydevd
-        pydevd.settrace(suspend=False)
-        self.run_obj.run()    
-    
-    def progressUpdate(self, text: str, percentage: int):
-        """send the progress update to the ResultFrame"""
-        self.progressSignal.emit(text, percentage)
-        
 class ResultFrame(QFrame):
-    def __init__(self, run: Run, run_name: str, tabWidget: QTabWidget):
+    def __init__(self, run_thread: RunThread, run_name: str, tabWidget: QTabWidget):
         super().__init__()
-        loadUi(DESIGNER_RESULTS_FRAME, self)
+        loadUi(DESIGNER_RESULT_FRAME, self)
         
-        self.run = run                
         self.run_name = run_name
-        
         self.label.setText(run_name)
         self.tabWidget = tabWidget
                 
         # buttons
         self.openTab_button.clicked.connect(self.openTab)
         self.saveResults_button.clicked.connect(self.saveResults)
-        self.reproduceRun_button.clicked.connect(self.reproduce_run)
+        # self.reproduceRun_button.clicked.connect(self.reproduce_run)
         self.cancel_button.clicked.connect(self.cancel_run)
 
-        # make the run in a separate thread (has to be called in another class)
-        self.my_thread = MyThread(run)
-        self.my_thread.progressSignal.connect(self.receiveUpdate)
-        self.my_thread.start()
-        self.my_thread.finished.connect(self.afterRun)
+        # make the run in a separate thread (has to be called in another class) 
+        self.run_thread = run_thread                
+        self.run_thread.progressSignal.connect(self.receiveUpdate)
+        self.run_thread.start()
+        self.run_thread.finished.connect(self.afterRun)
 
     def afterRun(self):
             """After the run is finished, add the tab to the run window and show it"""
-            index = self.tabWidget.addTab(RunFrame(self.run, self.run_name), self.run_name)
+            index = self.tabWidget.addTab(RunTab(self.run_thread, self.run_name), self.run_name)
             self.tabWidget.setCurrentIndex(index)
             self.progressBar.setValue(100)
             self.progress_label.setText("")
             self.openTab_button.setEnabled(True)
             self.saveResults_button.setEnabled(True)
-            self.reproduceRun_button.setEnabled(True)
             
             # change the erase button to cancel button
             self.cancel_button.setText("Erase")
@@ -81,14 +59,11 @@ class ResultFrame(QFrame):
     def saveResults(self):
         """Save the results of the run"""
         options = QFileDialog.Options()
-        fileName, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()", "","CSV Files (*.csv);;All Files (*)", options=options)
+        defaultName = f"{self.run_name}.csv"
+        fileName, _ = QFileDialog.getSaveFileName(self, "QFileDialog.getSaveFileName()", defaultName, "CSV Files (*.csv);;All Files (*)", options=options)
         if fileName:
-            self.run.data.to_csv(fileName, index=False)    
+            self.run_thread.data.to_csv(fileName, index=False)    
         
-    def reproduce_run(self):
-        """Reproduce the run"""
-        pass
-    
     def erase(self):
         """Erase the run"""
         self.tabWidget.results_layout.removeWidget(self)
@@ -96,19 +71,19 @@ class ResultFrame(QFrame):
     
     def cancel_run(self):
         """Cancel the run"""
-        self.my_thread.terminate()
+        self.run_thread.cancel()
         self.erase()
         
-class RunFrame(QFrame):
-    def __init__(self, run: Run, label: str):
+class RunTab(QFrame):
+    def __init__(self, run_thread: RunThread, label: str):
         super().__init__()
         loadUi(DESIGNER_RUN_FRAME, self)
         
         self.label.setText(label)
-        self.run = run 
-                 
+        self.run_thread = run_thread
+        
         # update the combo box with the performance indicators
-        pi_ids = [key for key in self.run.dfs_dict.keys()]
+        pi_ids = [key for key in self.run_thread.dfs_dict.keys()]
         self.pi.addItems(pi_ids)
         self.pi.currentIndexChanged.connect(self.changeTable)
         self.pi.setCurrentIndex(0)
@@ -126,7 +101,7 @@ class RunFrame(QFrame):
         
         # get the performance indicator id and the corresponding dataframe
         pi_id = self.pi.currentText()
-        df = self.run.dfs_dict[pi_id]
+        df = self.run_thread.dfs_dict[pi_id]
         
         # update the table widget
         self.table.setEditTriggers(QTableWidget.NoEditTriggers) # make table non-editable
@@ -168,7 +143,7 @@ class RunFrame(QFrame):
     def plot_prob(self, prob_id: str, pi_id: str):
         """Plot the results of the optimization for a given problem and performance indicator"""
 
-        df = self.run.data[self.run.data['problem_id'] == prob_id]
+        df = self.run_thread.data[self.run_thread.data['problem_id'] == prob_id]
 
         # get df with columns: algorithm_id, seed, n_eval, n_gen, pi_id
         df = df[['algorithm_id', 'seed', 'n_eval', 'n_gen', pi_id]]

@@ -5,7 +5,7 @@ DESIGNER_ALGO_WINDOW = 'frontend/designer_templates/algo_window.ui'
 DESIGNER_RUN_FRAME = 'frontend/designer_templates/run_frame.ui'
 DESIGNER_MAIN_TABS = 'frontend/designer_templates/main_tabs.ui'
 DESIGNER_EDIT_FRAME = 'frontend/designer_templates/edit_frame.ui'
-DESIGNER_RESULTS_FRAME = 'frontend/designer_templates/results_frame.ui'
+DESIGNER_RESULT_FRAME = 'frontend/designer_templates/result_frame.ui'
 
 # tests folders
 RESULTS_FOLDER = 'tests/results'
