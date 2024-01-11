@@ -62,7 +62,6 @@ class Defaults():
             self.dict['pi']['igd+_default']['pf'] = 'get from problem'
             self.dict['pi']['gd+_default']['pf'] = 'get from problem'
             self.dict['pi']['hv_default']['pf'] = 'get from problem'
-            self.dict['pi']['hv_default']['ref_point'] = NO_DEFAULT
     
     def return_dict(self):
         return self.dict

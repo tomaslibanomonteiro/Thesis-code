@@ -24,7 +24,7 @@ class OperatorWindow(QDialog):
         self.frames = {}
         
         for key in tab_dict.keys():
-            self.frames[key] = MyFrame(key, tab_dict[key], defaults)
+            self.frames[key] = EditFrame(key, tab_dict[key], defaults)
             self.tabWidget.addTab(self.frames[key], key)
             
         self.save_button.clicked.connect(self.save)
@@ -65,7 +65,7 @@ class EditWindow(OperatorWindow):
     def openOperatorWindow(self):
         self.operator_window.show()
     
-class MyFrame(QFrame):
+class EditFrame(QFrame):
     def __init__(self, key, args: tuple, defaults: dict):
         super().__init__()
         

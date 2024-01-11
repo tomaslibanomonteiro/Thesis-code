@@ -4,36 +4,101 @@ from backend.run import Run
 from utils.defines import DESIGNER_RUN_FRAME, DESIGNER_RESULTS_FRAME
 from matplotlib import pyplot as plt
 from PyQt5.QtCore import QThread
+from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtCore import pyqtSignal
 
 class MyThread(QThread):
+    progressSignal = pyqtSignal(str, int)
+
     def __init__(self, run_obj: Run):
         super().__init__()
-        self.run_obj = run_obj     
+        self.run_obj = run_obj
+        self.run_obj.thread = self
 
     def run(self):
         import pydevd
         pydevd.settrace(suspend=False)
-        self.run_obj.run()            
-
+        self.run_obj.run()    
+    
+    def progressUpdate(self, text: str, percentage: int):
+        """send the progress update to the ResultFrame"""
+        self.progressSignal.emit(text, percentage)
+        
 class ResultFrame(QFrame):
     def __init__(self, run: Run, run_name: str, tabWidget: QTabWidget):
         super().__init__()
         loadUi(DESIGNER_RESULTS_FRAME, self)
         
-        self.run = run
+        self.run = run                
         self.run_name = run_name
+        
+        self.label.setText(run_name)
         self.tabWidget = tabWidget
+                
+        # buttons
+        self.openTab_button.clicked.connect(self.openTab)
+        self.saveResults_button.clicked.connect(self.saveResults)
+        self.reproduceRun_button.clicked.connect(self.reproduce_run)
+        self.cancel_button.clicked.connect(self.cancel_run)
+
         # make the run in a separate thread (has to be called in another class)
         self.my_thread = MyThread(run)
-        self.my_thread.finished.connect(self.afterRun)
+        self.my_thread.progressSignal.connect(self.receiveUpdate)
         self.my_thread.start()
-                
-    def afterRun(self):
-        """After the run is finished, add tabs to the run window and show it"""
-        self.tabWidget.addTab(RunFrame(self.run, self.run_name), self.run_name)
-        self.tabWidget.setCurrentIndex(self.tabWidget.count()-1)
+        self.my_thread.finished.connect(self.afterRun)
 
-      
+    def afterRun(self):
+            """After the run is finished, add the tab to the run window and show it"""
+            index = self.tabWidget.addTab(RunFrame(self.run, self.run_name), self.run_name)
+            self.tabWidget.setCurrentIndex(index)
+            self.progressBar.setValue(100)
+            self.progress_label.setText("")
+            self.openTab_button.setEnabled(True)
+            self.saveResults_button.setEnabled(True)
+            self.reproduceRun_button.setEnabled(True)
+            
+            # change the erase button to cancel button
+            self.cancel_button.setText("Erase")
+            self.cancel_button.clicked.connect(self.erase)
+            
+    def closeTab(self, index):
+        """Close the tab at the given index"""
+        self.tabWidget.removeTab(index)       
+
+    def openTab(self):
+        """Check if any of the tabs has the same name as the run, if not, call afterRun"""
+        for i in range(self.tabWidget.count()):
+            if self.tabWidget.tabText(i) == self.run_name:
+                self.tabWidget.setCurrentIndex(i)
+                return
+        self.afterRun()
+    
+    def receiveUpdate(self, label: str, value: int):
+        """Update the progress bar and label with the current run"""
+        self.progressBar.setValue(value)
+        self.progress_label.setText(label)
+             
+    def saveResults(self):
+        """Save the results of the run"""
+        options = QFileDialog.Options()
+        fileName, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()", "","CSV Files (*.csv);;All Files (*)", options=options)
+        if fileName:
+            self.run.data.to_csv(fileName, index=False)    
+        
+    def reproduce_run(self):
+        """Reproduce the run"""
+        pass
+    
+    def erase(self):
+        """Erase the run"""
+        self.tabWidget.results_layout.removeWidget(self)
+        self.deleteLater()     
+    
+    def cancel_run(self):
+        """Cancel the run"""
+        self.my_thread.terminate()
+        self.erase()
+        
 class RunFrame(QFrame):
     def __init__(self, run: Run, label: str):
         super().__init__()
@@ -122,3 +187,4 @@ class RunFrame(QFrame):
             plt.xlabel(var)
             plt.ylabel(pi_id)
             plt.show()
+            

@@ -7,7 +7,7 @@ from backend.defaults import Defaults
 from backend.run import Run, SingleRunArgs
 from frontend.my_widgets import MyComboBox, MyMessageBox
 from frontend.edit_windows import (EditWindow, ArgsAreSet)
-from frontend.run_widgets import ResultFrame
+from frontend.main_window_frames import ResultFrame
 from utils.defines import DESIGNER_MAIN, RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_MAIN_TABS
 
 class MyMainWindow(QMainWindow):
@@ -15,7 +15,7 @@ class MyMainWindow(QMainWindow):
         super().__init__()        
         
         loadUi(DESIGNER_MAIN, self)
-        
+
         self.soo_tabs = MainTabsWidget(options_soo, defaults_soo, 'Single Objective Optimization')
         my_layout_soo = QVBoxLayout()
         my_layout_soo.addWidget(self.soo_tabs)
@@ -48,6 +48,8 @@ class MyMainWindow(QMainWindow):
             self.stackedWidget.setCurrentIndex(0)
             self.actionSOO.setChecked(True)
 
+
+
 class MainTabsWidget(QTabWidget):
     def __init__(self, options, defaults, label) -> None:
         super().__init__()
@@ -55,34 +57,46 @@ class MainTabsWidget(QTabWidget):
         loadUi(DESIGNER_MAIN_TABS, self)
         
         self.soo_label.setText(label)
-        # set run button 
-        self.run_button.clicked.connect(self.runButton)
         self.defaults = defaults
         
-        # set run options
-        if not set(options.keys()).issubset(set(RUN_OPTIONS_KEYS)):
-            raise ValueError(f"Invalid run options: expected keys {RUN_OPTIONS_KEYS}, got keys {options.keys()}")
+        # this property holds the result frames from each run
+        self.result_frames = []                            
         
+        # set run options
         missing_keys = set(RUN_OPTIONS_KEYS) - set(options.keys())
         for key in missing_keys:
             options[key] = []
         self.options = options
 
+        # set the combo boxes and the default run options
         self.setComboBoxes()
-        self.SetDefaultRunOptions()                            
+        self.SetDefaultRunOptions()
         
-        # KEYS MUST MATCH 'DEFAULTS' KEYS 
+        # create the edit window 
         tab_dicts = {'problem': ('Edit Problems', get_problem, [self.prob_table]), 
                      'algorithm': ('Edit Algorithms', get_algorithm, [self.algo_table]), 
                      'pi': ('Edit Performance Indicators', get_performance_indicator, [self.pi_table]),
                      'termination': ('Edit Termination Criteria', get_termination, [self.term_table])}
-        
         self.edit_window = EditWindow(tab_dicts, self.defaults)
-                
+        
+        # set run button 
+        self.run_button.clicked.connect(self.runButton)
+        
+        from PyQt5 import QtWidgets
+        
+        # Make the tabs closable
+        self.setTabsClosable(True)
+        self.tabCloseRequested.connect(self.closeTab)
+        self.tabBar().setTabButton(0, QtWidgets.QTabBar.RightSide, None)
+        self.tabBar().setTabButton(1, QtWidgets.QTabBar.RightSide, None)
+    
+    def closeTab(self, index):
+        """Close the tab at the given index"""
+        self.removeTab(index)
+        
     def setComboBoxes(self):
         
         # options for each combobox
-        
         self.comboBox_items = []
         for key in ['problem', 'algorithm', 'pi', 'termination']:
             options = [obj_id for obj_id in self.defaults[key].keys() if ArgsAreSet(self.defaults[key])]
@@ -185,15 +199,24 @@ class MainTabsWidget(QTabWidget):
         
         # get the run objects and create the run window
         return Run(run_args, term_id, term_object, n_seeds, moo)
-        
+
     def runButton(self):
         """First start the run window, then start the run. The two are separated 
         so that in a test scenario the threads from this window can be trailed 
         so it waits for them to finish before checking results."""
+        
+        if self.results_layout.count() > 6:
+            warning = MyMessageBox("Please clear one of the results before running again.")
+            return
+        
         run = self.getRunObject()
         if run is None:
             return
+
+        # create a result frame. get the number of the run from the self.listWidget
+        run_number = self.results_layout.count() + 1  # Assuming run_number is the count of items in the list
+        result_frame = ResultFrame(run, f"Run {run_number}", self)
+
+        self.results_layout.addWidget(result_frame)  # Add the ResultFrame to the QVBoxLayout.
         
-        result_frame = ResultFrame(run, f"Run {self.my_layout.count()+1}", self)        
-        self.my_layout.addWidget(result_frame)
-        
+        self.setCurrentIndex(1)

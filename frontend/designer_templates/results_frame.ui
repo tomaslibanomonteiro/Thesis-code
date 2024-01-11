@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>732</width>
-    <height>128</height>
+    <width>958</width>
+    <height>127</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,57 +24,82 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>711</width>
+     <width>941</width>
      <height>111</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <widget class="QLabel" name="label_7">
+     <widget class="QLabel" name="label">
       <property name="text">
-       <string>Run 1</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QPushButton" name="pushButton_2">
-      <property name="text">
-       <string>Open in tab</string>
+       <string>Run Name</string>
       </property>
      </widget>
     </item>
     <item>
      <widget class="QProgressBar" name="progressBar">
       <property name="value">
-       <number>24</number>
+       <number>0</number>
       </property>
      </widget>
     </item>
     <item>
-     <widget class="QLineEdit" name="lineEdit"/>
-    </item>
-    <item>
-     <widget class="QLabel" name="label_8">
+     <widget class="QPushButton" name="openTab_button">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="text">
-       <string>.csv</string>
+       <string>Open in tab</string>
       </property>
      </widget>
     </item>
     <item>
-     <widget class="QPushButton" name="pushButton">
+     <widget class="QPushButton" name="saveResults_button">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="text">
        <string>Save Results</string>
       </property>
      </widget>
     </item>
     <item>
-     <widget class="QPushButton" name="pushButton_3">
+     <widget class="QPushButton" name="reproduceRun_button">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="text">
        <string>Reproduce Run</string>
       </property>
      </widget>
     </item>
+    <item>
+     <widget class="QPushButton" name="cancel_button">
+      <property name="text">
+       <string>cancel</string>
+      </property>
+     </widget>
+    </item>
    </layout>
+  </widget>
+  <widget class="QLabel" name="progress_label">
+   <property name="geometry">
+    <rect>
+     <x>60</x>
+     <y>20</y>
+     <width>491</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>TextLabel</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+   <property name="wordWrap">
+    <bool>false</bool>
+   </property>
   </widget>
  </widget>
  <resources/>

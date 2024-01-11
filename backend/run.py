@@ -34,7 +34,7 @@ class SingleRunArgs():
         self.pi_object = pi_objects                
         
 class Run():
-    def __init__(self, single_run_args: list, term_id, term_object, n_seeds: int, moo: bool):
+    def __init__(self, single_run_args: list, term_id, term_object, n_seeds: int, moo: bool, thread = None):
         self.n_seeds = n_seeds
         self.term_id = term_id
         self.term_object = term_object
@@ -42,16 +42,30 @@ class Run():
         self.moo = moo
         self.data = pd.DataFrame()
         self.dfs_dict = {}
+        self.run_counter = 0
+        self.thread = thread
+        self.total_single_runs = len(single_run_args)*n_seeds
         
     def run(self):
         for run_args in self.single_run_args_list:
             for seed in range(self.n_seeds):
-                debug_print(run_args.algo_id, run_args.prob_id, seed)
+                self.progressUpdate(run_args.algo_id, run_args.prob_id, seed)
                 res = self.single_run(run_args, seed, self.term_object)
                 self.data = self.update_data(run_args, res, res.algorithm.callback)
         
         self.dfs_dict = self.get_DFs_dict(self.single_run_args_list[0].pi_ids)
+    
+    def progressUpdate(self, algo_id: str, prob_id: str, seed: int):
+        """Update the progress bar and the text in the status bar"""
         
+        text = f"Running algo {algo_id} on problem {prob_id}, seed {seed}"
+        percentage = self.run_counter/self.total_single_runs*100                
+        
+        if self.thread:    
+            self.thread.progressUpdate(text, percentage)
+        debug_print(f"{percentage}%  - ",text)
+        self.run_counter += 1    
+            
     def single_run(self, run_args: SingleRunArgs, seed: int, termination) -> Result:
         res = minimize(algorithm=run_args.algo_object,
                        problem=run_args.prob_object,
@@ -88,9 +102,6 @@ class Run():
         single_run = pd.DataFrame(single_run)
 
         return pd.concat([data, single_run])
-
-    def print_data(self):
-        print(self.data)
         
     def get_DFs_dict(self, pi_ids: list):
         """ returns a dictionary of pi_ids, where each entry is a dataframe

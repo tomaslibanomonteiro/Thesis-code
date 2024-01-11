@@ -10,8 +10,8 @@ class Test():
         
         if set(options.keys()) != set(RUN_OPTIONS_KEYS + ['moo']):
             raise Exception('Invalid options dictionary! Test options must contain: ' + str(RUN_OPTIONS_KEYS + ['moo']))
-        self.moo = options.pop('moo') 
         self.options = options
+        self.moo = self.options.pop('moo') 
         self.defaults_soo = defaults_soo
         self.defaults_moo = defaults_moo
         
@@ -73,6 +73,15 @@ options_soo_mixed = {
 }        
 
 soo_mixed = Test('soo_mixed', options_soo_mixed)
+
+options_soo_simple = {
+    'moo': False,
+    'n_seeds': 2,
+    'term': ['n_eval_default'],
+    'pi': ['best_default'],
+    'algo': ['ga_default'],
+    'prob': ['ackley_default']
+}
     
 ############################################################################################################
 ######################################### MOO TESTS ########################################################
@@ -111,3 +120,11 @@ options_moo_mixed = {
 
 moo_mixed = Test('moo_mixed_1', options_moo_mixed)
 
+options_moo_simple = {
+    'moo': True,
+    'n_seeds': 2,
+    'term': ['n_eval_default'],
+    'pi': ['gd_default'],
+    'algo': ['nsga2_default'],
+    'prob': ['bnh_default']    
+}

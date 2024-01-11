@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1107</width>
-    <height>689</height>
+    <width>1059</width>
+    <height>683</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -32,6 +32,9 @@
     <layout class="QVBoxLayout" name="verticalLayout">
      <property name="spacing">
       <number>20</number>
+     </property>
+     <property name="sizeConstraint">
+      <enum>QLayout::SetDefaultConstraint</enum>
      </property>
      <property name="topMargin">
       <number>0</number>
@@ -529,16 +532,36 @@
    <attribute name="title">
     <string>Results</string>
    </attribute>
+   <widget class="QLabel" name="label_7">
+    <property name="geometry">
+     <rect>
+      <x>320</x>
+      <y>20</y>
+      <width>411</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt; font-weight:600;&quot;&gt;Your Run Results will appear here&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
    <widget class="QWidget" name="verticalLayoutWidget_2">
     <property name="geometry">
      <rect>
-      <x>0</x>
-      <y>0</y>
-      <width>1031</width>
-      <height>16</height>
+      <x>10</x>
+      <y>60</y>
+      <width>1021</width>
+      <height>561</height>
      </rect>
     </property>
-    <layout class="QVBoxLayout" name="my_layout"/>
+    <layout class="QVBoxLayout" name="results_layout">
+     <property name="spacing">
+      <number>2</number>
+     </property>
+     <property name="sizeConstraint">
+      <enum>QLayout::SetDefaultConstraint</enum>
+     </property>
+    </layout>
    </widget>
   </widget>
  </widget>
