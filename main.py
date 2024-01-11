@@ -18,8 +18,6 @@ def main():
         main_window.moo_tabs.runButton()
         
     app.exec_()
-
-        
         
 if __name__ == '__main__':
     main()

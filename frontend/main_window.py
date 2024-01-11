@@ -197,4 +197,3 @@ class MainTabsWidget(QTabWidget):
         result_frame = ResultFrame(run, f"Run {self.my_layout.count()+1}", self)        
         self.my_layout.addWidget(result_frame)
         
-        
