@@ -12,7 +12,7 @@ from utils.defines import NO_DEFAULT, OPERATORS, VALUE_TYPES
 class Defaults():
     def __init__(self, obj = 'all'):
         """obj can be 'soo', 'moo' or 'all'        
-            what is changed in the defaults set by the code?
+            what is changed in the defaults set by the code? #!
             - if the algorithm has no default operator value, the first operator in the 
             list is assumed as the default
             - the list of specific arguments changed is at the end 

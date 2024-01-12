@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1147</width>
-    <height>750</height>
+    <height>745</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -65,16 +65,17 @@
      <property name="title">
       <string>Save</string>
      </property>
-     <addaction name="action_SaveDefaultsVariants"/>
      <addaction name="action_SaveAllResults"/>
      <addaction name="action_SaveRunOptions"/>
+     <addaction name="action_SaveParameters"/>
     </widget>
     <widget class="QMenu" name="menuLoad">
      <property name="title">
       <string>Load</string>
      </property>
-     <addaction name="action_LoadRunOptions"/>
      <addaction name="action_LoadResults"/>
+     <addaction name="action_LoadRunOptions"/>
+     <addaction name="action_LoadParameters"/>
     </widget>
     <addaction name="menuLoad"/>
     <addaction name="menuSave"/>
@@ -84,7 +85,7 @@
      <string>Options</string>
     </property>
     <addaction name="action_SwitchPage"/>
-    <addaction name="action_EditRunOptions"/>
+    <addaction name="action_EditParameters"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -99,9 +100,9 @@
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="action_EditRunOptions">
+  <action name="action_EditParameters">
    <property name="text">
-    <string>Edit Run Options</string>
+    <string>Edit Parameters</string>
    </property>
    <property name="toolTip">
     <string>Edit Run Options</string>
@@ -122,9 +123,9 @@
     <string>Results</string>
    </property>
   </action>
-  <action name="action_SaveDefaultsVariants">
+  <action name="action_SaveParameters">
    <property name="text">
-    <string>Defaults + Variants</string>
+    <string>Parameters</string>
    </property>
   </action>
   <action name="action_SaveAllResults">
@@ -145,6 +146,11 @@
   <action name="action_SaveRunOptions">
    <property name="text">
     <string>Run Options</string>
+   </property>
+  </action>
+  <action name="action_LoadParameters">
+   <property name="text">
+    <string>Parameters</string>
    </property>
   </action>
  </widget>

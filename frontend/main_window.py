@@ -12,43 +12,45 @@ from utils.defines import DESIGNER_MAIN, RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, 
 import pickle
 
 class MyMainWindow(QMainWindow):
-    def __init__(self, options_soo = {}, options_moo = {}, defaults_soo = Defaults('soo').dict, defaults_moo = Defaults('moo').dict, ) -> None:
+    def __init__(self, run_options_soo = {}, run_options_moo = {}, parameters_soo = Defaults('soo').dict, parameters_moo = Defaults('moo').dict, ) -> None:
         super().__init__()        
         
         loadUi(DESIGNER_MAIN, self)
 
+        # Set the current page to the SOO or MOO page depending on the options given to start the app
+        page, text = (0, "Change to MOO") if run_options_soo != {} else (1, "Change to SOO")
+        self.stackedWidget.setCurrentIndex(page)
+        self.action_SwitchPage.setText(text)
+
         # Create single objective optimization tab
-        self.soo_tabs = MainTabsWidget(options_soo, defaults_soo, 'Single Objective Optimization')
+        self.soo_tabs = MainTabsWidget(run_options_soo, parameters_soo, 'Single Objective Optimization')
         my_layout_soo = QVBoxLayout()
         my_layout_soo.addWidget(self.soo_tabs)
         my_layout_soo.setStretch(0, 1)
         self.SOOpage.setLayout(my_layout_soo)
         
         # Create multi objective optimization tab
-        self.moo_tabs = MainTabsWidget(options_moo, defaults_moo, 'Multi Objective Optimization')
+        self.moo_tabs = MainTabsWidget(run_options_moo, parameters_moo, 'Multi Objective Optimization')
         my_layout_moo = QVBoxLayout()
         my_layout_moo.addWidget(self.moo_tabs)
         my_layout_moo.setStretch(0, 1)
         self.MOOpage.setLayout(my_layout_moo)
         
-        # Set the current page to the SOO or MOO page depending on the options given to start the app
-        page, text = (0, "Change to MOO") if options_soo != {} else (1, "Change to SOO")
-        self.stackedWidget.setCurrentIndex(page)
-        self.action_SwitchPage.setText(text)
-
         # Menu bar actions
-        self.action_EditRunOptions.triggered.connect(self.editRunOptions)
         self.action_SwitchPage.triggered.connect(self.switchPage)
-        self.action_SaveDefaultsVariants.triggered.connect(self.saveDefaultsVariants)
-        self.action_LoadRunOptions.triggered.connect(self.loadRunOptions)
-        self.action_LoadResults.triggered.connect(self.loadResults)
-        self.action_SaveDefaultsVariants.triggered.connect(self.saveDefaultsVariants)
-        self.action_SaveAllResults.triggered.connect(self.saveAllResults)
         self.action_SeeTutorial.triggered.connect(self.seeTutorial)
         self.action_About.triggered.connect(self.about)
-        self.action_SaveRunOptions.triggered.connect(self.saveRunOptions)
 
-    ####### GENRAL METHODS #######
+        self.action_SaveRunOptions.triggered.connect(self.saveRunOptions)
+        self.action_SaveAllResults.triggered.connect(self.saveAllResults)
+        self.action_LoadRunOptions.triggered.connect(self.loadRunOptions)
+        self.action_LoadResults.triggered.connect(self.loadResults)
+
+        self.action_EditParameters.triggered.connect(self.editParameters)
+        self.action_SaveParameters.triggered.connect(self.saveParameters)
+        self.action_LoadParameters.triggered.connect(self.loadParameters)
+
+    ####### GENERAL METHODS #######
     
     def switchPage(self):
         """Switch between SOO and MOO pages, and change the menu bar accordingly"""
@@ -124,51 +126,83 @@ class MyMainWindow(QMainWindow):
     
     ####### EDIT WINDOW METHODS #######
     
-    def editRunOptions(self):
+    def editParameters(self):
         active_tabs = self.soo_tabs if self.stackedWidget.currentIndex() == 0 else self.moo_tabs
         active_tabs.edit_window.show()
     
-    ##### TODO: Implement the functionality for the following actions #####
+    def saveParameters(self):
+        """Go through all the tabs and save the parameters as a dictionary, where the key is the tab name
+        and the value is a dictionary with the parameters. dont forget to save the operators"""
 
-    def saveDefaultsVariants(self):
-        # TODO: Implement the functionality for the Save Defaults Variants action
-        pass
+        edit_window = self.soo_tabs.edit_window if self.stackedWidget.currentIndex() == 0 else self.moo_tabs.edit_window
+        
+        parameters = {}
+        
+        # save the parameters from the main tabs
+        for tab_name, tab in edit_window.tabs.items():
+            parameters[tab_name] = tab.tableToDict()
+        
+        # save the parameters from the operator tabs
+        for tab_name, tab in edit_window.operator_window.tabs.items():
+            parameters[tab_name] = tab.tableToDict()
+            
+        # Open file dialog to select the save location
+        file_dialog = QFileDialog()
+        file_dialog.setAcceptMode(QFileDialog.AcceptSave)
+        file_dialog.setDefaultSuffix('.pickle')
+        file_dialog.setNameFilter('Pickle Files (*.pickle)')
+        file_dialog.setWindowTitle('Save Parameters')
+        
+        if file_dialog.exec_() == QFileDialog.Accepted:
+            file_path = file_dialog.selectedFiles()[0]
+            
+            # Save options_dict as a pickle file
+            with open(file_path, 'wb') as file:
+                pickle.dump(parameters, file)
     
-    
+    def loadParameters(self):
+        """Load the parameters"""
+        active_tabs = self.soo_tabs if self.stackedWidget.currentIndex() == 0 else self.moo_tabs
+
+        # Open file dialog to select the file to load
+        file_dialog = QFileDialog()
+        file_dialog.setAcceptMode(QFileDialog.AcceptOpen)
+        file_dialog.setDefaultSuffix('.pickle')
+        file_dialog.setNameFilter('Pickle Files (*.pickle)')
+        file_dialog.setWindowTitle('Load Parameters')
+        
+        if file_dialog.exec_() == QFileDialog.Accepted:
+            file_path = file_dialog.selectedFiles()[0]
+            
+            # Load the pickle file
+            with open(file_path, 'rb') as file:
+                parameters = pickle.load(file)
+                
+                # Set the parameters
+                active_tabs.setEditWindow(parameters)
+
 class MainTabsWidget(QTabWidget):
-    def __init__(self, options: dict, defaults: Defaults, label: str) -> None:
+    def __init__(self, run_options: dict, parameters: dict, label: str) -> None:
         super().__init__()
 
         loadUi(DESIGNER_MAIN_TABS, self)
         
-        ############################ GENERAL #################################
+        ############################ EDIT WINDOW #################################
         
-        self.defaults = defaults
+        self.parameters = parameters
+        self.setEditWindow(parameters)
         
-        # create the edit window 
-        tab_dicts = {'problem': ('Edit Problems', get_problem, [self.prob_table]), 
-                     'algorithm': ('Edit Algorithms', get_algorithm, [self.algo_table]), 
-                     'pi': ('Edit Performance Indicators', get_performance_indicator, [self.pi_table]),
-                     'termination': ('Edit Termination Criteria', get_termination, [self.term_table])}
-        self.edit_window = EditWindow(tab_dicts, self.defaults)
-        
-        # Make the tabs closable
-        self.setTabsClosable(True)
-        self.tabCloseRequested.connect(self.closeTab)
-        self.tabBar().setTabButton(0, QTabBar.RightSide, None)
-        self.tabBar().setTabButton(1, QTabBar.RightSide, None)
-
         ############################ RUN TAB  #################################
         
-        # set run options
-        missing_keys = set(RUN_OPTIONS_KEYS) - set(options.keys())
+        # set run run_options
+        missing_keys = set(RUN_OPTIONS_KEYS) - set(run_options.keys())
         for key in missing_keys:
-            options[key] = []
-        self.options = options
+            run_options[key] = [] if key != 'n_seeds' else 1
+        self.run_options = run_options
 
         self.soo_label.setText(label)
         self.initialComboBoxItems()
-        self.runOptions_to_tables(options)
+        self.runOptions_to_tables(run_options)
         
         # set run button 
         self.run_button.clicked.connect(self.runButton)
@@ -184,18 +218,33 @@ class MainTabsWidget(QTabWidget):
         self.erase_button.clicked.connect(self.eraseAllResults)
     
     ### General methods ###        
+    
+    def setEditWindow(self, parameters: dict):
+        # create the edit window 
+        tab_dicts = {'problem': ('Edit Problems', get_problem, [self.prob_table]), 
+                     'algorithm': ('Edit Algorithms', get_algorithm, [self.algo_table]), 
+                     'pi': ('Edit Performance Indicators', get_performance_indicator, [self.pi_table]),
+                     'termination': ('Edit Termination Criteria', get_termination, [self.term_table])}
+        self.edit_window = EditWindow(tab_dicts, parameters)
+        
+        # Make the tabs closable
+        self.setTabsClosable(True)
+        self.tabCloseRequested.connect(self.closeTab)
+        self.tabBar().setTabButton(0, QTabBar.RightSide, None)
+        self.tabBar().setTabButton(1, QTabBar.RightSide, None)
+
     def closeTab(self, index):
         """Close the tab at the given index"""
         self.removeTab(index)
     
     ### Run tab methods ###
     def initialComboBoxItems(self):
-        """Set one comboBox for each table with the initial items from the defaults"""
+        """Set one comboBox for each table with the initial items from the parameters"""
         
         # items for each combobox
         self.comboBox_items = []
         for key in ['problem', 'algorithm', 'pi', 'termination']:
-            items = [obj_id for obj_id in self.defaults[key].keys() if ArgsAreSet(self.defaults[key])]
+            items = [obj_id for obj_id in self.parameters[key].keys() if ArgsAreSet(self.parameters[key])]
             self.comboBox_items.append(items)    
         
         # columns with comboboxes
@@ -215,7 +264,7 @@ class MainTabsWidget(QTabWidget):
         and sets the index to the correspondent item in the list. Returns a string with the items that are not available"""
         
         if table_options == []:
-            return
+            return ""
 
         # set the number of rows
         rows = max(min_rows, len(table_options))  
@@ -241,34 +290,35 @@ class MainTabsWidget(QTabWidget):
                 
         return missing_options
                 
-    def runOptions_to_tables(self, options: dict):
+    def runOptions_to_tables(self, run_options: dict):
         
-        missing_keys = set(RUN_OPTIONS_KEYS) - set(options.keys())
-        for key in missing_keys:
-            options[key] = [] if key != 'n_seeds' else 1
+        missing_keys = set(RUN_OPTIONS_KEYS) - set(run_options.keys())
             
-        # set the combo boxes and the default run options
-        missing_options = self.setTable(self.prob_table, options['prob'], DEFAULT_ROW_NUMBERS[0])
-        missing_options += self.setTable(self.algo_table, options['algo'], DEFAULT_ROW_NUMBERS[1])
-        missing_options += self.setTable(self.pi_table, options['pi'], DEFAULT_ROW_NUMBERS[2])
-        missing_options += self.setTable(self.term_table, options['term'], DEFAULT_ROW_NUMBERS[3])
+        for key in missing_keys:
+            run_options[key] = [] if key != 'n_seeds' else 1
+            
+        # set the combo boxes and the default run_options
+        missing_options = self.setTable(self.prob_table, run_options['prob'], DEFAULT_ROW_NUMBERS[0])
+        missing_options += self.setTable(self.algo_table, run_options['algo'], DEFAULT_ROW_NUMBERS[1])
+        missing_options += self.setTable(self.pi_table, run_options['pi'], DEFAULT_ROW_NUMBERS[2])
+        missing_options += self.setTable(self.term_table, run_options['term'], DEFAULT_ROW_NUMBERS[3])
 
-        self.n_seeds_SpinBox.setValue(options['n_seeds'])
+        self.n_seeds_SpinBox.setValue(run_options['n_seeds'])
         
         if missing_options != "":
-            warning = MyMessageBox(f"The following options are not available: {missing_options[:-2]}. \nTo choose them, please add"
-                                   " the correspondent Variant ID to the respective table through 'Edit Run Options' in the menu bar.")
+            warning = MyMessageBox(f"The following run options are not available: {missing_options[:-2]}. \nTo choose them, please add"
+                                   " the correspondent IDs to the respective table through the 'Edit Parameters' option of the menu bar.")
             
     def runOptions_to_dict(self):
         """Get the run options from the table into a dictionary"""
-        options = {}
+        run_options = {}
         keys = RUN_OPTIONS_KEYS.copy()
         keys.remove('n_seeds')
         for table, key in zip([self.prob_table, self.algo_table, self.pi_table, self.term_table], keys):
-            options[key] = [table.cellWidget(row, 0).currentText() for row in range(table.rowCount()) if table.cellWidget(row, 0).currentText() != ""]
-        options['n_seeds'] = self.n_seeds_SpinBox.value()
+            run_options[key] = [table.cellWidget(row, 0).currentText() for row in range(table.rowCount()) if table.cellWidget(row, 0).currentText() != ""]
+        run_options['n_seeds'] = self.n_seeds_SpinBox.value()
         
-        return options
+        return run_options
     
     def getRunObject(self):
 
