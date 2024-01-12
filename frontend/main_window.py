@@ -277,14 +277,14 @@ class MainTabsWidget(QTabWidget):
         # get seed values
         n_seeds = self.n_seeds_SpinBox.value()
         
-        frames = self.edit_window.frames
+        tabs = self.edit_window.tabs
         
         # get the termination object
         term_id = self.term_table.cellWidget(0, 0).currentText()
         if term_id == "":
             warning = MyMessageBox("Please select a Termination Criteria.")
             return None
-        term_object = frames['termination'].getObjectFromID(term_id)
+        term_object = tabs['termination'].getObjectFromID(term_id)
         
         # get run args, a list with the arguments for each individual run
         run_args =  []
@@ -293,7 +293,7 @@ class MainTabsWidget(QTabWidget):
         for row in range(self.prob_table.rowCount()):
             prob_id = self.prob_table.cellWidget(row, 0).currentText()
             if prob_id != "":
-                prob_object = frames['problem'].getObjectFromID(prob_id)
+                prob_object = tabs['problem'].getObjectFromID(prob_id)
                 pf = prob_object.pareto_front() if prob_object.pareto_front else None
                 n_obj = prob_object.n_obj
                 
@@ -302,7 +302,7 @@ class MainTabsWidget(QTabWidget):
                     algo_id = self.algo_table.cellWidget(row, 0).currentText()
                     if algo_id != "":
                         algo_id = self.algo_table.cellWidget(row, 0).currentText()
-                        algo_object = frames['algorithm'].getObjectFromID(algo_id, pf, n_obj)
+                        algo_object = tabs['algorithm'].getObjectFromID(algo_id, pf, n_obj)
                         
                         # get pi objects (pi depends on prob pf)
                         pi_ids, pi_objects = [], []
@@ -310,7 +310,7 @@ class MainTabsWidget(QTabWidget):
                             pi_id = self.pi_table.cellWidget(row, 0).currentText()
                             if pi_id != "":
                                 pi_ids.append(pi_id)
-                                pi_objects.append(frames['pi'].getObjectFromID(pi_id, pf, n_obj))
+                                pi_objects.append(tabs['pi'].getObjectFromID(pi_id, pf, n_obj))
                     
                         # check if any of the arguments is not set
                         if pi_ids == []:

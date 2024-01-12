@@ -14,36 +14,36 @@ def ArgsAreSet(dic: dict) -> bool:
     return not any([value == NO_DEFAULT for value in dic.values()]) 
 
 class OperatorWindow(QDialog):
-    def __init__(self, tab_dict, defaults: dict):
+    def __init__(self, tab_dict: dict, defaults: dict):
         """ tab_dict is a dictionary with the following structure:
                 {tab_name: (label, get_function, affected_tables)}"""
         
         super().__init__()
         loadUi(DESIGNER_EDIT_WINDOW, self)
         
-        self.frames = {}
+        self.tabs = {}
         
         for key in tab_dict.keys():
-            self.frames[key] = EditFrame(key, tab_dict[key], defaults)
-            self.tabWidget.addTab(self.frames[key], key)
+            self.tabs[key] = EditFrame(key, tab_dict[key], defaults)
+            self.tabWidget.addTab(self.tabs[key], key)
             
         self.save_button.clicked.connect(self.save)
         
     def save(self):
-        for frame in self.frames.values():
-            frame.updateTables() if frame.isChanged() else None
+        for tab in self.tabs.values():
+            tab.updateTables() if tab.isChanged() else None
         
         self.close()
 
 class EditWindow(OperatorWindow):
-    def __init__(self, tab_dict, defaults: dict):
+    def __init__(self, tab_dict: dict, defaults: dict):
         """ tab_dict is a dictionary with the following structure:
                 {tab_name: (label, get_function, affected_tables)}"""
         super().__init__(tab_dict, defaults)
         
-        # find algorithm frame 
-        algo_frame = self.frames["algorithm"]
-        tables = [algo_frame.defaults_table, algo_frame.variants_table]
+        # find algorithm tab 
+        algo_tab = self.tabs["algorithm"]
+        tables = [algo_tab.defaults_table, algo_tab.variants_table]
 
         op_tab_dict = { "mutation": ("Edit Mutations", get_mutation, tables),
                         "crossover": ("Edit Crossovers", get_crossover, tables),
@@ -54,17 +54,23 @@ class EditWindow(OperatorWindow):
                 
         self.operator_window = OperatorWindow(op_tab_dict, defaults)
         
-        # add the atritbute to the algo frame to get_operator()
+        # add the atritbute to the algo tab to get_operator()
         self.operators_button = QPushButton("Edit Operators")
         self.operators_button.clicked.connect(self.openOperatorWindow)
 
-        # add and connect the button to open the operators window from the algo frame
-        algo_frame.layout.addWidget(self.operators_button)
-        algo_frame.op_frames = self.operator_window.frames
+        # add and connect the button to open the operators window from the algo tab
+        algo_tab.layout.addWidget(self.operators_button)
+        algo_tab.op_tabs = self.operator_window.tabs
         
     def openOperatorWindow(self):
         self.operator_window.show()
     
+    def saveDefaultsVariants(self):
+        data_dict = {}
+        for tab in self.tabs:
+            tab.updateTables() if tab.isChanged() else None
+        
+        self.close()
 class EditFrame(QFrame):
     def __init__(self, key, args: tuple, defaults: dict):
         super().__init__()
@@ -80,7 +86,7 @@ class EditFrame(QFrame):
         self.label.setText(label)
         
         if key == "algorithm":
-            self.op_frames = None
+            self.op_tabs = None
             self.operator_comboBox_items = {key: [key] + list(defaults[key].keys()) for key in OPERATORS} 
         
         # modify what the save and help buttons do
@@ -286,7 +292,7 @@ class EditFrame(QFrame):
         if op_name not in OPERATORS:
             raise Exception("Operator " + op_name + " not found, with id " + op_id)
         else:
-            return self.op_frames[op_name].getObjectFromID(op_id, pf, n_obj)
+            return self.op_tabs[op_name].getObjectFromID(op_id, pf, n_obj)
     
     def isChanged(self):
         # check if the variant table has changed
