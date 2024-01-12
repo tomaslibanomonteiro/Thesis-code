@@ -25,7 +25,7 @@ OPERATORS = ["mutation", "crossover", "selection", "decomposition", "sampling", 
 FAKE_OPERATORS = ['ReductionBasedReferenceDirectionFactory', 'RieszEnergyReferenceDirectionFactory']
 
 # keys needed in a dictionary given to start the app
-RUN_OPTIONS_KEYS = ['n_seeds', 'term', 'pi', 'algo', 'prob']
+RUN_OPTIONS_KEYS = ['prob', 'algo', 'pi', 'term', 'n_seeds']
 
 # import pydevd and settrace() to activate debug in QThreads 
 DEBUG_MODE = True

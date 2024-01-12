@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1109</width>
-    <height>751</height>
+    <width>1147</width>
+    <height>750</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -37,12 +37,12 @@
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>1091</width>
-      <height>721</height>
+      <width>1151</width>
+      <height>731</height>
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="SOOpage"/>
     <widget class="QWidget" name="MOOpage"/>
@@ -53,7 +53,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1109</width>
+     <width>1147</width>
      <height>26</height>
     </rect>
    </property>
@@ -65,17 +65,16 @@
      <property name="title">
       <string>Save</string>
      </property>
-     <addaction name="actionSaveDefaults_Variants"/>
-     <addaction name="actionSaveResults"/>
-     <addaction name="actionRun_Options"/>
+     <addaction name="action_SaveDefaultsVariants"/>
+     <addaction name="action_SaveAllResults"/>
+     <addaction name="action_SaveRunOptions"/>
     </widget>
     <widget class="QMenu" name="menuLoad">
      <property name="title">
       <string>Load</string>
      </property>
-     <addaction name="actionDefaults_Variants"/>
-     <addaction name="actionLoadRun_Options"/>
-     <addaction name="actionLoadResults"/>
+     <addaction name="action_LoadRunOptions"/>
+     <addaction name="action_LoadResults"/>
     </widget>
     <addaction name="menuLoad"/>
     <addaction name="menuSave"/>
@@ -84,16 +83,15 @@
     <property name="title">
      <string>Options</string>
     </property>
-    <addaction name="actionSOO"/>
-    <addaction name="actionEdit_Run_Options"/>
+    <addaction name="action_SwitchPage"/>
+    <addaction name="action_EditRunOptions"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
      <string>Help</string>
     </property>
-    <addaction name="actionSee_Tutorial"/>
-    <addaction name="actionContact_me"/>
-    <addaction name="actionAbout"/>
+    <addaction name="action_SeeTutorial"/>
+    <addaction name="action_About"/>
     <addaction name="separator"/>
    </widget>
    <addaction name="menuFile"/>
@@ -101,7 +99,7 @@
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionEdit_Run_Options">
+  <action name="action_EditRunOptions">
    <property name="text">
     <string>Edit Run Options</string>
    </property>
@@ -109,55 +107,42 @@
     <string>Edit Run Options</string>
    </property>
   </action>
-  <action name="actionSOO">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
+  <action name="action_SwitchPage">
    <property name="text">
     <string>Single Objective Optimization</string>
    </property>
   </action>
-  <action name="actionDefaults_Variants">
-   <property name="text">
-    <string>Defaults + Variants</string>
-   </property>
-  </action>
-  <action name="actionLoadRun_Options">
+  <action name="action_LoadRunOptions">
    <property name="text">
     <string>Run Options</string>
    </property>
   </action>
-  <action name="actionLoadResults">
+  <action name="action_LoadResults">
    <property name="text">
     <string>Results</string>
    </property>
   </action>
-  <action name="actionSaveDefaults_Variants">
+  <action name="action_SaveDefaultsVariants">
    <property name="text">
     <string>Defaults + Variants</string>
    </property>
   </action>
-  <action name="actionSaveResults">
+  <action name="action_SaveAllResults">
    <property name="text">
     <string>Results</string>
    </property>
   </action>
-  <action name="actionSee_Tutorial">
+  <action name="action_SeeTutorial">
    <property name="text">
     <string>Tutorial</string>
    </property>
   </action>
-  <action name="actionContact_me">
-   <property name="text">
-    <string>Contacts</string>
-   </property>
-  </action>
-  <action name="actionAbout">
+  <action name="action_About">
    <property name="text">
     <string>About</string>
    </property>
   </action>
-  <action name="actionRun_Options">
+  <action name="action_SaveRunOptions">
    <property name="text">
     <string>Run Options</string>
    </property>

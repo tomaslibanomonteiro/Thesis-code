@@ -34,40 +34,40 @@ class Defaults():
                             
         # changed defaults
         if obj != 'moo':
-            self.dict['algorithm']['ga_default']['selection'] = 'tournament_by_cv_and_fitness_default'
+            self.dict['algorithm']['ga']['selection'] = 'tournament_by_cv_and_fitness'
         if obj != 'soo':
-            self.dict['algorithm']['nsga2_default']['selection'] = 'binary_tournament_default'
-            self.dict['algorithm']['nsga3_default']['selection'] = 'tournament_by_cv_then_random_default'
-            self.dict['algorithm']['unsga3_default']['selection'] = 'tournament_by_rank_and_ref_line_dist_default'
-            self.dict['algorithm']['ctaea_default']['selection'] = 'restricted_mating_ctaea_default'
-            self.dict['algorithm']['rnsga3_default']['selection'] = 'tournament_by_cv_then_random_default'
+            self.dict['algorithm']['nsga2']['selection'] = 'binary_tournament'
+            self.dict['algorithm']['nsga3']['selection'] = 'tournament_by_cv_then_random'
+            self.dict['algorithm']['unsga3']['selection'] = 'tournament_by_rank_and_ref_line_dist'
+            self.dict['algorithm']['ctaea']['selection'] = 'restricted_mating_ctaea'
+            self.dict['algorithm']['rnsga3']['selection'] = 'tournament_by_cv_then_random'
         
-        self.dict['termination']['n_eval_default']['n_max_evals'] = 2000
-        self.dict['termination']['n_gen_default']['n_max_gen'] = 40
-        self.dict['termination']['fmin_default']['fmin'] = 1
-        self.dict['termination']['time_default']['max_time'] = 10
+        self.dict['termination']['n_eval']['n_max_evals'] = 2000
+        self.dict['termination']['n_gen']['n_max_gen'] = 40
+        self.dict['termination']['fmin']['fmin'] = 1
+        self.dict['termination']['time']['max_time'] = 10
         
-        self.dict['ref_dirs']['(das-dennis|uniform)_default']['n_dim'] = 'n_obj*1'
-        self.dict['ref_dirs']['(das-dennis|uniform)_default']['n_points'] = 'n_obj*2'
-        self.dict['ref_dirs']['(energy|riesz)_default']['n_dim'] = 'n_obj*1'
-        self.dict['ref_dirs']['(energy|riesz)_default']['n_points'] = 'n_obj*2'
-        self.dict['ref_dirs']['(layer-energy|layer-riesz)_default']['n_dim'] = 'n_obj*2'
-        self.dict['ref_dirs']['(layer-energy|layer-riesz)_default']['partitions'] = 'n_obj*2'
-        self.dict['ref_dirs']['red_default']['n_dim'] = 'n_obj*1'
-        self.dict['ref_dirs']['red_default']['n_points'] = 'n_obj*2'
+        self.dict['ref_dirs']['(das-dennis|uniform)']['n_dim'] = 'n_obj*1'
+        self.dict['ref_dirs']['(das-dennis|uniform)']['n_points'] = 'n_obj*2'
+        self.dict['ref_dirs']['(energy|riesz)']['n_dim'] = 'n_obj*1'
+        self.dict['ref_dirs']['(energy|riesz)']['n_points'] = 'n_obj*2'
+        self.dict['ref_dirs']['(layer-energy|layer-riesz)']['n_dim'] = 'n_obj*2'
+        self.dict['ref_dirs']['(layer-energy|layer-riesz)']['partitions'] = 'n_obj*2'
+        self.dict['ref_dirs']['red']['n_dim'] = 'n_obj*1'
+        self.dict['ref_dirs']['red']['n_points'] = 'n_obj*2'
         
         if self.obj != 'soo':                
-            self.dict['pi']['gd_default']['pf'] = 'get from problem'
-            self.dict['pi']['igd_default']['pf'] = 'get from problem'
-            self.dict['pi']['igd+_default']['pf'] = 'get from problem'
-            self.dict['pi']['gd+_default']['pf'] = 'get from problem'
-            self.dict['pi']['hv_default']['pf'] = 'get from problem'
+            self.dict['pi']['gd']['pf'] = 'get from problem'
+            self.dict['pi']['igd']['pf'] = 'get from problem'
+            self.dict['pi']['igd+']['pf'] = 'get from problem'
+            self.dict['pi']['gd+']['pf'] = 'get from problem'
+            self.dict['pi']['hv']['pf'] = 'get from problem'
     
     def return_dict(self):
         return self.dict
     
     def get_table_dict(self, options_list):
-        return {name + '_default' : self.get_class_dict(name, obj) for name, obj in options_list}
+        return {name: self.get_class_dict(name, obj) for name, obj in options_list}
                 
     def get_class_dict(self, get_name: str, cls: type):
         """ get a dict with the class name, the object id and the arguments with their default values.
@@ -105,7 +105,7 @@ class Defaults():
         
         # if operator has no default value, return the first operator in the list
         if obj in [None, NO_DEFAULT]:
-            return get_list[0][0] + "_default"
+            return get_list[0][0]
         # get object class name    
         for get_name, cls in get_list:
             if obj.__class__.__name__ == cls.__name__:

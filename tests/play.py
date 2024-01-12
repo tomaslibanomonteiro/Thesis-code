@@ -1,56 +1,58 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget, QWidget, QVBoxLayout, QRadioButton, QLabel
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableView, QDoubleSpinBox, QSpinBox, QLineEdit
+from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
-class SingleObjectiveWidget(QWidget):
+class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        layout = QVBoxLayout()
-        self.single_objective_label = QLabel("Single Objective Page")
-        layout.addWidget(self.single_objective_label)
-        self.setLayout(layout)
 
-class MultiObjectiveWidget(QWidget):
-    def __init__(self):
-        super().__init__()
-        layout = QVBoxLayout()
-        self.multi_objective_label = QLabel("Multi-Objective Page")
-        layout.addWidget(self.multi_objective_label)
-        self.setLayout(layout)
+        # Assuming this is your dictionary
+        self.params_dict = {
+            'algorithm1': {
+                'param1': 1.23,
+                'param2': 4,
+                'param3': 'hello'
+            },
+            'algorithm2': {
+                'param1': 2.34,
+                'param2': 5,
+                'param3': 'world'
+            }
+        }
 
-class MainApp(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Optimization App")
-        self.setGeometry(100, 100, 400, 300)
+        # Create the table view and model
+        self.table = QTableView(self)
+        self.setCentralWidget(self.table)
+        self.model = QStandardItemModel()
+        self.table.setModel(self.model)
 
-        self.stacked_widget = QStackedWidget()
-        self.single_objective_widget = SingleObjectiveWidget()
-        self.multi_objective_widget = MultiObjectiveWidget()
-        self.stacked_widget.addWidget(self.single_objective_widget)
-        self.stacked_widget.addWidget(self.multi_objective_widget)
+        # Set the headers
+        self.model.setHorizontalHeaderLabels(max(self.params_dict.values(), key=len).keys())
+        self.model.setVerticalHeaderLabels(self.params_dict.keys())
 
-        self.radio_single_objective = QRadioButton("Single Objective")
-        self.radio_multi_objective = QRadioButton("Multi-Objective")
-        self.radio_single_objective.toggled.connect(self.show_single_objective_page)
-        self.radio_multi_objective.toggled.connect(self.show_multi_objective_page)
+        # Populate the model
+        for row, (algorithm_id, parameters) in enumerate(self.params_dict.items()):
+            for column, (parameter_name, parameter_value) in enumerate(parameters.items()):
+                item = QStandardItem()
+                self.model.setItem(row, column, item)
 
-        layout = QVBoxLayout()
-        layout.addWidget(self.radio_single_objective)
-        layout.addWidget(self.radio_multi_objective)
-        layout.addWidget(self.stacked_widget)
-        central_widget = QWidget()
-        central_widget.setLayout(layout)
-        self.setCentralWidget(central_widget)
+                if isinstance(parameter_value, float):
+                    widget = QDoubleSpinBox()
+                    widget.setValue(parameter_value)
+                elif isinstance(parameter_value, int):
+                    widget = QSpinBox()
+                    widget.setValue(parameter_value)
+                elif isinstance(parameter_value, str):
+                    widget = QLineEdit()
+                    widget.setText(parameter_value)
+                else:
+                    widget = QLineEdit()
+                    widget.setText(str(parameter_value))
 
-    def show_single_objective_page(self, checked):
-        if checked:
-            self.stacked_widget.setCurrentIndex(0)
+                self.table.setIndexWidget(item.index(), widget)
 
-    def show_multi_objective_page(self, checked):
-        if checked:
-            self.stacked_widget.setCurrentIndex(1)
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QApplication([])
-    window = MainApp()
+    window = MainWindow()
     window.show()
     app.exec_()
+    

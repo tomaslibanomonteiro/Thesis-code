@@ -107,7 +107,7 @@ class MyComboBox(QtWidgets.QComboBox):
                 break
     
         # update the table with the new row
-        object_id = self.copy_table.cellWidget(copy_row, 0).text().replace("_default", "_variant") 
+        object_id = self.copy_table.cellWidget(copy_row, 0).text() + "_variant" 
         widget = MyTextEdit(object_id, read_only=False)
         self.table.setCellWidget(row, 0, widget)
         for col in range(2, copy_table.columnCount()):
