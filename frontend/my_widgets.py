@@ -29,14 +29,14 @@ class MyMessageBox(QtWidgets.QMessageBox):
         self.exec_() if execute else None
   
 class MyComboBox(QtWidgets.QComboBox):
-    def __init__(self, items=[], initial_index: int=-1, enabled: bool=True, table: QtWidgets.QTableWidget=None, col:int=0, add_rows:bool=False, copy_table:QtWidgets.QTableWidget=None):
+    def __init__(self, items=[], initial_index: int=-1, enabled: bool=True, table: QtWidgets.QTableWidget=None, col:int=0, row:int=None, add_rows:bool=False):
         super().__init__()
 
         # table in which the combobox is located
         self.table = table
         self.add_rows = add_rows
         self.col = col
-        self.copy_table = copy_table
+        self.row = row
 
         for item in items:
             self.addItem(item)
@@ -63,7 +63,7 @@ class MyComboBox(QtWidgets.QComboBox):
             self.context_menu.addAction(self.remove_combobox_action)
 
         # connect the currentIndexChanged signal to a slot that updates the table
-        self.currentIndexChanged.connect(self.updateTable) if copy_table is not None else None
+        self.currentIndexChanged.connect(self.updateRow) if row is not None else None
 
     def showContextMenu(self, pos):
         self.context_menu.exec_(self.mapToGlobal(pos))
@@ -72,7 +72,7 @@ class MyComboBox(QtWidgets.QComboBox):
         # create a new row  and add it to the table
         row_count = self.table.rowCount()
         items = [self.itemText(i) for i in range(self.count())]
-        new_combobox = MyComboBox(items, table=self.table, col=self.col, add_rows=self.add_rows, copy_table=self.copy_table)
+        new_combobox = MyComboBox(items, table=self.table, col=self.col, add_rows=self.add_rows)
         self.table.setRowCount(row_count + 1)
         self.table.setCellWidget(row_count, self.col, new_combobox)
 
@@ -81,46 +81,47 @@ class MyComboBox(QtWidgets.QComboBox):
         if self.table.rowCount() == 1: 
             warning = MyMessageBox("Cannot remove the only row in the table.")			
         else:
-               # remove the combobox from the table
-            index = self.table.indexAt(self.pos())
-            if index.isValid():
-                self.table.removeRow(index.row())
+            # remove the combobox from the table
+            if self.row is not None:
+                self.table.removeRow(self.row)
+            else:
+                index = self.table.indexAt(self.pos())
+                if index.isValid():
+                    self.table.removeRow(index.row())
 
     def clearRow(self):
         self.setCurrentIndex(-1)
         self.setEditText("")
 
-    def updateTable(self):
+    def updateRow(self):
 
         if self.currentIndex() == -1:
             return
 
-        copy_table = self.copy_table
         # get the current text of the combobox
         text = self.currentText()
-        index = self.table.indexAt(self.pos())
-        row = index.row()
         
         # find the row of the copy table that matches the current text
-        for copy_row in range(copy_table.rowCount()):
-            if copy_table.cellWidget(copy_row, self.col).text() == text:
+        for row_to_copy in range(self.table.rowCount()):
+            widget = self.table.cellWidget(row_to_copy, self.col)
+            if isinstance(widget, MyTextEdit) and widget.text() == text:
                 break
     
         # update the table with the new row
-        object_id = self.copy_table.cellWidget(copy_row, ID_COL).text() + "_variant" 
+        object_id = self.table.cellWidget(row_to_copy, ID_COL).text() + "_variant" 
         widget = MyTextEdit(object_id, read_only=False)
-        self.table.setCellWidget(row, ID_COL, widget)
+        self.table.setCellWidget(self.row, ID_COL, widget)
         for col in range(self.col+1, self.table.columnCount()):
-            widget = copy_table.cellWidget(copy_row, col)
+            widget = self.table.cellWidget(row_to_copy, col)
             # if it is a combobox, print the comboBox options
             if isinstance(widget, MyComboBox):
                 new_widget = widget.copy()
             new_widget = widget.copy() if widget is not None else None
-            self.table.setCellWidget(row, col, new_widget)
+            self.table.setCellWidget(self.row, col, new_widget)
             
     def copy(self):
         items = [self.itemText(i) for i in range(self.count())]
-        copy = MyComboBox(items, self.currentIndex(), self.isEnabled(), self.table, self.col, self.add_rows, self.copy_table)
+        copy = MyComboBox(items, self.currentIndex(), self.isEnabled(), self.table, self.col, None, self.add_rows)
         return copy
 
 

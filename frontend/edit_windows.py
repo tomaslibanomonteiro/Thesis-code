@@ -101,10 +101,7 @@ class EditTab(QFrame):
     
     def dictToTable(self, table_dict: dict):
         
-        # set number of n_rows and columns (each element of the list is a tuple (argument, value))
-        n_rows = len(table_dict)
         n_cols = max([len(row_dict) for row_dict in table_dict.values()]) * 2 + 1  # +1 to add the button column
-        self.table.setRowCount(n_rows)
         self.table.setColumnCount(n_cols)
 
         # set col names
@@ -112,14 +109,21 @@ class EditTab(QFrame):
             self.table.setHorizontalHeaderItem(i, QTableWidgetItem("Arg" + str(int(i-1))))
             self.table.setHorizontalHeaderItem(i+1, QTableWidgetItem("Value"))
 
+        variants = {}
+        row = 0
         # set the table items from the table, each row is a list of the arguments and values of the class
-        for row, (row_id, row_dict) in zip(range(n_rows), table_dict.items()):
+        for row_id, row_dict in table_dict.items():
             # check if it is a variant or a default class and set the row accordingly
             if row_dict["class"] == row_id:
+                self.table.setRowCount(row+1)
                 self.addDefault(row_dict.pop("class"), row_id, row_dict, row)
+                row += 1
             else:
-                self.addVariant(row_dict.pop("class"), row_id, row_dict, row)
-
+                variants[row_id] = row_dict
+                
+        for row_id, row_dict in variants.items():
+            self.addVariant(row_dict.pop("class"), row_id, row_dict)
+            
     def addDefault(self, class_name: str, id:str, args_dict:dict, row:int):
         
         # add the id and class name in the first columns
@@ -136,26 +140,20 @@ class EditTab(QFrame):
         add_variant_button.clicked.connect(lambda checked, cn=class_name: self.addVariant(cn))
         self.table.setCellWidget(row, 0, add_variant_button)
 
-    def addVariant(self, class_name: str, id:str = None, args_dict:dict = None, row:int = None):
+    def addVariant(self, class_name: str, id:str = None, args_dict:dict = None):
         
-        # add a new row if the call was made from the "Add Variant" button
-        if row is None:
-            row = self.table.rowCount()
-            self.table.insertRow(row)
+        row = self.table.rowCount()
+        self.table.insertRow(row)
         
         # add a MyComboBox in the new row and set it to the class name
-        combo_box = MyComboBox(self.classes, table=self.table, col=ID_COL+1, copy_table=self.table)
+        combo_box = MyComboBox(self.classes, table=self.table, col=ID_COL+1, row=row)
         self.table.setCellWidget(row, ID_COL+1, combo_box)
         self.table.cellWidget(row, ID_COL+1).setCurrentIndex(self.classes.index(class_name))
         
         # add a remove button in the new row
         remove_button = QPushButton("Remove")
-        remove_button.setStyleSheet("color: red;")
-        
-        if args_dict is None:
-            remove_button.clicked.connect(lambda: self.removeVariant(self.table.rowCount()-1))
-        else:
-            remove_button.clicked.connect(lambda: self.removeVariant(row))
+        remove_button.setStyleSheet("color: red;")        
+        remove_button.clicked.connect(lambda: self.removeVariant(self.table.rowCount()-1))
         self.table.setCellWidget(row, 0, remove_button)
 
         # scroll to the bottom of the table
