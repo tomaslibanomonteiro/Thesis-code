@@ -27,8 +27,8 @@ FAKE_OPERATORS = ['ReductionBasedReferenceDirectionFactory', 'RieszEnergyReferen
 # keys needed in a dictionary given to start the app
 RUN_OPTIONS_KEYS = ['prob', 'algo', 'pi', 'term', 'n_seeds']
 
-# import pydevd and settrace() to activate debug in QThreads 
-DEBUG_MODE = True
-
-# default number of rows in the run window tables
+# default number of rows in the main window tables
 DEFAULT_ROW_NUMBERS = [7, 7, 4, 1]
+
+# object id col number in the edit parameters tables
+ID_COL = 1 

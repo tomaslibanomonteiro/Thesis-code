@@ -2,7 +2,7 @@ import re
 from typing import Tuple
 
 from qtpy import QtCore, QtGui, QtWidgets
-
+from utils.defines import ID_COL
 class MyTextEdit(QtWidgets.QTextEdit):
     def __init__(self, text="", read_only=False):
         super().__init__()
@@ -100,17 +100,17 @@ class MyComboBox(QtWidgets.QComboBox):
         text = self.currentText()
         index = self.table.indexAt(self.pos())
         row = index.row()
-  
+        
         # find the row of the copy table that matches the current text
         for copy_row in range(copy_table.rowCount()):
             if copy_table.cellWidget(copy_row, self.col).text() == text:
                 break
     
         # update the table with the new row
-        object_id = self.copy_table.cellWidget(copy_row, 0).text() + "_variant" 
+        object_id = self.copy_table.cellWidget(copy_row, ID_COL).text() + "_variant" 
         widget = MyTextEdit(object_id, read_only=False)
-        self.table.setCellWidget(row, 0, widget)
-        for col in range(2, copy_table.columnCount()):
+        self.table.setCellWidget(row, ID_COL, widget)
+        for col in range(self.col+1, self.table.columnCount()):
             widget = copy_table.cellWidget(copy_row, col)
             # if it is a combobox, print the comboBox options
             if isinstance(widget, MyComboBox):

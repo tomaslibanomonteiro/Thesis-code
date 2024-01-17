@@ -1,13 +1,12 @@
 from numpy import inf
 from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QTableWidget, QPushButton, QFrame, QHBoxLayout
 from PyQt5.uic import loadUi
-
 from backend.get import (get_crossover, get_decomposition, get_mutation,
                          get_reference_directions, get_sampling, get_selection)
-from backend.defaults import NO_DEFAULT, OPERATORS, Defaults
 from frontend.my_widgets import MyTextEdit, MyComboBox, ScientificDoubleSpinBox, ScientificSpinBox, MyCheckBox, MyMessageBox
 from utils.debug import debug_print
-from utils.defines import DESIGNER_EDIT_WINDOW, DESIGNER_EDIT_FRAME
+from utils.defines import DESIGNER_EDIT_WINDOW, DESIGNER_EDIT_FRAME, NO_DEFAULT, OPERATORS, ID_COL
+from copy import deepcopy #!
 
 def ArgsAreSet(dic: dict) -> bool:
     # check if any of the values in the dict is == NO_DEFAULT
@@ -80,6 +79,7 @@ class EditTab(QFrame):
         label, self.get_function, self.affected_tables = tab_args
         self.table_dict = parameters[name]
         self.default_ids = list(self.table_dict.keys())        
+        self.classes = [self.table_dict[key]["class"] for key in self.default_ids]
         self.label.setText(label)
 
         # modify what the save and help buttons do
@@ -97,38 +97,85 @@ class EditTab(QFrame):
         helpbox = MyMessageBox("To create variants of the default classes, choose a class from the comboBox."
                                " The arguments will be inherited from the default class", "Variants Help", warning_icon=False)
         
-    ###### SET TABLES ######
+    ###### EDIT TABLES ######
     
     def dictToTable(self, table_dict: dict):
         
         # set number of n_rows and columns (each element of the list is a tuple (argument, value))
-        n_rows = len(table_dict)+1
-        n_cols = max([len(row_dict) for row_dict in table_dict.values()]) * 2
+        n_rows = len(table_dict)
+        n_cols = max([len(row_dict) for row_dict in table_dict.values()]) * 2 + 1  # +1 to add the button column
         self.table.setRowCount(n_rows)
         self.table.setColumnCount(n_cols)
 
         # set col names
-        for i in range(2, n_cols, 2):
+        for i in range(ID_COL+2, n_cols, 2):
             self.table.setHorizontalHeaderItem(i, QTableWidgetItem("Arg" + str(int(i-1))))
             self.table.setHorizontalHeaderItem(i+1, QTableWidgetItem("Value"))
-        
-        # import deepcopy to avoid changing the original dict
-        from copy import deepcopy #!
-        table_dict_copy = deepcopy(table_dict)   
+
         # set the table items from the table, each row is a list of the arguments and values of the class
-        for row, (row_id, row_dict) in zip(range(n_rows-1), table_dict_copy.items()):
-            self.setTablePair(self.table, row, 0, row_id, row_dict.pop("class"), editable=False)
-            # make the first two cells painted light grey
-            self.table.cellWidget(row, 0).setStyleSheet("background-color: lightgrey;")
-            self.table.cellWidget(row, 1).setStyleSheet("background-color: lightgrey;")
-            for col, (arg, value) in zip(range(2, n_cols, 2), list(row_dict.items())):
+        for row, (row_id, row_dict) in zip(range(n_rows), table_dict.items()):
+            # check if it is a variant or a default class and set the row accordingly
+            if row_dict["class"] == row_id:
+                self.addDefault(row_dict.pop("class"), row_id, row_dict, row)
+            else:
+                self.addVariant(row_dict.pop("class"), row_id, row_dict, row)
+
+    def addDefault(self, class_name: str, id:str, args_dict:dict, row:int):
+        
+        # add the id and class name in the first columns
+        self.setTablePair(self.table, row, ID_COL, id, class_name, editable=False)
+        
+        # add the arguments and values in the rest of the columns
+        for col, (arg, value) in zip(range(ID_COL+2, self.table.columnCount(), 2), list(args_dict.items())): 
+            self.setTablePair(self.table, row, col, arg, value)
+
+        # add "Add Variant" button at the end of the row
+        add_variant_button = QPushButton("Add Variant")
+        add_variant_button.setStyleSheet("color: green;")
+        class_name = self.table.cellWidget(row, ID_COL+1).text()  # get the class name from the third column
+        add_variant_button.clicked.connect(lambda checked, cn=class_name: self.addVariant(cn))
+        self.table.setCellWidget(row, 0, add_variant_button)
+
+    def addVariant(self, class_name: str, id:str = None, args_dict:dict = None, row:int = None):
+        
+        # add a new row if the call was made from the "Add Variant" button
+        if row is None:
+            row = self.table.rowCount()
+            self.table.insertRow(row)
+        
+        # add a MyComboBox in the new row and set it to the class name
+        combo_box = MyComboBox(self.classes, table=self.table, col=ID_COL+1, copy_table=self.table)
+        self.table.setCellWidget(row, ID_COL+1, combo_box)
+        self.table.cellWidget(row, ID_COL+1).setCurrentIndex(self.classes.index(class_name))
+        
+        # add a remove button in the new row
+        remove_button = QPushButton("Remove")
+        remove_button.setStyleSheet("color: red;")
+        
+        if args_dict is None:
+            remove_button.clicked.connect(lambda: self.removeVariant(self.table.rowCount()-1))
+        else:
+            remove_button.clicked.connect(lambda: self.removeVariant(row))
+        self.table.setCellWidget(row, 0, remove_button)
+
+        # scroll to the bottom of the table
+        self.table.scrollToBottom()        
+        
+        # fucntionalities if the call was not made from the "Add Variant" button
+        
+        if id is not None: # set the id in the new row
+            self.table.setCellWidget(row, ID_COL, MyTextEdit(id))
+            
+        if args_dict is not None: # set the default args in the new row
+            for col in range(ID_COL+2, self.table.columnCount()):
+                self.table.cellWidget(row, col).deleteLater() if self.table.cellWidget(row, col) is not None else None
+            for col, (arg, value) in zip(range(ID_COL+2, self.table.columnCount(), 2), list(args_dict.items())):
                 self.setTablePair(self.table, row, col, arg, value)
-
-        classes = [self.table.cellWidget(row, 1).text() for row in range(n_rows-1)]
-                
-        widget = MyComboBox(classes, table=self.table, copy_table=self.table, add_rows=True, col=1)
-        self.table.setCellWidget(n_rows-1, 1, widget)
-
+        
+    def removeVariant(self, row):
+        # remove the row from the table
+        self.table.removeRow(row)
+             
     def setTablePair(self, table: QTableWidget, row: int, col: int, arg: str, value, editable: bool = True) -> None:
 
         FAKE_OPERATORS = ['(energy|riesz)', 'red']
@@ -186,29 +233,34 @@ class EditTab(QFrame):
         # get the table items from the table, each row is a list of the arguments and values of the class
         table_dict = {}
         for row in range(self.table.rowCount()):
-            if self.table.cellWidget(row, 0) is None:
+            widget = self.table.cellWidget(row, ID_COL+1)
+            if widget is None:
                 continue
-            row_id = self.table.cellWidget(row, 0).text()
+            
+            row_id = self.table.cellWidget(row, ID_COL).text()
             row_dict = self.getArgsFromRow(self.table, row, get_operator_obj=False)
             table_dict[row_id] = row_dict
+            class_name = widget.text() if isinstance(widget, MyTextEdit) else widget.currentText()
+            table_dict[row_id]["class"] = class_name
+            
         return table_dict
 
     def getObjectFromID(self, object_id, pf=None, n_obj=None):
         # get the object from a table
         for row in range(self.table.rowCount()):
-            if self.table.cellWidget(row, 0) is None:
+            if self.table.cellWidget(row, ID_COL) is None:
                 continue
-            if self.table.cellWidget(row, 0).text() == object_id:
+            if self.table.cellWidget(row, ID_COL).text() == object_id:
                 return self.getObjectFromRow(self.table, row, pf, n_obj)
                 
         raise Exception("Object ID '", object_id, "' not found in table from tab ", self.name)
             
     def getObjectFromRow(self, table: QTableWidget, row, pf=None, n_obj=None):
         # get the object from the table
-        if isinstance(table.cellWidget(row, 1), MyTextEdit):
-            class_name = table.cellWidget(row, 1).text()
+        if isinstance(table.cellWidget(row, ID_COL+1), MyTextEdit):
+            class_name = table.cellWidget(row, ID_COL+1).text()
         else:
-            class_name = table.cellWidget(row, 1).currentText()
+            class_name = table.cellWidget(row, ID_COL+1).currentText()
         args_dict = self.getArgsFromRow(table, row, pf, n_obj)
         
         # get the n_dim from the problem n_obj    
@@ -239,7 +291,7 @@ class EditTab(QFrame):
     def getArgsFromRow(self, table: QTableWidget, row: int, pf = None, n_obj=None, get_operator_obj=True) -> dict:
         # get the args from the table
         args_dict = {}
-        for col in range(2, table.columnCount(), 2):
+        for col in range(ID_COL+2, table.columnCount(), 2):
             
             if table.cellWidget(row, col) in [None, ""]:
                 break
@@ -290,15 +342,15 @@ class EditTab(QFrame):
         return
         # check if the variant table has changed
         for row in range(self.variants_table.rowCount()):
-            if self.variants_table.cellWidget(row, 0) is None or not ArgsAreSet(self.getArgsFromRow(self.variants_table, row)):
+            if self.variants_table.cellWidget(row, ID_COL) is None or not ArgsAreSet(self.getArgsFromRow(self.variants_table, row)):
                 return 
 
         new_variant_ids = []
         table = self.variants_table
         # get the variants from the table
         for row in range(table.rowCount()):
-            if table.cellWidget(row, 0) is not None and ArgsAreSet(self.getArgsFromRow(table, row)):
-                new_variant_ids.append(table.cellWidget(row, 0).text())
+            if table.cellWidget(row, ID_COL) is not None and ArgsAreSet(self.getArgsFromRow(table, row)):
+                new_variant_ids.append(table.cellWidget(row, ID_COL).text())
         # if the variant ids have changed, change the respective ComboBoxes 
         if sorted(new_variant_ids) != sorted(self.variant_ids):
             self.variant_ids = new_variant_ids
@@ -310,14 +362,14 @@ class EditTab(QFrame):
     def updateComboBoxItems(self, items: list):
         # if there is just one table, is main window, get all the comboboxes from the table
         if len (self.affected_tables) == 1:
-            table = self.affected_tables[0]
-            comboBoxes = [table.cellWidget(x,0) for x in range(table.rowCount()) if table.cellWidget(x, 0) is not None]     
+            table = self.affected_tables[ID_COL]
+            comboBoxes = [table.cellWidget(x,ID_COL) for x in range(table.rowCount()) if table.cellWidget(x, ID_COL) is not None]     
         # Else is algo window, check cell by cell for the operator comboboxes    
         else: 
             comboBoxes = []
             for table in self.affected_tables:
                 for row in range(table.rowCount()):
-                    for col in range(2, table.columnCount(), 2):
+                    for col in range(ID_COL+2, table.columnCount(), 2):
                         arg = table.cellWidget(row, col)
                         if arg is not None and arg.text() == self.op_name:
                             comboBoxes.append(table.cellWidget(row, col+1))
