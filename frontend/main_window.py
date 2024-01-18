@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QHeaderView, QMainWindow, QTabWidget, QVBoxLayout, QTableWidget, QTabBar, QFileDialog
+from PyQt5.QtWidgets import QHeaderView, QMainWindow, QTabWidget, QVBoxLayout, QTableWidget, QTabBar, QFileDialog, QWidget
 from PyQt5.uic import loadUi
 
 from backend.get import (get_algorithm, get_performance_indicator, get_problem,
@@ -8,7 +8,7 @@ from backend.run import RunThread, SingleRunArgs
 from frontend.my_widgets import MyComboBox, MyMessageBox
 from frontend.edit_windows import (EditWindow, ArgsAreSet)
 from frontend.main_window_frames import ResultFrame
-from utils.defines import DESIGNER_MAIN, RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_MAIN_TABS
+from utils.defines import DESIGNER_MAIN, RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_MAIN_TABS, RESULT_LAYOUT_WIDGETS, MAX_RESULT_FRAMES
 import pickle
 
 class MyMainWindow(QMainWindow):
@@ -208,15 +208,12 @@ class MainTabsWidget(QTabWidget):
         self.run_button.clicked.connect(self.runButton)
 
         ############################ RESULTS TAB  #################################
-
-        # this property holds the result frames from each run
-        self.result_frames = []
         
         # open, save and erase buttons                            
         self.save_button.clicked.connect(self.saveAllResults)
         self.open_button.clicked.connect(self.openAllResults)
         self.erase_button.clicked.connect(self.eraseAllResults)
-    
+                
     ### General methods ###        
     
     def setEditWindow(self, parameters: dict):
@@ -227,12 +224,16 @@ class MainTabsWidget(QTabWidget):
                      'termination': ('Edit Termination Criteria', get_termination, [self.term_table])}
         self.edit_window = EditWindow(tab_dicts, parameters)
         
-        # Make the tabs closable
+        # Make the tabs closable. 
         self.setTabsClosable(True)
         self.tabCloseRequested.connect(self.closeTab)
-        self.tabBar().setTabButton(0, QTabBar.RightSide, None)
-        self.tabBar().setTabButton(1, QTabBar.RightSide, None)
-
+        # Add a spacer so that the height remains the same when Run Tab is added with the close button
+        spacer = QWidget()
+        spacer.setFixedHeight(20)  
+        spacer.setFixedWidth(1)  
+        self.tabBar().setTabButton(0, QTabBar.RightSide, spacer)        
+        self.tabBar().setTabButton(1, QTabBar.RightSide, spacer)
+        
     def closeTab(self, index):
         """Close the tab at the given index"""
         self.removeTab(index)
@@ -306,7 +307,7 @@ class MainTabsWidget(QTabWidget):
         self.n_seeds_SpinBox.setValue(run_options['n_seeds'])
         
         if missing_options != "":
-            warning = MyMessageBox(f"The following run options are not available: {missing_options[:-2]}. \nTo choose them, please add"
+            MyMessageBox(f"The following run options are not available: {missing_options[:-2]}. \nTo choose them, please add"
                                    " the correspondent IDs to the respective table through the 'Edit Parameters' option of the menu bar.")
             
     def runOptions_to_dict(self):
@@ -332,7 +333,7 @@ class MainTabsWidget(QTabWidget):
         # get the termination object
         term_id = self.term_table.cellWidget(0, 0).currentText()
         if term_id == "":
-            warning = MyMessageBox("Please select a Termination Criteria.")
+            MyMessageBox("Please select a Termination Criteria.")
             return None
         term_object = tabs['termination'].getObjectFromID(term_id)
         
@@ -364,17 +365,17 @@ class MainTabsWidget(QTabWidget):
                     
                         # check if any of the arguments is not set
                         if pi_ids == []:
-                            warning = MyMessageBox("Please select at least one Performance Indicator.")
+                            MyMessageBox("Please select at least one Performance Indicator.")
                             return None
                     
                         # append the arguments for this run
                         run_args.append(SingleRunArgs(prob_id, prob_object, algo_id, algo_object, pi_ids, pi_objects))
         
         if algo_id is None:
-            warning = MyMessageBox("Please select at least one Problem.")   
+            MyMessageBox("Please select at least one Problem.")   
             return None      
         elif run_args == []:
-            warning = MyMessageBox("Please select at least one Algorithm.")
+            MyMessageBox("Please select at least one Algorithm.")
             return None
         
         # get the run objects and create the run window
@@ -385,8 +386,8 @@ class MainTabsWidget(QTabWidget):
         so that in a test scenario the threads from this window can be trailed 
         so it waits for them to finish before checking results."""
         
-        if self.results_layout.count() > 6:
-            warning = MyMessageBox("Please clear one of the results before running again.")
+        if self.results_layout.count() > MAX_RESULT_FRAMES + RESULT_LAYOUT_WIDGETS - 1:
+            MyMessageBox("Please clear one of the results before running again.")
             return
         
         run = self.getRunObject()
@@ -394,18 +395,19 @@ class MainTabsWidget(QTabWidget):
             return
 
         # create a result frame. get the number of the run from the self.listWidget
-        run_number = self.results_layout.count() + 1  # Assuming run_number is the count of items in the list
+        run_number = self.results_layout.count() + 1 - RESULT_LAYOUT_WIDGETS # Assuming run_number is the count of items in the list
         result_frame = ResultFrame(run, f"Run {run_number}", self)
-
-        self.results_layout.addWidget(result_frame)  # Add the ResultFrame to the QVBoxLayout.
         
-        self.setCurrentIndex(1)
+        # add widget after the last widget in the layout but before the stretch
+        self.results_layout.insertWidget(self.results_layout.count() - 1, result_frame)
                 
+        self.setCurrentIndex(1)     
+                   
     ### Results tab methods ###
     def noResults(self):
         """Return True if there are no results"""
-        if self.results_layout.count() == 0:
-            warning = MyMessageBox("There are no results available.")
+        if self.results_layout.count() == RESULT_LAYOUT_WIDGETS:
+            MyMessageBox("There are no results available.")
             return True
         return False
     
@@ -414,7 +416,7 @@ class MainTabsWidget(QTabWidget):
         if self.noResults():
             return
         
-        for i in range(self.results_layout.count()):
+        for i in range(RESULT_LAYOUT_WIDGETS-1, self.results_layout.count()-1):
             self.results_layout.itemAt(i).widget().saveResults()
     
     def openAllResults(self):
@@ -422,7 +424,7 @@ class MainTabsWidget(QTabWidget):
         if self.noResults():
             return
         
-        for i in range(self.results_layout.count()):
+        for i in range(RESULT_LAYOUT_WIDGETS-1, self.results_layout.count()-1):
             self.results_layout.itemAt(i).widget().openTab()
     
     def eraseAllResults(self):
@@ -430,6 +432,6 @@ class MainTabsWidget(QTabWidget):
         if self.noResults():
             return
         
-        for i in range(self.results_layout.count()):
-            self.results_layout.itemAt(0).widget().erase()
+        for i in range(self.results_layout.count()-RESULT_LAYOUT_WIDGETS):
+            self.results_layout.itemAt(RESULT_LAYOUT_WIDGETS-1).widget().erase()
             

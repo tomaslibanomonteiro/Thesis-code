@@ -79,7 +79,7 @@ class MyComboBox(QtWidgets.QComboBox):
     def removeRowFromTable(self):
         # check if the combobox is the only one in the table, give warning 
         if self.table.rowCount() == 1: 
-            warning = MyMessageBox("Cannot remove the only row in the table.")			
+            MyMessageBox("Cannot remove the only row in the table.")			
         else:
             # remove the combobox from the table
             if self.row is not None:

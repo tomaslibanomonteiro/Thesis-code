@@ -32,3 +32,9 @@ DEFAULT_ROW_NUMBERS = [7, 7, 4, 1]
 
 # object id col number in the edit parameters tables
 ID_COL = 1 
+
+# result_layout number of widgets before adding result_frames 
+RESULT_LAYOUT_WIDGETS = 3
+
+# maximum number of result_frames accepted before asking the user to delete
+MAX_RESULT_FRAMES = 1

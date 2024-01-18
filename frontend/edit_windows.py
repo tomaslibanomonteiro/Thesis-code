@@ -6,7 +6,6 @@ from backend.get import (get_crossover, get_decomposition, get_mutation,
 from frontend.my_widgets import MyTextEdit, MyComboBox, ScientificDoubleSpinBox, ScientificSpinBox, MyCheckBox, MyMessageBox
 from utils.debug import debug_print
 from utils.defines import DESIGNER_EDIT_WINDOW, DESIGNER_EDIT_FRAME, NO_DEFAULT, OPERATORS, ID_COL
-from copy import deepcopy #!
 
 def ArgsAreSet(dic: dict) -> bool:
     # check if any of the values in the dict is == NO_DEFAULT
@@ -94,7 +93,7 @@ class EditTab(QFrame):
     ###### GENERAL METHODS ######
                     
     def variantsHelp(self):
-        helpbox = MyMessageBox("To create variants of the default classes, choose a class from the comboBox."
+        MyMessageBox("To create variants of the default classes, choose a class from the comboBox."
                                " The arguments will be inherited from the default class", "Variants Help", warning_icon=False)
         
     ###### EDIT TABLES ######
