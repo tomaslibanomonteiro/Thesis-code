@@ -1,11 +1,14 @@
 # frontend 
-DESIGNER_MAIN = 'frontend/designer_templates/main_window.ui' 
-DESIGNER_EDIT_WINDOW = 'frontend/designer_templates/edit_window.ui'
-DESIGNER_ALGO_WINDOW = 'frontend/designer_templates/algo_window.ui'
-DESIGNER_RUN_FRAME = 'frontend/designer_templates/run_frame.ui'
-DESIGNER_MAIN_TABS = 'frontend/designer_templates/main_tabs.ui'
-DESIGNER_EDIT_FRAME = 'frontend/designer_templates/edit_frame.ui'
-DESIGNER_RESULT_FRAME = 'frontend/designer_templates/result_frame.ui'
+
+# main window
+DESIGNER_MAIN = 'frontend/designer_templates/main_window/main_window.ui' 
+DESIGNER_MAIN_TABS = 'frontend/designer_templates/main_window/main_tabs.ui'
+DESIGNER_RUN_TAB = 'frontend/designer_templates/main_window/run_tab.ui'
+DESIGNER_RESULT_FRAME = 'frontend/designer_templates/main_window/result_frame.ui'
+
+# edit window
+DESIGNER_EDIT_WINDOW = 'frontend/designer_templates/edit_window/edit_window.ui'
+DESIGNER_EDIT_TAB = 'frontend/designer_templates/edit_window/edit_tab.ui'
 
 # tests folders
 RESULTS_FOLDER = 'tests/results'

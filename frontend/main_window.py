@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import QHeaderView, QMainWindow, QTabWidget, QVBoxLayout, QTableWidget, QTabBar, QFileDialog, QWidget
 from PyQt5.uic import loadUi
 
-from backend.get import (get_algorithm, get_performance_indicator, get_problem,
-                         get_termination)
+from backend.get import (get_algorithm, get_performance_indicator, get_problem, get_termination, get_crossover, 
+                         get_decomposition, get_mutation, get_reference_directions, get_sampling, get_selection)
 from backend.defaults import Defaults
 from backend.run import RunThread, SingleRunArgs
 from frontend.my_widgets import MyComboBox, MyMessageBox
@@ -23,14 +23,14 @@ class MyMainWindow(QMainWindow):
         self.action_SwitchPage.setText(text)
 
         # Create single objective optimization tab
-        self.soo_tabs = MainTabsWidget(run_options_soo, parameters_soo, 'Single Objective Optimization')
+        self.soo_tabs = MainTabsWidget(self, run_options_soo, parameters_soo, 'Single Objective Optimization')
         my_layout_soo = QVBoxLayout()
         my_layout_soo.addWidget(self.soo_tabs)
         my_layout_soo.setStretch(0, 1)
         self.SOOpage.setLayout(my_layout_soo)
         
         # Create multi objective optimization tab
-        self.moo_tabs = MainTabsWidget(run_options_moo, parameters_moo, 'Multi Objective Optimization')
+        self.moo_tabs = MainTabsWidget(self, run_options_moo, parameters_moo, 'Multi Objective Optimization')
         my_layout_moo = QVBoxLayout()
         my_layout_moo.addWidget(self.moo_tabs)
         my_layout_moo.setStretch(0, 1)
@@ -55,9 +55,13 @@ class MyMainWindow(QMainWindow):
     def switchPage(self):
         """Switch between SOO and MOO pages, and change the menu bar accordingly"""
         if self.stackedWidget.currentIndex() == 0:
+            if self.soo_tabs.edit_window.isVisible():
+                self.soo_tabs.edit_window.close()
             self.stackedWidget.setCurrentIndex(1)
             self.action_SwitchPage.setText("Change to SOO")
         else:
+            if self.moo_tabs.edit_window.isVisible():
+                self.moo_tabs.edit_window.close()
             self.stackedWidget.setCurrentIndex(0)
             self.action_SwitchPage.setText("Change to MOO")
     
@@ -128,7 +132,10 @@ class MyMainWindow(QMainWindow):
     
     def editParameters(self):
         active_tabs = self.soo_tabs if self.stackedWidget.currentIndex() == 0 else self.moo_tabs
-        active_tabs.edit_window.show()
+        if active_tabs.edit_window.isVisible():
+            active_tabs.edit_window.activateWindow()
+        else:
+            active_tabs.edit_window.show()
     
     def saveParameters(self):
         """Go through all the tabs and save the parameters as a dictionary, where the key is the tab name
@@ -137,14 +144,8 @@ class MyMainWindow(QMainWindow):
         edit_window = self.soo_tabs.edit_window if self.stackedWidget.currentIndex() == 0 else self.moo_tabs.edit_window
         
         parameters = {}
-        
-        # save the parameters from the main tabs
-        for tab_name, tab in edit_window.tabs.items():
-            parameters[tab_name] = tab.tableToDict()
-        
-        # save the parameters from the operator tabs
-        for tab_name, tab in edit_window.operator_window.tabs.items():
-            parameters[tab_name] = tab.tableToDict()
+        for _, tab in edit_window.tabs.items():
+            parameters[tab.key] = tab.tableToDict()
             
         # Open file dialog to select the save location
         file_dialog = QFileDialog()
@@ -164,6 +165,9 @@ class MyMainWindow(QMainWindow):
         """Load the parameters"""
         active_tabs = self.soo_tabs if self.stackedWidget.currentIndex() == 0 else self.moo_tabs
 
+        active_tabs.edit_window.close()
+        active_tabs.edit_window.deleteLater()
+        
         # Open file dialog to select the file to load
         file_dialog = QFileDialog()
         file_dialog.setAcceptMode(QFileDialog.AcceptOpen)
@@ -180,19 +184,30 @@ class MyMainWindow(QMainWindow):
                 
                 # Set the parameters
                 active_tabs.setEditWindow(parameters)
-
+                self.editParameters()
+                
 class MainTabsWidget(QTabWidget):
-    def __init__(self, run_options: dict, parameters: dict, label: str) -> None:
+    def __init__(self, main_window: MyMainWindow, run_options: dict, parameters: dict, label: str) -> None:
         super().__init__()
 
         loadUi(DESIGNER_MAIN_TABS, self)
         
-        ############################ EDIT WINDOW #################################
+        ############################ GENERAL #################################
         
-        self.parameters = parameters
+        self.main_window = main_window
+        
+        # Add a spacer so that the height remains the same when Run Tab is added with the close button
+        spacer = QWidget()
+        spacer.setFixedHeight(20)  
+        spacer.setFixedWidth(1)  
+        self.tabBar().setTabButton(0, QTabBar.RightSide, spacer)        
+        self.tabBar().setTabButton(1, QTabBar.RightSide, spacer)
+        
+        ############################ EDIT WINDOW ##############################
+        
         self.setEditWindow(parameters)
         
-        ############################ RUN TAB  #################################
+        ############################ RUN TAB #################################
         
         # set run run_options
         missing_keys = set(RUN_OPTIONS_KEYS) - set(run_options.keys())
@@ -201,51 +216,43 @@ class MainTabsWidget(QTabWidget):
         self.run_options = run_options
 
         self.soo_label.setText(label)
-        self.initialComboBoxItems()
+        self.initialComboBoxItems(parameters)
         self.runOptions_to_tables(run_options)
         
         # set run button 
         self.run_button.clicked.connect(self.runButton)
 
-        ############################ RESULTS TAB  #################################
+        ############################ RESULTS TAB #################################
         
         # open, save and erase buttons                            
         self.save_button.clicked.connect(self.saveAllResults)
         self.open_button.clicked.connect(self.openAllResults)
         self.erase_button.clicked.connect(self.eraseAllResults)
-                
-    ### General methods ###        
-    
+
     def setEditWindow(self, parameters: dict):
-        # create the edit window 
-        tab_dicts = {'problem': ('Edit Problems', get_problem, [self.prob_table]), 
-                     'algorithm': ('Edit Algorithms', get_algorithm, [self.algo_table]), 
-                     'pi': ('Edit Performance Indicators', get_performance_indicator, [self.pi_table]),
-                     'termination': ('Edit Termination Criteria', get_termination, [self.term_table])}
-        self.edit_window = EditWindow(tab_dicts, parameters)
+        """Set the edit window with the parameters"""
+        # create edit window
+        tab_dicts = {'Problems': ('Edit Problems', get_problem, None, 'problem'), 
+             'Algorithms': ('Edit Algorithms', get_algorithm, None, 'algorithm'), 
+             'Perf. Ind.': ('Edit Performance Indicators', get_performance_indicator, None, 'pi'),
+             'Terminations': ('Edit Termination Criteria', get_termination, None, 'termination'),
+             '(op) Mutations': ('Edit Mutations', get_mutation, None, 'mutation'),
+             '(op) Crossovers': ('Edit Crossovers', get_crossover, None, 'crossover'),
+             '(op) Selections': ('Edit Selections', get_selection, None, 'selection'),
+             '(op) Samplings': ('Edit Samplings', get_sampling, None, 'sampling'),
+             '(op) Decomp.': ('Edit Decompositions', get_decomposition, None, 'decomposition'),
+             '(op) Ref. Dir.': ('Edit Ref_dirs', get_reference_directions, None, 'ref_dirs')}
         
-        # Make the tabs closable. 
-        self.setTabsClosable(True)
-        self.tabCloseRequested.connect(self.closeTab)
-        # Add a spacer so that the height remains the same when Run Tab is added with the close button
-        spacer = QWidget()
-        spacer.setFixedHeight(20)  
-        spacer.setFixedWidth(1)  
-        self.tabBar().setTabButton(0, QTabBar.RightSide, spacer)        
-        self.tabBar().setTabButton(1, QTabBar.RightSide, spacer)
-        
-    def closeTab(self, index):
-        """Close the tab at the given index"""
-        self.removeTab(index)
-    
+        self.edit_window = EditWindow(self.main_window, tab_dicts, parameters)
+
     ### Run tab methods ###
-    def initialComboBoxItems(self):
+    def initialComboBoxItems(self, parameters):
         """Set one comboBox for each table with the initial items from the parameters"""
         
         # items for each combobox
         self.comboBox_items = []
         for key in ['problem', 'algorithm', 'pi', 'termination']:
-            items = [obj_id for obj_id in self.parameters[key].keys() if ArgsAreSet(self.parameters[key])]
+            items = [obj_id for obj_id in parameters[key].keys() if ArgsAreSet(parameters[key])]
             self.comboBox_items.append(items)    
         
         # columns with comboboxes
@@ -335,7 +342,7 @@ class MainTabsWidget(QTabWidget):
         if term_id == "":
             MyMessageBox("Please select a Termination Criteria.")
             return None
-        term_object = tabs['termination'].getObjectFromID(term_id)
+        term_object = tabs['Terminations'].getObjectFromID(term_id)
         
         # get run args, a list with the arguments for each individual run
         run_args =  []
@@ -344,7 +351,7 @@ class MainTabsWidget(QTabWidget):
         for row in range(self.prob_table.rowCount()):
             prob_id = self.prob_table.cellWidget(row, 0).currentText()
             if prob_id != "":
-                prob_object = tabs['problem'].getObjectFromID(prob_id)
+                prob_object = tabs['Problems'].getObjectFromID(prob_id)
                 pf = prob_object.pareto_front() if prob_object.pareto_front else None
                 n_obj = prob_object.n_obj
                 
@@ -353,7 +360,7 @@ class MainTabsWidget(QTabWidget):
                     algo_id = self.algo_table.cellWidget(row, 0).currentText()
                     if algo_id != "":
                         algo_id = self.algo_table.cellWidget(row, 0).currentText()
-                        algo_object = tabs['algorithm'].getObjectFromID(algo_id, pf, n_obj)
+                        algo_object = tabs['Algorithms'].getObjectFromID(algo_id, pf, n_obj)
                         
                         # get pi objects (pi depends on prob pf)
                         pi_ids, pi_objects = [], []
@@ -361,7 +368,7 @@ class MainTabsWidget(QTabWidget):
                             pi_id = self.pi_table.cellWidget(row, 0).currentText()
                             if pi_id != "":
                                 pi_ids.append(pi_id)
-                                pi_objects.append(tabs['pi'].getObjectFromID(pi_id, pf, n_obj))
+                                pi_objects.append(tabs['Perf. Ind.'].getObjectFromID(pi_id, pf, n_obj))
                     
                         # check if any of the arguments is not set
                         if pi_ids == []:

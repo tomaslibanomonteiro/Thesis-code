@@ -1,58 +1,101 @@
 from numpy import inf
-from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QTableWidget, QPushButton, QFrame, QHBoxLayout
+from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QTableWidget, QPushButton, QFrame, QHBoxLayout, QTabBar, QWidget
 from PyQt5.uic import loadUi
-from backend.get import (get_crossover, get_decomposition, get_mutation,
-                         get_reference_directions, get_sampling, get_selection)
 from frontend.my_widgets import MyTextEdit, MyComboBox, ScientificDoubleSpinBox, ScientificSpinBox, MyCheckBox, MyMessageBox
 from utils.debug import debug_print
-from utils.defines import DESIGNER_EDIT_WINDOW, DESIGNER_EDIT_FRAME, NO_DEFAULT, OPERATORS, ID_COL
+from utils.defines import DESIGNER_EDIT_WINDOW, DESIGNER_EDIT_TAB, NO_DEFAULT, OPERATORS, ID_COL
 
 def ArgsAreSet(dic: dict) -> bool:
     # check if any of the values in the dict is == NO_DEFAULT
     return not any([value == NO_DEFAULT for value in dic.values()]) 
 
-class OperatorWindow(QDialog):
-    def __init__(self, tab_args: dict, parameters: dict):
+
+class EditWindow(QDialog):
+    def __init__(self, main_window, tab_args: dict, parameters: dict):
         """ tab_args is a dictionary with the following structure:
                 {tab_name: (label, get_function, affected_tables)}"""
-        
         super().__init__()
+
         loadUi(DESIGNER_EDIT_WINDOW, self)
+        self.setWindowTitle("Edit Parameters")
         
+        self.main_window = main_window
+        self.parameters = parameters
         self.tabs = {}
-        
-        for tab_name in tab_args.keys():
-            self.tabs[tab_name] = EditTab(tab_name, tab_args[tab_name], parameters)
-            self.tabWidget.addTab(self.tabs[tab_name], tab_name)
-            
-        self.save_button.clicked.connect(self.save)
-        
-    def save(self):
-        for tab in self.tabs.values():
-            tab.updateTables()
-
-        self.close()
-
-class EditWindow(OperatorWindow):
-    def __init__(self, tab_args: dict, parameters: dict):
-        """ tab_args is a dictionary with the following structure:
-                {tab_name: (label, get_function, affected_tables)}"""
-        super().__init__(tab_args, parameters)
-        
-        algo_tab = self.tabs["algorithm"]
-
-        op_tab_dict = { "mutation": ("Edit Mutations", get_mutation, algo_tab.table),
-                        "crossover": ("Edit Crossovers", get_crossover, algo_tab.table),
-                        "selection": ("Edit Selections", get_selection, algo_tab.table),
-                        "sampling": ("Edit Samplings", get_sampling, algo_tab.table),
-                        "decomposition": ("Edit Decompositions", get_decomposition, algo_tab.table),
-                        "ref_dirs": ("Edit Ref_dirs", get_reference_directions, algo_tab.table)}
+        self.op_tab_names = ["(op) Mutations", "(op) Crossovers", "(op) Selections", "(op) Samplings", "(op) Decomp.", "(op) Ref. Dir."]
+        self.run_tab_names = ["Problems", "Algorithms", "Perf. Ind." , "Terminations"]
                 
-        self.operator_window = OperatorWindow(op_tab_dict, parameters)
+        # set open_operators and open_run_options buttons
+        self.open_operators.clicked.connect(self.openOperators)
+        self.open_run_options.clicked.connect(self.openRunOptions)
+        self.save_parameters.clicked.connect(self.main_window.saveParameters)
+        self.load_parameters.clicked.connect(self.main_window.loadParameters)
+        self.helpButton.clicked.connect(self.help)
+        self.tabWidget.tabCloseRequested.connect(self.closeTab)
         
-        # add the button to open Operator Window in the bottom of the EditWindow
+        # Add a spacer so that the height remains the same when all other tabs are closed
+        spacer = QWidget()
+        spacer.setFixedHeight(20)  
+        spacer.setFixedWidth(1)  
+        self.tabWidget.tabBar().setTabButton(0, QTabBar.RightSide, spacer)        
+        
+        # order the names so operator tabs are created first then algo tab (because of the combo boxes)          
+        # self.tabs = {tab_name: EditTab(self, tab_name, tab_args[tab_name]) for tab_name in self.op_tab_names + self.run_tab_names}            
+        for tab_name in self.op_tab_names:
+            self.tabs[tab_name] = EditTab(self, tab_name, tab_args[tab_name])
+
+        for tab_name in self.run_tab_names:
+            self.tabs[tab_name] = EditTab(self, tab_name, tab_args[tab_name])
+    def closeTab(self, index):
+        # close the tab with the index
+        self.tabWidget.removeTab(index)
+        
+    def openOperators(self):
+        for tab_name in self.op_tab_names:
+            self.tabWidget.addTab(self.tabs[tab_name], tab_name)
+        self.tabWidget.setCurrentIndex(len(self.tabWidget)-1)
+        
+    def openRunOptions(self):
+        # open all the run options tabs
+        for tab_name in self.run_tab_names:
+            self.tabWidget.addTab(self.tabs[tab_name], tab_name)
+        self.tabWidget.setCurrentIndex(len(self.tabWidget)-1)    
+                
+    def help(self):
+        MyMessageBox("Click on \"Edit Run Options\" to edit their parameters. Click on \"Edit Operators\" to edit "
+                     "the operators parameters that are then used in the algorithms. Click on \"Save Parameters\" "
+                     "to save the parameters to a file.", "Help", warning_icon=False)
+        
+class EditTab(QFrame):
+    def __init__(self, edit_window: EditWindow, name: str, tab_args: tuple):
+        super().__init__()
+        
+        loadUi(DESIGNER_EDIT_TAB, self)
+        
+        self.edit_window = edit_window
+        self.name = name
+        label, self.get_function, self.affected_tables, self.key = tab_args
+        self.table_dict = edit_window.parameters[self.key]
+        self.default_ids = list(self.table_dict.keys())        
+        self.classes = [self.table_dict[key]["class"] for key in self.default_ids]
+        self.label.setText(label)
+        self.helpButton.clicked.connect(self.variantsHelp)
+                
+        if name == "Algorithms":
+            self.setAlgorithmTab()
+
+        self.dictToTable(self.table_dict)
+    
+    ###### GENERAL METHODS ######
+    
+    def setAlgorithmTab(self):
+
+        # define operator combobox items
+        self.operator_comboBox_items = {key: [key] + list(self.edit_window.parameters[key].keys()) for key in OPERATORS} 
+
+        # add the operators button to the algorithm tab
         self.operators_button = QPushButton("Edit Operators")
-        self.operators_button.clicked.connect(self.openOperatorWindow)
+        self.operators_button.clicked.connect(self.edit_window.openOperators)
         self.operators_button.setFixedWidth(150)
         self.operators_button.setFixedHeight(50)
         button_layout = QHBoxLayout()
@@ -60,38 +103,8 @@ class EditWindow(OperatorWindow):
         button_layout.addWidget(self.operators_button)
         button_layout.addStretch(1)
 
-        # add the button layout to the algo_tab layout
-        algo_tab.layout.addLayout(button_layout)        
-        
-        algo_tab.op_tabs = self.operator_window.tabs
-        
-    def openOperatorWindow(self):
-        self.operator_window.show()
-        
-class EditTab(QFrame):
-    def __init__(self, name: str, tab_args: tuple, parameters: dict):
-        super().__init__()
-        
-        loadUi(DESIGNER_EDIT_FRAME, self)
-        
-        self.name = name
-        label, self.get_function, self.affected_tables = tab_args
-        self.table_dict = parameters[name]
-        self.default_ids = list(self.table_dict.keys())        
-        self.classes = [self.table_dict[key]["class"] for key in self.default_ids]
-        self.label.setText(label)
-
-        # modify what the save and help buttons do
-        self.helpButton.clicked.connect(self.variantsHelp)
-        
-        if name == "algorithm":
-            self.op_tabs = None
-            self.operator_comboBox_items = {key: [key] + list(parameters[key].keys()) for key in OPERATORS} 
-         
-        self.dictToTable(self.table_dict)
+        self.layout.addLayout(button_layout)        
     
-    ###### GENERAL METHODS ######
-                    
     def variantsHelp(self):
         MyMessageBox("To create variants of the default classes, choose a class from the comboBox."
                                " The arguments will be inherited from the default class", "Variants Help", warning_icon=False)
@@ -195,7 +208,7 @@ class EditTab(QFrame):
                 widget.setValue(widget.minimum())
             else:
                 widget.setValue(value)
-        elif arg in OPERATORS and table.cellWidget(row, 1).text() not in FAKE_OPERATORS:
+        elif self.name == "Algorithms" and arg in OPERATORS:
             self.setOperatorComboBox(table, row, col, arg, value)
             return
         elif value is None:
@@ -330,7 +343,7 @@ class EditTab(QFrame):
         if op_name not in OPERATORS:
             raise Exception("Operator " + op_name + " not found, with id " + op_id)
         else:
-            return self.op_tabs[op_name].getObjectFromID(op_id, pf, n_obj)
+            return self.edit_window.tabs[op_name].getObjectFromID(op_id, pf, n_obj)
     
     ###### UPDATE COMBOBOXES ######
         

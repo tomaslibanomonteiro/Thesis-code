@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QFrame, QTableWidget, QTableWidgetItem, QTabWidget
 from PyQt5.uic import loadUi
 from backend.run import RunThread
-from utils.defines import DESIGNER_RUN_FRAME, DESIGNER_RESULT_FRAME
+from utils.defines import DESIGNER_RUN_TAB, DESIGNER_RESULT_FRAME
 from matplotlib import pyplot as plt
 from PyQt5.QtWidgets import QFileDialog
 
@@ -77,7 +77,7 @@ class ResultFrame(QFrame):
 class RunTab(QFrame):
     def __init__(self, run_thread: RunThread, label: str):
         super().__init__()
-        loadUi(DESIGNER_RUN_FRAME, self)
+        loadUi(DESIGNER_RUN_TAB, self)
         
         self.label.setText(label)
         self.run_thread = run_thread
