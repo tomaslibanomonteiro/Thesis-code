@@ -6,7 +6,7 @@ from backend.get import (get_algorithm, get_performance_indicator, get_problem, 
 from backend.defaults import Defaults
 from backend.run import RunThread, SingleRunArgs
 from frontend.my_widgets import MyComboBox, MyMessageBox
-from frontend.edit_windows import (EditWindow, ArgsAreSet)
+from frontend.edit_window import (EditWindow, ArgsAreSet)
 from frontend.main_window_frames import ResultFrame
 from utils.defines import DESIGNER_MAIN, RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_MAIN_TABS, RESULT_LAYOUT_WIDGETS, MAX_RESULT_FRAMES
 import pickle
