@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from PyQt5.QtWidgets import QFileDialog
 
 class ResultFrame(QFrame):
-    def __init__(self, run_thread: RunThread, run_name: str, tabWidget: QTabWidget):
+    def __init__(self, tabWidget: QTabWidget, run_thread: RunThread, run_name: str):
         super().__init__()
         loadUi(DESIGNER_RESULT_FRAME, self)
         
@@ -67,6 +67,11 @@ class ResultFrame(QFrame):
     def erase(self):
         """Erase the run"""
         self.tabWidget.results_layout.removeWidget(self)
+        # remove tab if it exists
+        for i in range(self.tabWidget.count()):
+            if self.tabWidget.tabText(i) == self.run_name:
+                self.tabWidget.removeTab(i)
+                break
         self.deleteLater()     
     
     def cancel_run(self):

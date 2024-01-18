@@ -8,7 +8,8 @@ from backend.run import RunThread, SingleRunArgs
 from frontend.my_widgets import MyComboBox, MyMessageBox
 from frontend.edit_window import (EditWindow, ArgsAreSet)
 from frontend.main_window_frames import ResultFrame
-from utils.defines import DESIGNER_MAIN, RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_MAIN_TABS, RESULT_LAYOUT_WIDGETS, MAX_RESULT_FRAMES
+from utils.defines import (DESIGNER_MAIN, RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_MAIN_TABS, RESULT_LAYOUT_WIDGETS, 
+                           MAX_RESULT_FRAMES, ALGO_KEY, PROB_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY, KEY_ARGS_DICT)
 import pickle
 
 class MyMainWindow(QMainWindow):
@@ -195,6 +196,9 @@ class MainTabsWidget(QTabWidget):
         ############################ GENERAL #################################
         
         self.main_window = main_window
+        self.run_counter = 0
+        
+        self.tabCloseRequested.connect(self.closeTab)
         
         # Add a spacer so that the height remains the same when Run Tab is added with the close button
         spacer = QWidget()
@@ -212,7 +216,7 @@ class MainTabsWidget(QTabWidget):
         # set run run_options
         missing_keys = set(RUN_OPTIONS_KEYS) - set(run_options.keys())
         for key in missing_keys:
-            run_options[key] = [] if key != 'n_seeds' else 1
+            run_options[key] = [] if key != N_SEEDS_KEY else 1
         self.run_options = run_options
 
         self.soo_label.setText(label)
@@ -232,18 +236,12 @@ class MainTabsWidget(QTabWidget):
     def setEditWindow(self, parameters: dict):
         """Set the edit window with the parameters"""
         # create edit window
-        tab_dicts = {'Problems': ('Edit Problems', get_problem, None, 'problem'), 
-             'Algorithms': ('Edit Algorithms', get_algorithm, None, 'algorithm'), 
-             'Perf. Ind.': ('Edit Performance Indicators', get_performance_indicator, None, 'pi'),
-             'Terminations': ('Edit Termination Criteria', get_termination, None, 'termination'),
-             '(op) Mutations': ('Edit Mutations', get_mutation, None, 'mutation'),
-             '(op) Crossovers': ('Edit Crossovers', get_crossover, None, 'crossover'),
-             '(op) Selections': ('Edit Selections', get_selection, None, 'selection'),
-             '(op) Samplings': ('Edit Samplings', get_sampling, None, 'sampling'),
-             '(op) Decomp.': ('Edit Decompositions', get_decomposition, None, 'decomposition'),
-             '(op) Ref. Dir.': ('Edit Ref_dirs', get_reference_directions, None, 'ref_dirs')}
-        
-        self.edit_window = EditWindow(self.main_window, tab_dicts, parameters)
+        signals = {tab_key: None for tab_key in KEY_ARGS_DICT.keys()}  
+        self.edit_window = EditWindow(self.main_window, signals, parameters)
+
+    def closeTab(self, index):
+        # close the tab with the index
+        self.removeTab(index)
 
     ### Run tab methods ###
     def initialComboBoxItems(self, parameters):
@@ -251,7 +249,9 @@ class MainTabsWidget(QTabWidget):
         
         # items for each combobox
         self.comboBox_items = []
-        for key in ['problem', 'algorithm', 'pi', 'termination']:
+        keys = RUN_OPTIONS_KEYS.copy() 
+        keys.remove(N_SEEDS_KEY)
+        for key in keys:
             items = [obj_id for obj_id in parameters[key].keys() if ArgsAreSet(parameters[key])]
             self.comboBox_items.append(items)    
         
@@ -303,15 +303,15 @@ class MainTabsWidget(QTabWidget):
         missing_keys = set(RUN_OPTIONS_KEYS) - set(run_options.keys())
             
         for key in missing_keys:
-            run_options[key] = [] if key != 'n_seeds' else 1
+            run_options[key] = [] if key != N_SEEDS_KEY else 1
             
         # set the combo boxes and the default run_options
-        missing_options = self.setTable(self.prob_table, run_options['prob'], DEFAULT_ROW_NUMBERS[0])
-        missing_options += self.setTable(self.algo_table, run_options['algo'], DEFAULT_ROW_NUMBERS[1])
-        missing_options += self.setTable(self.pi_table, run_options['pi'], DEFAULT_ROW_NUMBERS[2])
-        missing_options += self.setTable(self.term_table, run_options['term'], DEFAULT_ROW_NUMBERS[3])
+        missing_options = self.setTable(self.prob_table, run_options[PROB_KEY], DEFAULT_ROW_NUMBERS[0])
+        missing_options += self.setTable(self.algo_table, run_options[ALGO_KEY], DEFAULT_ROW_NUMBERS[1])
+        missing_options += self.setTable(self.pi_table, run_options[PI_KEY], DEFAULT_ROW_NUMBERS[2])
+        missing_options += self.setTable(self.term_table, run_options[TERM_KEY], DEFAULT_ROW_NUMBERS[3])
 
-        self.n_seeds_SpinBox.setValue(run_options['n_seeds'])
+        self.n_seeds_SpinBox.setValue(run_options[N_SEEDS_KEY])
         
         if missing_options != "":
             MyMessageBox(f"The following run options are not available: {missing_options[:-2]}. \nTo choose them, please add"
@@ -321,10 +321,10 @@ class MainTabsWidget(QTabWidget):
         """Get the run options from the table into a dictionary"""
         run_options = {}
         keys = RUN_OPTIONS_KEYS.copy()
-        keys.remove('n_seeds')
+        keys.remove(N_SEEDS_KEY)
         for table, key in zip([self.prob_table, self.algo_table, self.pi_table, self.term_table], keys):
             run_options[key] = [table.cellWidget(row, 0).currentText() for row in range(table.rowCount()) if table.cellWidget(row, 0).currentText() != ""]
-        run_options['n_seeds'] = self.n_seeds_SpinBox.value()
+        run_options[N_SEEDS_KEY] = self.n_seeds_SpinBox.value()
         
         return run_options
     
@@ -342,7 +342,7 @@ class MainTabsWidget(QTabWidget):
         if term_id == "":
             MyMessageBox("Please select a Termination Criteria.")
             return None
-        term_object = tabs['Terminations'].getObjectFromID(term_id)
+        term_object = tabs[TERM_KEY].getObjectFromID(term_id)
         
         # get run args, a list with the arguments for each individual run
         run_args =  []
@@ -351,7 +351,7 @@ class MainTabsWidget(QTabWidget):
         for row in range(self.prob_table.rowCount()):
             prob_id = self.prob_table.cellWidget(row, 0).currentText()
             if prob_id != "":
-                prob_object = tabs['Problems'].getObjectFromID(prob_id)
+                prob_object = tabs[PROB_KEY].getObjectFromID(prob_id)
                 pf = prob_object.pareto_front() if prob_object.pareto_front else None
                 n_obj = prob_object.n_obj
                 
@@ -360,7 +360,7 @@ class MainTabsWidget(QTabWidget):
                     algo_id = self.algo_table.cellWidget(row, 0).currentText()
                     if algo_id != "":
                         algo_id = self.algo_table.cellWidget(row, 0).currentText()
-                        algo_object = tabs['Algorithms'].getObjectFromID(algo_id, pf, n_obj)
+                        algo_object = tabs[ALGO_KEY].getObjectFromID(algo_id, pf, n_obj)
                         
                         # get pi objects (pi depends on prob pf)
                         pi_ids, pi_objects = [], []
@@ -368,7 +368,7 @@ class MainTabsWidget(QTabWidget):
                             pi_id = self.pi_table.cellWidget(row, 0).currentText()
                             if pi_id != "":
                                 pi_ids.append(pi_id)
-                                pi_objects.append(tabs['Perf. Ind.'].getObjectFromID(pi_id, pf, n_obj))
+                                pi_objects.append(tabs[PI_KEY].getObjectFromID(pi_id, pf, n_obj))
                     
                         # check if any of the arguments is not set
                         if pi_ids == []:
@@ -402,8 +402,8 @@ class MainTabsWidget(QTabWidget):
             return
 
         # create a result frame. get the number of the run from the self.listWidget
-        run_number = self.results_layout.count() + 1 - RESULT_LAYOUT_WIDGETS # Assuming run_number is the count of items in the list
-        result_frame = ResultFrame(run, f"Run {run_number}", self)
+        self.run_counter += 1
+        result_frame = ResultFrame(self, run, f"Run {self.run_counter}")
         
         # add widget after the last widget in the layout but before the stretch
         self.results_layout.insertWidget(self.results_layout.count() - 1, result_frame)

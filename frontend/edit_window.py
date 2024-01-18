@@ -3,7 +3,10 @@ from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QTableWidget, QPushButton
 from PyQt5.uic import loadUi
 from frontend.my_widgets import MyTextEdit, MyComboBox, ScientificDoubleSpinBox, ScientificSpinBox, MyCheckBox, MyMessageBox
 from utils.debug import debug_print
-from utils.defines import DESIGNER_EDIT_WINDOW, DESIGNER_EDIT_TAB, NO_DEFAULT, OPERATORS, ID_COL
+
+from utils.defines import (DESIGNER_EDIT_WINDOW, DESIGNER_EDIT_TAB, NO_DEFAULT, OPERATORS, ID_COL, OPERATORS_ARGS_DICT, 
+                           RUN_OPTIONS_ARGS_DICT, ALGO_KEY, REF_DIR_KEY, PI_KEY) 
+
 
 def ArgsAreSet(dic: dict) -> bool:
     # check if any of the values in the dict is == NO_DEFAULT
@@ -11,20 +14,17 @@ def ArgsAreSet(dic: dict) -> bool:
 
 
 class EditWindow(QDialog):
-    def __init__(self, main_window, tab_args: dict, parameters: dict):
-        """ tab_args is a dictionary with the following structure:
-                {tab_name: (label, get_function, affected_tables)}"""
+    def __init__(self, main_window, signals: dict, parameters: dict):
         super().__init__()
 
         loadUi(DESIGNER_EDIT_WINDOW, self)
         self.setWindowTitle("Edit Parameters")
-        
+
         self.main_window = main_window
         self.parameters = parameters
-        self.tabs = {}
-        self.op_tab_names = ["(op) Mutations", "(op) Crossovers", "(op) Selections", "(op) Samplings", "(op) Decomp.", "(op) Ref. Dir."]
-        self.run_tab_names = ["Problems", "Algorithms", "Perf. Ind." , "Terminations"]
-                
+        self.tabs = {tab_key: EditTab(self, tab_key, tab_args) for tab_key, tab_args in OPERATORS_ARGS_DICT.items()}
+        self.tabs.update({tab_key: EditTab(self, tab_key, tab_args) for tab_key, tab_args in RUN_OPTIONS_ARGS_DICT.items()})
+
         # set open_operators and open_run_options buttons
         self.open_operators.clicked.connect(self.openOperators)
         self.open_run_options.clicked.connect(self.openRunOptions)
@@ -32,33 +32,26 @@ class EditWindow(QDialog):
         self.load_parameters.clicked.connect(self.main_window.loadParameters)
         self.helpButton.clicked.connect(self.help)
         self.tabWidget.tabCloseRequested.connect(self.closeTab)
-        
+
         # Add a spacer so that the height remains the same when all other tabs are closed
         spacer = QWidget()
-        spacer.setFixedHeight(20)  
-        spacer.setFixedWidth(1)  
-        self.tabWidget.tabBar().setTabButton(0, QTabBar.RightSide, spacer)        
-        
-        # order the names so operator tabs are created first then algo tab (because of the combo boxes)          
-        # self.tabs = {tab_name: EditTab(self, tab_name, tab_args[tab_name]) for tab_name in self.op_tab_names + self.run_tab_names}            
-        for tab_name in self.op_tab_names:
-            self.tabs[tab_name] = EditTab(self, tab_name, tab_args[tab_name])
+        spacer.setFixedHeight(20)
+        spacer.setFixedWidth(1)
+        self.tabWidget.tabBar().setTabButton(0, QTabBar.RightSide, spacer)
 
-        for tab_name in self.run_tab_names:
-            self.tabs[tab_name] = EditTab(self, tab_name, tab_args[tab_name])
     def closeTab(self, index):
         # close the tab with the index
         self.tabWidget.removeTab(index)
         
     def openOperators(self):
-        for tab_name in self.op_tab_names:
-            self.tabWidget.addTab(self.tabs[tab_name], tab_name)
+        for tab_key in OPERATORS_ARGS_DICT.keys():
+            self.tabWidget.addTab(self.tabs[tab_key], self.tabs[tab_key].name)
         self.tabWidget.setCurrentIndex(len(self.tabWidget)-1)
         
     def openRunOptions(self):
         # open all the run options tabs
-        for tab_name in self.run_tab_names:
-            self.tabWidget.addTab(self.tabs[tab_name], tab_name)
+        for tab_key in RUN_OPTIONS_ARGS_DICT.keys():
+            self.tabWidget.addTab(self.tabs[tab_key], self.tabs[tab_key].name)
         self.tabWidget.setCurrentIndex(len(self.tabWidget)-1)    
                 
     def help(self):
@@ -67,21 +60,21 @@ class EditWindow(QDialog):
                      "to save the parameters to a file.", "Help", warning_icon=False)
         
 class EditTab(QFrame):
-    def __init__(self, edit_window: EditWindow, name: str, tab_args: tuple):
+    def __init__(self, edit_window: EditWindow, key: str, tab_args: tuple):
         super().__init__()
         
         loadUi(DESIGNER_EDIT_TAB, self)
         
         self.edit_window = edit_window
-        self.name = name
-        label, self.get_function, self.affected_tables, self.key = tab_args
+        self.key = key
+        self.name, label, self.get_function, _ = tab_args
         self.table_dict = edit_window.parameters[self.key]
         self.default_ids = list(self.table_dict.keys())        
         self.classes = [self.table_dict[key]["class"] for key in self.default_ids]
         self.label.setText(label)
         self.helpButton.clicked.connect(self.variantsHelp)
                 
-        if name == "Algorithms":
+        if key == ALGO_KEY:
             self.setAlgorithmTab()
 
         self.dictToTable(self.table_dict)
@@ -187,8 +180,6 @@ class EditTab(QFrame):
         self.table.removeRow(row)
              
     def setTablePair(self, table: QTableWidget, row: int, col: int, arg: str, value, editable: bool = True) -> None:
-
-        FAKE_OPERATORS = ['(energy|riesz)', 'red']
         
         # Set the widget in the arg column (always text)
         widget = MyTextEdit(arg, read_only=True)
@@ -208,7 +199,7 @@ class EditTab(QFrame):
                 widget.setValue(widget.minimum())
             else:
                 widget.setValue(value)
-        elif self.name == "Algorithms" and arg in OPERATORS:
+        elif self.key == ALGO_KEY and arg in OPERATORS:
             self.setOperatorComboBox(table, row, col, arg, value)
             return
         elif value is None:
@@ -274,11 +265,11 @@ class EditTab(QFrame):
         args_dict = self.getArgsFromRow(table, row, pf, n_obj)
         
         # get the n_dim from the problem n_obj    
-        if self.name == "ref_dirs":
+        if self.key == REF_DIR_KEY:
             for arg in ["n_dim", "n_points", "partitions"]:
                 self.check_ref_dirs_dependency(args_dict, arg, n_obj)    
         # get the pf from the problem pf
-        elif self.name == "pi":
+        elif self.key == PI_KEY:
             if "pf" in args_dict and args_dict["pf"] == 'get from problem':
                 args_dict["pf"] = pf
             
@@ -308,7 +299,7 @@ class EditTab(QFrame):
             arg = table.cellWidget(row, col).text()
             widget = table.cellWidget(row, col+1)
             
-            if arg in OPERATORS and self.name == "algorithm" and get_operator_obj:
+            if arg in OPERATORS and self.key == ALGO_KEY and get_operator_obj:
                 value = self.getOperator(arg, widget.currentText(), pf, n_obj)
             elif isinstance(widget, (ScientificSpinBox, ScientificDoubleSpinBox)):
                 value = widget.value()       

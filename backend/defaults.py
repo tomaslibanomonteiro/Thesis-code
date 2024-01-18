@@ -1,13 +1,7 @@
 import inspect
 
-from backend.get import (get_algorithm_options, get_crossover_options,
-                         get_decomposition_options, get_mutation_options,
-                         get_performance_indicator_options,
-                         get_problem_options, get_reference_direction_options,
-                         get_sampling_options, get_selection_options,
-                         get_termination_options)
-from utils.defines import NO_DEFAULT, OPERATORS, VALUE_TYPES
-
+from utils.defines import (NO_DEFAULT, OPERATORS, VALUE_TYPES, KEY_ARGS_DICT, MUT_KEY, CROSS_KEY, 
+                           SEL_KEY, SAMP_KEY, DECOMP_KEY, REF_DIR_KEY, PROB_KEY, ALGO_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY)
 
 class Defaults():
     def __init__(self, obj = 'all'):
@@ -19,49 +13,44 @@ class Defaults():
         """                
         self.obj = obj
         
-        key_get_pairs = [('mutation', get_mutation_options), ('crossover', get_crossover_options),
-                         ('decomposition', get_decomposition_options), ('sampling', get_sampling_options),
-                         ('selection', get_selection_options), ('ref_dirs', get_reference_direction_options),
-                            
-                         ('termination', get_termination_options), ('pi', get_performance_indicator_options),
-                         ('problem', get_problem_options), ('algorithm', get_algorithm_options)]
+        key_get_pairs = [(key, get_options_function) for key, (tab_name, label, get_function, get_options_function) in KEY_ARGS_DICT.items()]
         
         self.dict = {}
         self.get_dict = {}
-        for key, get_function in key_get_pairs:
-            self.dict[key] = self.get_table_dict(get_function(self.obj))
-            self.get_dict[key] = get_function
+        for key, get_options_function in key_get_pairs:
+            self.dict[key] = self.get_table_dict(get_options_function(self.obj))
+            self.get_dict[key] = get_options_function
                             
         # changed defaults
         if obj != 'moo':
-            self.dict['algorithm']['ga']['selection'] = 'tournament_by_cv_and_fitness'
+            self.dict[ALGO_KEY]['ga']['selection'] = 'tournament_by_cv_and_fitness'
         if obj != 'soo':
-            self.dict['algorithm']['nsga2']['selection'] = 'binary_tournament'
-            self.dict['algorithm']['nsga3']['selection'] = 'tournament_by_cv_then_random'
-            self.dict['algorithm']['unsga3']['selection'] = 'tournament_by_rank_and_ref_line_dist'
-            self.dict['algorithm']['ctaea']['selection'] = 'restricted_mating_ctaea'
-            self.dict['algorithm']['rnsga3']['selection'] = 'tournament_by_cv_then_random'
+            self.dict[ALGO_KEY]['nsga2']['selection'] = 'binary_tournament'
+            self.dict[ALGO_KEY]['nsga3']['selection'] = 'tournament_by_cv_then_random'
+            self.dict[ALGO_KEY]['unsga3']['selection'] = 'tournament_by_rank_and_ref_line_dist'
+            self.dict[ALGO_KEY]['ctaea']['selection'] = 'restricted_mating_ctaea'
+            self.dict[ALGO_KEY]['rnsga3']['selection'] = 'tournament_by_cv_then_random'
         
-        self.dict['termination']['n_eval']['n_max_evals'] = 2000
-        self.dict['termination']['n_gen']['n_max_gen'] = 40
-        self.dict['termination']['fmin']['fmin'] = 1
-        self.dict['termination']['time']['max_time'] = 10
+        self.dict[TERM_KEY]['n_eval']['n_max_evals'] = 2000
+        self.dict[TERM_KEY]['n_gen']['n_max_gen'] = 40
+        self.dict[TERM_KEY]['fmin']['fmin'] = 1
+        self.dict[TERM_KEY]['time']['max_time'] = 10
         
-        self.dict['ref_dirs']['(das-dennis|uniform)']['n_dim'] = 'n_obj*1'
-        self.dict['ref_dirs']['(das-dennis|uniform)']['n_points'] = 'n_obj*2'
-        self.dict['ref_dirs']['(energy|riesz)']['n_dim'] = 'n_obj*1'
-        self.dict['ref_dirs']['(energy|riesz)']['n_points'] = 'n_obj*2'
-        self.dict['ref_dirs']['(layer-energy|layer-riesz)']['n_dim'] = 'n_obj*2'
-        self.dict['ref_dirs']['(layer-energy|layer-riesz)']['partitions'] = 'n_obj*2'
-        self.dict['ref_dirs']['red']['n_dim'] = 'n_obj*1'
-        self.dict['ref_dirs']['red']['n_points'] = 'n_obj*2'
+        self.dict[REF_DIR_KEY]['(das-dennis|uniform)']['n_dim'] = 'n_obj*1'
+        self.dict[REF_DIR_KEY]['(das-dennis|uniform)']['n_points'] = 'n_obj*2'
+        self.dict[REF_DIR_KEY]['(energy|riesz)']['n_dim'] = 'n_obj*1'
+        self.dict[REF_DIR_KEY]['(energy|riesz)']['n_points'] = 'n_obj*2'
+        self.dict[REF_DIR_KEY]['(layer-energy|layer-riesz)']['n_dim'] = 'n_obj*2'
+        self.dict[REF_DIR_KEY]['(layer-energy|layer-riesz)']['partitions'] = 'n_obj*2'
+        self.dict[REF_DIR_KEY]['red']['n_dim'] = 'n_obj*1'
+        self.dict[REF_DIR_KEY]['red']['n_points'] = 'n_obj*2'
         
         if self.obj != 'soo':                
-            self.dict['pi']['gd']['pf'] = 'get from problem'
-            self.dict['pi']['igd']['pf'] = 'get from problem'
-            self.dict['pi']['igd+']['pf'] = 'get from problem'
-            self.dict['pi']['gd+']['pf'] = 'get from problem'
-            self.dict['pi']['hv']['pf'] = 'get from problem'
+            self.dict[PI_KEY]['gd']['pf'] = 'get from problem'
+            self.dict[PI_KEY]['igd']['pf'] = 'get from problem'
+            self.dict[PI_KEY]['igd+']['pf'] = 'get from problem'
+            self.dict[PI_KEY]['gd+']['pf'] = 'get from problem'
+            self.dict[PI_KEY]['hv']['pf'] = 'get from problem'
     
     def return_dict(self):
         return self.dict
@@ -94,7 +83,7 @@ class Defaults():
         return ret_dict
 
     def getOperators(self, arg: str, obj):
-        if arg == "selection": # selection must be 'by hand' because one arg is a function
+        if arg == SEL_KEY: # selection must be 'by hand' because one arg is a function
             return 'by hand'                                  
         elif arg not in OPERATORS: 
             raise Exception("unknown operator", arg)
