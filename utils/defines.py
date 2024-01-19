@@ -18,6 +18,9 @@ RESULTS_FILE = 'tests/results/results.txt'
 # to be put in ui table
 NO_DEFAULT = "No def"
 
+# sufix for the variant of an object
+VARIANT = '_variant'
+
 # to be put in ui table as respective widget 
 VALUE_TYPES = (int, float, str, bool, type(None), NO_DEFAULT)
 

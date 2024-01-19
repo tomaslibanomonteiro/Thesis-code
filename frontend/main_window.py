@@ -1,8 +1,7 @@
 from PyQt5.QtWidgets import QHeaderView, QMainWindow, QTabWidget, QVBoxLayout, QTableWidget, QTabBar, QFileDialog, QWidget
 from PyQt5.uic import loadUi
+import pickle
 
-from backend.get import (get_algorithm, get_performance_indicator, get_problem, get_termination, get_crossover, 
-                         get_decomposition, get_mutation, get_reference_directions, get_sampling, get_selection)
 from backend.defaults import Defaults
 from backend.run import RunThread, SingleRunArgs
 from frontend.my_widgets import MyComboBox, MyMessageBox
@@ -10,9 +9,8 @@ from frontend.edit_window import (EditWindow, ArgsAreSet)
 from frontend.main_window_frames import ResultFrame
 from utils.defines import (DESIGNER_MAIN, RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_MAIN_TABS, RESULT_LAYOUT_WIDGETS, 
                            MAX_RESULT_FRAMES, ALGO_KEY, PROB_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY, KEY_ARGS_DICT)
-import pickle
-
 class MyMainWindow(QMainWindow):
+    
     def __init__(self, run_options_soo = {}, run_options_moo = {}, parameters_soo = Defaults('soo').dict, parameters_moo = Defaults('moo').dict, ) -> None:
         super().__init__()        
         
@@ -188,6 +186,7 @@ class MyMainWindow(QMainWindow):
                 self.editParameters()
                 
 class MainTabsWidget(QTabWidget):
+
     def __init__(self, main_window: MyMainWindow, run_options: dict, parameters: dict, label: str) -> None:
         super().__init__()
 
@@ -197,7 +196,8 @@ class MainTabsWidget(QTabWidget):
         
         self.main_window = main_window
         self.run_counter = 0
-        
+        self.tables_dict = { PROB_KEY: self.prob_table, ALGO_KEY: self.algo_table, 
+                            PI_KEY: self.pi_table, TERM_KEY: self.term_table}     
         self.tabCloseRequested.connect(self.closeTab)
         
         # Add a spacer so that the height remains the same when Run Tab is added with the close button
@@ -235,15 +235,23 @@ class MainTabsWidget(QTabWidget):
 
     def setEditWindow(self, parameters: dict):
         """Set the edit window with the parameters"""
+        
         # create edit window
-        signals = {tab_key: None for tab_key in KEY_ARGS_DICT.keys()}  
-        self.edit_window = EditWindow(self.main_window, signals, parameters)
+        self.edit_window = EditWindow(self.main_window, parameters)
+        self.edit_window.itemUpdates.connect(self.updateComboBoxItems)
 
     def closeTab(self, index):
         # close the tab with the index
         self.removeTab(index)
 
     ### Run tab methods ###
+    
+    def updateComboBoxItems(self, key: str, items: list):
+        """Update the items of the comboboxes in the run tab"""
+        table = self.tables_dict[key] 
+        for row in range(table.rowCount()):
+            table.cellWidget(row, 0).updateItems(items)
+            
     def initialComboBoxItems(self, parameters):
         """Set one comboBox for each table with the initial items from the parameters"""
         
@@ -322,7 +330,7 @@ class MainTabsWidget(QTabWidget):
         run_options = {}
         keys = RUN_OPTIONS_KEYS.copy()
         keys.remove(N_SEEDS_KEY)
-        for table, key in zip([self.prob_table, self.algo_table, self.pi_table, self.term_table], keys):
+        for key, table in self.tables_dict.items():
             run_options[key] = [table.cellWidget(row, 0).currentText() for row in range(table.rowCount()) if table.cellWidget(row, 0).currentText() != ""]
         run_options[N_SEEDS_KEY] = self.n_seeds_SpinBox.value()
         

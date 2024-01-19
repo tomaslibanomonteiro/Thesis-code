@@ -1,12 +1,12 @@
 from numpy import inf
-from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QTableWidget, QPushButton, QFrame, QHBoxLayout, QTabBar, QWidget
+from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QTableWidget, QFrame, QTabBar, QWidget, QPushButton
 from PyQt5.uic import loadUi
+from PyQt5.QtCore import pyqtSignal, QTimer
+
 from frontend.my_widgets import MyTextEdit, MyComboBox, ScientificDoubleSpinBox, ScientificSpinBox, MyCheckBox, MyMessageBox
 from utils.debug import debug_print
-
 from utils.defines import (DESIGNER_EDIT_WINDOW, DESIGNER_EDIT_TAB, NO_DEFAULT, OPERATORS, ID_COL, OPERATORS_ARGS_DICT, 
-                           RUN_OPTIONS_ARGS_DICT, ALGO_KEY, REF_DIR_KEY, PI_KEY) 
-
+                           RUN_OPTIONS_ARGS_DICT, ALGO_KEY, REF_DIR_KEY, PI_KEY, VARIANT) 
 
 def ArgsAreSet(dic: dict) -> bool:
     # check if any of the values in the dict is == NO_DEFAULT
@@ -14,7 +14,9 @@ def ArgsAreSet(dic: dict) -> bool:
 
 
 class EditWindow(QDialog):
-    def __init__(self, main_window, signals: dict, parameters: dict):
+    itemUpdates = pyqtSignal(str,list) 
+    operatorUpdates = pyqtSignal(str,list)
+    def __init__(self, main_window, parameters: dict):
         super().__init__()
 
         loadUi(DESIGNER_EDIT_WINDOW, self)
@@ -22,12 +24,14 @@ class EditWindow(QDialog):
 
         self.main_window = main_window
         self.parameters = parameters
-        self.tabs = {tab_key: EditTab(self, tab_key, tab_args) for tab_key, tab_args in OPERATORS_ARGS_DICT.items()}
+        
+        self.tabs = {tab_key: EditTab(self, tab_key, tab_args) for tab_key, tab_args in OPERATORS_ARGS_DICT.items()}            
         self.tabs.update({tab_key: EditTab(self, tab_key, tab_args) for tab_key, tab_args in RUN_OPTIONS_ARGS_DICT.items()})
 
         # set open_operators and open_run_options buttons
         self.open_operators.clicked.connect(self.openOperators)
         self.open_run_options.clicked.connect(self.openRunOptions)
+        self.open_all_tabs.clicked.connect(self.openAllTabs)
         self.save_parameters.clicked.connect(self.main_window.saveParameters)
         self.load_parameters.clicked.connect(self.main_window.loadParameters)
         self.helpButton.clicked.connect(self.help)
@@ -44,16 +48,27 @@ class EditWindow(QDialog):
         self.tabWidget.removeTab(index)
         
     def openOperators(self):
+        # close all tabs except the first one
+        while self.tabWidget.count() > 1:
+            self.tabWidget.removeTab(1)
+            
         for tab_key in OPERATORS_ARGS_DICT.keys():
             self.tabWidget.addTab(self.tabs[tab_key], self.tabs[tab_key].name)
         self.tabWidget.setCurrentIndex(len(self.tabWidget)-1)
         
     def openRunOptions(self):
-        # open all the run options tabs
+        # close all tabs except the first one
+        while self.tabWidget.count() > 1:
+            self.tabWidget.removeTab(1)
+        
         for tab_key in RUN_OPTIONS_ARGS_DICT.keys():
             self.tabWidget.addTab(self.tabs[tab_key], self.tabs[tab_key].name)
         self.tabWidget.setCurrentIndex(len(self.tabWidget)-1)    
-                
+    
+    def openAllTabs(self):
+        for tab_key in self.tabs.keys():
+            self.tabWidget.addTab(self.tabs[tab_key], self.tabs[tab_key].name)    
+            
     def help(self):
         MyMessageBox("Click on \"Edit Run Options\" to edit their parameters. Click on \"Edit Operators\" to edit "
                      "the operators parameters that are then used in the algorithms. Click on \"Save Parameters\" "
@@ -89,18 +104,14 @@ class EditTab(QFrame):
         # add the operators button to the algorithm tab
         self.operators_button = QPushButton("Edit Operators")
         self.operators_button.clicked.connect(self.edit_window.openOperators)
-        self.operators_button.setFixedWidth(150)
-        self.operators_button.setFixedHeight(50)
-        button_layout = QHBoxLayout()
-        button_layout.addStretch(1)
-        button_layout.addWidget(self.operators_button)
-        button_layout.addStretch(1)
-
-        self.layout.addLayout(button_layout)        
+        self.operators_button.setFixedWidth(100)
+        self.operators_button.setFixedHeight(30)
+        
+        self.label_layout.insertWidget(3, self.operators_button)        
     
     def variantsHelp(self):
         MyMessageBox("To create variants of the default classes, choose a class from the comboBox."
-                               " The arguments will be inherited from the default class", "Variants Help", warning_icon=False)
+                     " The arguments will be inherited from the default class", "Variants Help", warning_icon=False)
         
     ###### EDIT TABLES ######
     
@@ -149,36 +160,50 @@ class EditTab(QFrame):
         
         row = self.table.rowCount()
         self.table.insertRow(row)
+                
+        # scroll to the bottom of the table
+        self.table.scrollToBottom()        
         
+        # set the text edit with table to check if the id is unique
+        id = id if id is not None else class_name + VARIANT
+        
+        text_edit = MyTextEdit(id, self)
+        self.table.setCellWidget(row, ID_COL, text_edit)
+        
+        # connect the signal to the slot to update the items in the other tables
+        if self.key in RUN_OPTIONS_ARGS_DICT.keys():
+            text_edit.itemsSignal.connect(self.edit_window.itemUpdates.emit)
+        else:
+            text_edit.itemsSignal.connect(self.edit_window.operatorUpdates.emit)
+                    
         # add a MyComboBox in the new row and set it to the class name
         combo_box = MyComboBox(self.classes, table=self.table, col=ID_COL+1, row=row)
         self.table.setCellWidget(row, ID_COL+1, combo_box)
         self.table.cellWidget(row, ID_COL+1).setCurrentIndex(self.classes.index(class_name))
-        
-        # add a remove button in the new row
-        remove_button = QPushButton("Remove")
-        remove_button.setStyleSheet("color: red;")        
-        remove_button.clicked.connect(lambda: self.removeVariant(self.table.rowCount()-1))
-        self.table.setCellWidget(row, 0, remove_button)
 
-        # scroll to the bottom of the table
-        self.table.scrollToBottom()        
-        
-        # fucntionalities if the call was not made from the "Add Variant" button
-        
-        if id is not None: # set the id in the new row
-            self.table.setCellWidget(row, ID_COL, MyTextEdit(id))
-            
+        # functionalities if the call was not made from the "Add Variant" button
         if args_dict is not None: # set the default args in the new row
             for col in range(ID_COL+2, self.table.columnCount()):
                 self.table.cellWidget(row, col).deleteLater() if self.table.cellWidget(row, col) is not None else None
             for col, (arg, value) in zip(range(ID_COL+2, self.table.columnCount(), 2), list(args_dict.items())):
                 self.setTablePair(self.table, row, col, arg, value)
         
-    def removeVariant(self, row):
-        # remove the row from the table
+        # add a remove button in the new row
+        remove_button = QPushButton("Remove")
+        remove_button.setStyleSheet("color: red;")        
+        remove_button.clicked.connect(lambda: self.removeVariant(text_edit))        
+        self.table.setCellWidget(row, 0, remove_button)
+
+    def removeVariant(self, text_edit: MyTextEdit):
+        # find the row through the button
+        row = self.table.indexAt(text_edit.pos()).row()
+        print(f"Removing row {row}")
+        # emit a signal to update the items in the other tables
+        items = text_edit.makeUnique()
+        items = [item for item in items if item != text_edit.text()]
+        text_edit.itemsSignal.emit(text_edit.tab.key, items)
         self.table.removeRow(row)
-             
+        
     def setTablePair(self, table: QTableWidget, row: int, col: int, arg: str, value, editable: bool = True) -> None:
         
         # Set the widget in the arg column (always text)
@@ -226,7 +251,7 @@ class EditTab(QFrame):
             index = items.index(value)
         else:
             index = -1
-        table.setCellWidget(row, col+1, MyComboBox(items, index))
+        table.setCellWidget(row, col+1, MyComboBox(items, index, table=self.table, tab=self, key=arg))
                 
     ###### EXTRACT FROM TABLE ######
 
@@ -336,50 +361,3 @@ class EditTab(QFrame):
         else:
             return self.edit_window.tabs[op_name].getObjectFromID(op_id, pf, n_obj)
     
-    ###### UPDATE COMBOBOXES ######
-        
-    #!
-    def updateTables(self):
-        return
-        # check if the variant table has changed
-        for row in range(self.variants_table.rowCount()):
-            if self.variants_table.cellWidget(row, ID_COL) is None or not ArgsAreSet(self.getArgsFromRow(self.variants_table, row)):
-                return 
-
-        new_variant_ids = []
-        table = self.variants_table
-        # get the variants from the table
-        for row in range(table.rowCount()):
-            if table.cellWidget(row, ID_COL) is not None and ArgsAreSet(self.getArgsFromRow(table, row)):
-                new_variant_ids.append(table.cellWidget(row, ID_COL).text())
-        # if the variant ids have changed, change the respective ComboBoxes 
-        if sorted(new_variant_ids) != sorted(self.variant_ids):
-            self.variant_ids = new_variant_ids
-            items = self.variant_ids + self.default_ids
-            self.updateComboBoxItems(items)
-        # close window
-        self.close()
-
-    def updateComboBoxItems(self, items: list):
-        # if there is just one table, is main window, get all the comboboxes from the table
-        if len (self.affected_tables) == 1:
-            table = self.affected_tables[ID_COL]
-            comboBoxes = [table.cellWidget(x,ID_COL) for x in range(table.rowCount()) if table.cellWidget(x, ID_COL) is not None]     
-        # Else is algo window, check cell by cell for the operator comboboxes    
-        else: 
-            comboBoxes = []
-            for table in self.affected_tables:
-                for row in range(table.rowCount()):
-                    for col in range(ID_COL+2, table.columnCount(), 2):
-                        arg = table.cellWidget(row, col)
-                        if arg is not None and arg.text() == self.op_name:
-                            comboBoxes.append(table.cellWidget(row, col+1))
-        
-        # update the comboboxes in the respective MainWindow table widget
-        for comboBox in comboBoxes:
-            curr_text = comboBox.currentText()
-            comboBox.clear()
-            comboBox.addItems(items)
-            location = items.index(curr_text) if curr_text in items else -1
-            comboBox.setCurrentIndex(location)                  
-

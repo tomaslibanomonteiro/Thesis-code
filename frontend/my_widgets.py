@@ -1,70 +1,109 @@
 import re
 from typing import Tuple
 
-from qtpy import QtCore, QtGui, QtWidgets
-from utils.defines import ID_COL
-class MyTextEdit(QtWidgets.QTextEdit):
-    def __init__(self, text="", read_only=False):
+from PyQt5 import QtCore
+from PyQt5.QtWidgets import QTableWidget, QComboBox, QMessageBox, QCheckBox, QSpinBox, QDoubleSpinBox, QTextEdit, QMenu, QAction
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtGui import QValidator
+
+from utils.defines import ID_COL, VARIANT
+
+class MyMessageBox(QMessageBox):
+    def __init__(self, text, title="Warning", warning_icon=True, execute = True):
+        super().__init__()
+
+        self.setIcon(QMessageBox.Warning) if warning_icon else None
+        self.setText(text)
+        self.setWindowTitle(title)
+        self.setStandardButtons(QMessageBox.Ok)
+        self.exec_() if execute else None
+
+class MyTextEdit(QTextEdit):
+    itemsSignal = pyqtSignal(str, list)
+    def __init__(self, text="", tab=None, read_only=False):
         super().__init__()
 
         self.setText(text)
         self.setReadOnly(read_only)
-
+        self.tab = tab
+        self.recorded_text = text
+        
     def text(self):
         return self.toPlainText()
 
+    def focusOutEvent(self, event):
+        # emit a signal to update the comboboxes
+        self.setText(self.text().strip())
+        if self.recorded_text != self.text():
+            self.recorded_text = self.text()
+            self.emitSignal()
+        super().focusOutEvent(event)
+        
+    def emitSignal(self):
+        if self.tab is not None and not self.isReadOnly():
+            items = self.makeUnique()
+            self.itemsSignal.emit(self.tab.key, items)
+        
+    def makeUnique(self):        
+        # check if the text is different from the rest of the table
+        self.setText("can't be empty") if self.text() in ["", "\n", " "] else None
+        
+        table = self.tab.table
+        count = 2
+        while count > 1:
+            items = [table.cellWidget(row, ID_COL).text() if table.cellWidget(row, ID_COL) is not None else None for row in range(table.rowCount())]
+            count = items.count(self.text())
+            if count > 1:
+                self.setText(self.text() + "_1")
+        
+        items = [item for item in items if item is not None]
+        items.sort() 
+        return items 
+        
     def copy(self):
-        copy = MyTextEdit(self.text(), self.isReadOnly())
+        copy = MyTextEdit(self.text(), self.tab, self.isReadOnly())
         copy.setStyleSheet(self.styleSheet())
         return copy
-  
-class MyMessageBox(QtWidgets.QMessageBox):
-    def __init__(self, text, title="Warning", warning_icon=True, execute = True):
+    
+class MyComboBox(QComboBox):
+    def __init__(self, items=[], initial_index: int=-1, enabled: bool=True, table: QTableWidget=None, 
+                 col:int=0, row:int=None, add_rows:bool=False, tab=None, key=None):
         super().__init__()
 
-        self.setIcon(QtWidgets.QMessageBox.Warning) if warning_icon else None
-        self.setText(text)
-        self.setWindowTitle(title)
-        self.setStandardButtons(QtWidgets.QMessageBox.Ok)
-        self.exec_() if execute else None
-  
-class MyComboBox(QtWidgets.QComboBox):
-    def __init__(self, items=[], initial_index: int=-1, enabled: bool=True, table: QtWidgets.QTableWidget=None, col:int=0, row:int=None, add_rows:bool=False):
-        super().__init__()
-
-        # table in which the combobox is located
-        self.table = table
+        self.table = table # table in which the combobox is located
         self.add_rows = add_rows
         self.col = col
         self.row = row
-
-        for item in items:
-            self.addItem(item)
+        self.tab = tab
+        self.key = key
+        tab.edit_window.operatorUpdates.connect(self.receiveSignal) if key is not None else None
+        
+        self.addItems(items)
         self.setCurrentIndex(initial_index) 
         self.setEnabled(enabled)
 
         # create a custom context menu
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.showContextMenu)
-        self.context_menu = QtWidgets.QMenu(self)
-        self.clear_action = QtWidgets.QAction("Clear Selection", self)
-        self.clear_action.triggered.connect(self.clearRow)
+        self.context_menu = QMenu(self)
+        self.clear_action = QAction("Clear Selection", self)
+        self.clear_action.triggered.connect(self.clearSelection)
         self.context_menu.addAction(self.clear_action)
 
         if add_rows:
             # add an option to add another combobox to the table
-            self.add_rows = QtWidgets.QAction("Add Row", self)
+            self.add_rows = QAction("Add Row", self)
             self.add_rows.triggered.connect(self.addRowToTable)
             self.context_menu.addAction(self.add_rows)
 
             # add an option to remove the combobox from the table
-            self.remove_combobox_action = QtWidgets.QAction("Remove Row", self)
+            self.remove_combobox_action = QAction("Remove Row", self)
             self.remove_combobox_action.triggered.connect(self.removeRowFromTable)
             self.context_menu.addAction(self.remove_combobox_action)
 
         # connect the currentIndexChanged signal to a slot that updates the table
-        self.currentIndexChanged.connect(self.updateRow) if row is not None else None
-
+        self.currentIndexChanged.connect(self.copyRowFromClass) if row is not None else None
+            
     def showContextMenu(self, pos):
         self.context_menu.exec_(self.mapToGlobal(pos))
 
@@ -89,11 +128,11 @@ class MyComboBox(QtWidgets.QComboBox):
                 if index.isValid():
                     self.table.removeRow(index.row())
 
-    def clearRow(self):
+    def clearSelection(self):
         self.setCurrentIndex(-1)
         self.setEditText("")
 
-    def updateRow(self):
+    def copyRowFromClass(self):
 
         if self.currentIndex() == -1:
             return
@@ -106,11 +145,14 @@ class MyComboBox(QtWidgets.QComboBox):
             widget = self.table.cellWidget(row_to_copy, self.col)
             if isinstance(widget, MyTextEdit) and widget.text() == text:
                 break
-    
-        # update the table with the new row
-        object_id = self.table.cellWidget(row_to_copy, ID_COL).text() + "_variant" 
-        widget = MyTextEdit(object_id, read_only=False)
-        self.table.setCellWidget(self.row, ID_COL, widget)
+        
+        # change id
+        new_id = self.table.cellWidget(row_to_copy, ID_COL).text() + VARIANT
+        widget = self.table.cellWidget(self.row, ID_COL)
+        widget.setText(new_id)
+        widget.emitSignal()
+        
+        # change args
         for col in range(self.col+1, self.table.columnCount()):
             widget = self.table.cellWidget(row_to_copy, col)
             # if it is a combobox, print the comboBox options
@@ -118,13 +160,30 @@ class MyComboBox(QtWidgets.QComboBox):
                 new_widget = widget.copy()
             new_widget = widget.copy() if widget is not None else None
             self.table.setCellWidget(self.row, col, new_widget)
-            
+    
+    def receiveSignal(self, key, items):
+        if key == self.key:
+            self.updateItems(items)
+                    
+    def updateItems(self, items:list):
+        # store current text
+        current_text = self.currentText()
+        # Clear the current items
+        self.clear()
+        # Add the new items
+        self.addItems(items)
+        # check if the current text is in the new items
+        if current_text in items:
+            self.setCurrentText(current_text)
+        else:
+            self.setCurrentIndex(-1)
+
     def copy(self):
         items = [self.itemText(i) for i in range(self.count())]
-        copy = MyComboBox(items, self.currentIndex(), self.isEnabled(), self.table, self.col, None, self.add_rows)
+        copy = MyComboBox(items, self.currentIndex(), self.isEnabled(), self.table, self.col, self.row, self.add_rows, self.tab, self.key)
+        copy.setStyleSheet(self.styleSheet())
         return copy
-
-
+    
 """
 This code has been adapted from: https://gist.github.com/jdreaver/0be2e44981159d0854f5
 Changes made are support for PyQt5, localisation, better intermediate state detection and better stepping.
@@ -141,7 +200,7 @@ partial_pos_int_re = re.compile(partial_pos_int_regex)
 partial_float_regex = r'([+-]?((\d*' + decimal_point + r'?))?\d*)'
 partial_float_re = re.compile(partial_float_regex)
 
-class MyCheckBox(QtWidgets.QCheckBox):
+class MyCheckBox(QCheckBox):
     def __init__(self, checked=False, enabled=True):
         super().__init__()
 
@@ -150,9 +209,10 @@ class MyCheckBox(QtWidgets.QCheckBox):
     
     def copy(self):
         copy = MyCheckBox(self.isChecked(), self.isEnabled())
+        copy.setStyleSheet(self.styleSheet())
         return copy
   
-class IntValidator(QtGui.QValidator):
+class IntValidator(QValidator):
     """
     Validates integer inputs for ScientificSpinBox
     """
@@ -224,7 +284,7 @@ class IntValidator(QtGui.QValidator):
 
         return False
 
-    def validate(self, string: str, position: int) -> QtGui.QValidator.State:
+    def validate(self, string: str, position: int) -> QValidator.State:
         """
         Validates input string to see if it is a valid integer or partial integer.
 
@@ -234,11 +294,11 @@ class IntValidator(QtGui.QValidator):
         """
 
         if self.valid_integer_string(string):
-            return QtGui.QValidator.Acceptable
+            return QValidator.Acceptable
         if self.intermediate_integer_string(string):
-            return QtGui.QValidator.Intermediate
+            return QValidator.Intermediate
         else:
-            return QtGui.QValidator.Invalid
+            return QValidator.Invalid
 
     def fixup(self, string: str) -> str:
         """
@@ -249,7 +309,7 @@ class IntValidator(QtGui.QValidator):
         return match.groups()[0] if match else ""
 
 
-class ScientificSpinBox(QtWidgets.QSpinBox):
+class ScientificSpinBox(QSpinBox):
     """
     Subclass of QSpinBox that allows for scientific notation and is locale independent.
     """
@@ -266,9 +326,9 @@ class ScientificSpinBox(QtWidgets.QSpinBox):
 
     from typing import Tuple
 
-    def validate(self, string: str, position: int) -> Tuple[QtGui.QValidator.State, str, int]:
+    def validate(self, string: str, position: int) -> Tuple[QValidator.State, str, int]:
         """
-        Returns the validity of the string, using a QtGui.QValidator object.
+        Returns the validity of the string, using a QValidator object.
 
         Notes
         -----
@@ -279,7 +339,7 @@ class ScientificSpinBox(QtWidgets.QSpinBox):
 
         # support 2 different PyQt APIs.
         if hasattr(QtCore, 'QString'):
-            return QtGui.QValidator.State(validity), string, position
+            return QValidator.State(validity), string, position
         else:
             return validity, string, position
 
@@ -348,7 +408,7 @@ class ScientificSpinBox(QtWidgets.QSpinBox):
         copy.setPrefix(self.prefix())
         copy.setSuffix(self.suffix())
         copy.setDisplayIntegerBase(self.displayIntegerBase())
-        
+        copy.setStyleSheet(self.styleSheet())
         return copy
 
 from numpy import inf
@@ -367,7 +427,7 @@ partial_float_regex = r'([+-]?((\d*' + decimal_point + r'?))?\d*)'
 partial_float_re = re.compile(partial_float_regex)
 
 
-class FloatValidator(QtGui.QValidator):
+class FloatValidator(QValidator):
     """
     Validates float inputs for ScientificDoubleSpinBox
     """
@@ -420,7 +480,7 @@ class FloatValidator(QtGui.QValidator):
 
         return False
 
-    def validate(self, string: str, position: int) -> QtGui.QValidator.State:
+    def validate(self, string: str, position: int) -> QValidator.State:
         """
         Validates input string to see if it is a valid float or partial float.
 
@@ -430,11 +490,11 @@ class FloatValidator(QtGui.QValidator):
         """
 
         if self.valid_float_string(string):
-            return QtGui.QValidator.Acceptable
+            return QValidator.Acceptable
         if self.intermediate_float_string(string):
-            return QtGui.QValidator.Intermediate
+            return QValidator.Intermediate
         else:
-            return QtGui.QValidator.Invalid
+            return QValidator.Invalid
 
     def fixup(self, string: str) -> str:
         """
@@ -445,7 +505,7 @@ class FloatValidator(QtGui.QValidator):
         return match.groups()[0] if match else ""
 
 
-class ScientificDoubleSpinBox(QtWidgets.QDoubleSpinBox):
+class ScientificDoubleSpinBox(QDoubleSpinBox):
     """
     Subclass of QDoubleSpinBox that allows for scientific notation and is locale independent.
     """
@@ -459,9 +519,9 @@ class ScientificDoubleSpinBox(QtWidgets.QDoubleSpinBox):
         self.validator = FloatValidator()
         self.setDecimals(1000)
 
-    def validate(self, string: str, position: int) -> Tuple[QtGui.QValidator.State, str, int]:
+    def validate(self, string: str, position: int) -> Tuple[QValidator.State, str, int]:
         """
-        Returns the validity of the string, using a QtGui.QValidator object.
+        Returns the validity of the string, using a QValidator object.
 
         Notes
         -----
@@ -548,5 +608,6 @@ class ScientificDoubleSpinBox(QtWidgets.QDoubleSpinBox):
         copy.setPrefix(self.prefix())
         copy.setSuffix(self.suffix())
         copy.setDecimals(self.decimals())	
+        copy.setStyleSheet(self.styleSheet())
   
         return copy
