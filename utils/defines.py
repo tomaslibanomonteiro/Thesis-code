@@ -9,6 +9,7 @@ DESIGNER_RESULT_FRAME = 'frontend/designer_templates/main_window/result_frame.ui
 # edit window
 DESIGNER_EDIT_WINDOW = 'frontend/designer_templates/edit_window/edit_window.ui'
 DESIGNER_EDIT_TAB = 'frontend/designer_templates/edit_window/edit_tab.ui'
+DESIGNER_WIDGETS_FRAME = 'frontend/designer_templates/edit_window/widgets_frame.ui'
 
 # tests folders
 RESULTS_FOLDER = 'tests/results'
@@ -35,6 +36,10 @@ RESULT_LAYOUT_WIDGETS = 3
 
 # maximum number of result_frames accepted before asking the user to delete
 MAX_RESULT_FRAMES = 6
+
+# default number of moo and soo pages in main window
+SOO_PAGE = 0
+MOO_PAGE = 1
 
 # arg values from an algorithm that have a separate table because they are objects
 MUT_KEY = 'mutation'

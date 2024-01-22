@@ -17,7 +17,11 @@ def main():
 
     elif CLICK_RUN_MOO:
         main_window.moo_tabs.runButton()
-        
+    
+    # click to edit parameters
+    main_window.editParameters()
+    main_window.activePage().edit_window.openRunOptions()
+    
     app.exec_()
         
 if __name__ == '__main__':

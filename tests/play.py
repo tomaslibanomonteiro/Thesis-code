@@ -1,27 +1,33 @@
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QFrame
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QVBoxLayout, QWidget
 
-app = QApplication([])
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
 
-window = QWidget()
+        # Create QTextEdit and set its style
+        self.textEdit = QTextEdit(self)
+        self.textEdit.setStyleSheet("border: 0; border-right: 20px solid darkblue;")
+        
+        # Create a layout and add the QTextEdit to it
+        layout = QVBoxLayout()
+        layout.addWidget(self.textEdit)
 
-# Create the layout
-layout = QVBoxLayout()
-window.setLayout(layout)
+        # Create a central widget, set the layout on it, and set it as the central widget
+        centralWidget = QWidget(self)
+        centralWidget.setLayout(layout)
+        self.setCentralWidget(centralWidget)
 
-# Create the frames
-frame1 = QFrame()
-frame1.setFrameShape(QFrame.StyledPanel)
-frame2 = QFrame()
-frame2.setFrameShape(QFrame.StyledPanel)
+        # Set a fixed size for the central widget
+        centralWidget.setFixedSize(500, 500)  # Adjust the size as needed
+        a= None
 
-# Add the frames to the layout
-layout.addWidget(frame1)
-layout.addWidget(frame2)
+def main():
+    app = QApplication([])
 
-# Align the frames at the top of the layout
-layout.setAlignment(Qt.AlignTop)
+    window = MainWindow()
+    window.show()
 
-window.show()
+    app.exec_()
 
-app.exec_()
+if __name__ == "__main__":
+    main()

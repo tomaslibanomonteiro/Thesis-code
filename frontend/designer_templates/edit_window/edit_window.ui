@@ -10,6 +10,11 @@
     <height>611</height>
    </rect>
   </property>
+  <property name="font">
+   <font>
+    <family>MV Boli</family>
+   </font>
+  </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
@@ -212,8 +217,8 @@
       <rect>
        <x>300</x>
        <y>160</y>
-       <width>179</width>
-       <height>175</height>
+       <width>252</width>
+       <height>189</height>
       </rect>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
@@ -240,8 +245,8 @@ p, li { white-space: pre-wrap; }
     <widget class="QPushButton" name="open_run_options">
      <property name="geometry">
       <rect>
-       <x>190</x>
-       <y>240</y>
+       <x>198</x>
+       <y>243</y>
        <width>103</width>
        <height>28</height>
       </rect>
@@ -266,9 +271,9 @@ p, li { white-space: pre-wrap; }
      <property name="geometry">
       <rect>
        <x>600</x>
-       <y>114</y>
-       <width>231</width>
-       <height>232</height>
+       <y>110</y>
+       <width>313</width>
+       <height>265</height>
       </rect>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_2">

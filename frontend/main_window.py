@@ -1,4 +1,6 @@
-from PyQt5.QtWidgets import QHeaderView, QMainWindow, QTabWidget, QVBoxLayout, QTableWidget, QTabBar, QFileDialog, QWidget
+from PyQt5.QtWidgets import (QHeaderView, QMainWindow, QTabWidget, QVBoxLayout, QTableWidget, QTabBar, 
+                             QFileDialog, QWidget, QSpinBox, QHBoxLayout)
+from PyQt5.QtCore import Qt
 from PyQt5.uic import loadUi
 import pickle
 
@@ -8,33 +10,18 @@ from frontend.my_widgets import MyComboBox, MyMessageBox
 from frontend.edit_window import (EditWindow, ArgsAreSet)
 from frontend.main_window_frames import ResultFrame
 from utils.defines import (DESIGNER_MAIN, RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_MAIN_TABS, RESULT_LAYOUT_WIDGETS, 
-                           MAX_RESULT_FRAMES, ALGO_KEY, PROB_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY, KEY_ARGS_DICT)
+                           MAX_RESULT_FRAMES, ALGO_KEY, PROB_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY, KEY_ARGS_DICT, MOO_PAGE, SOO_PAGE)
 class MyMainWindow(QMainWindow):
-    
+
     def __init__(self, run_options_soo = {}, run_options_moo = {}, parameters_soo = Defaults('soo').dict, parameters_moo = Defaults('moo').dict, ) -> None:
         super().__init__()        
         
         loadUi(DESIGNER_MAIN, self)
-
-        # Set the current page to the SOO or MOO page depending on the options given to start the app
-        page, text = (0, "Change to MOO") if run_options_soo != {} else (1, "Change to SOO")
-        self.stackedWidget.setCurrentIndex(page)
-        self.action_SwitchPage.setText(text)
-
-        # Create single objective optimization tab
-        self.soo_tabs = MainTabsWidget(self, run_options_soo, parameters_soo, 'Single Objective Optimization')
-        my_layout_soo = QVBoxLayout()
-        my_layout_soo.addWidget(self.soo_tabs)
-        my_layout_soo.setStretch(0, 1)
-        self.SOOpage.setLayout(my_layout_soo)
         
-        # Create multi objective optimization tab
-        self.moo_tabs = MainTabsWidget(self, run_options_moo, parameters_moo, 'Multi Objective Optimization')
-        my_layout_moo = QVBoxLayout()
-        my_layout_moo.addWidget(self.moo_tabs)
-        my_layout_moo.setStretch(0, 1)
-        self.MOOpage.setLayout(my_layout_moo)
-        
+        # create pages
+        args = [(self.SOOpage, run_options_soo, parameters_soo, SOO_PAGE), (self.MOOpage, run_options_moo, parameters_moo, MOO_PAGE)]
+        self.tabs = {page_index: self.createTabs(page, run_options, parameters) for page, run_options, parameters, page_index in args}         
+                
         # Menu bar actions
         self.action_SwitchPage.triggered.connect(self.switchPage)
         self.action_SeeTutorial.triggered.connect(self.seeTutorial)
@@ -48,23 +35,55 @@ class MyMainWindow(QMainWindow):
         self.action_EditParameters.triggered.connect(self.editParameters)
         self.action_SaveParameters.triggered.connect(self.saveParameters)
         self.action_LoadParameters.triggered.connect(self.loadParameters)
+        
+        # connect the buttons of each tab to the respective actions
+        for tab in self.tabs.values():
+            tab.soo_button.clicked.connect(self.switchPage)
+            tab.moo_button.clicked.connect(self.switchPage)
+            tab.parameters_button.clicked.connect(self.editParameters)
 
+        # Set the current page to the SOO or MOO page depending on the options given to start the app
+        self.action_SwitchPage.setText("Change to MOO")
+        self.tabs[SOO_PAGE].moo_button.setChecked(False)
+        self.tabs[SOO_PAGE].soo_button.setChecked(True)
+        self.stackedWidget.setCurrentIndex(SOO_PAGE)
+        self.switchPage() if run_options_soo == {} else None
+        
     ####### GENERAL METHODS #######
+    
+    def createTabs(self, page, run_options: dict, parameters: dict):
+        """Create a page with the run options and parameters"""
+        
+        my_layout = QVBoxLayout()
+        my_layout.setContentsMargins(0, 0, 0, 0)
+        page.setLayout(my_layout)
+        
+        tabs = MainTabsWidget(run_options, parameters)
+        my_layout.addWidget(tabs)
+        my_layout.setStretch(0, 1)
+        
+        return tabs
+    
+    def activePage(self):
+        """Return the active page"""
+        return self.tabs[self.stackedWidget.currentIndex()]
     
     def switchPage(self):
         """Switch between SOO and MOO pages, and change the menu bar accordingly"""
-        if self.stackedWidget.currentIndex() == 0:
-            if self.soo_tabs.edit_window.isVisible():
-                self.soo_tabs.edit_window.close()
-            self.stackedWidget.setCurrentIndex(1)
+        if self.stackedWidget.currentIndex() == SOO_PAGE:
             self.action_SwitchPage.setText("Change to SOO")
+            self.tabs[SOO_PAGE].edit_window.close()
+            self.tabs[MOO_PAGE].moo_button.setChecked(True)
+            self.tabs[MOO_PAGE].soo_button.setChecked(False)
+            self.stackedWidget.setCurrentIndex(MOO_PAGE)
         else:
-            if self.moo_tabs.edit_window.isVisible():
-                self.moo_tabs.edit_window.close()
-            self.stackedWidget.setCurrentIndex(0)
             self.action_SwitchPage.setText("Change to MOO")
+            self.tabs[MOO_PAGE].edit_window.close()
+            self.tabs[SOO_PAGE].moo_button.setChecked(False)
+            self.tabs[SOO_PAGE].soo_button.setChecked(True)
+            self.stackedWidget.setCurrentIndex(SOO_PAGE)
     
-    ##### TODO: Implement the functionality for the following actions
+    ##### TODO!: Implement the functionality for the following actions
     
     def seeTutorial(self):
         # TODO: Implement the functionality for the See Tutorial action
@@ -78,9 +97,9 @@ class MyMainWindow(QMainWindow):
     
     def saveRunOptions(self):
         """Save the run options"""
-        tabs = self.soo_tabs if self.stackedWidget.currentIndex() == 0 else self.moo_tabs
+        active_tabs = self.activePage()
 
-        options_dict = tabs.runOptions_to_dict()
+        options_dict = active_tabs.runOptions_to_dict()
         
         # Open file dialog to select the save location
         file_dialog = QFileDialog()
@@ -98,7 +117,7 @@ class MyMainWindow(QMainWindow):
     
     def loadRunOptions(self):
         """Load the run options"""
-        tabs = self.soo_tabs if self.stackedWidget.currentIndex() == 0 else self.moo_tabs
+        active_tabs = self.activePage()
 
         # Open file dialog to select the file to load
         file_dialog = QFileDialog()
@@ -115,11 +134,11 @@ class MyMainWindow(QMainWindow):
                 options_dict = pickle.load(file)
                 
                 # Set the run options
-                tabs.runOptions_to_tables(options_dict)
+                active_tabs.runOptions_to_tables(options_dict)
 
     def saveAllResults(self):
-        tabs = self.soo_tabs if self.stackedWidget.currentIndex() == 0 else self.moo_tabs
-        tabs.saveAllResults()
+        active_tabs = self.activePage()
+        active_tabs.saveAllResults()
         
     ##### TODO: Implement the functionality for the following actions #####
 
@@ -130,71 +149,30 @@ class MyMainWindow(QMainWindow):
     ####### EDIT WINDOW METHODS #######
     
     def editParameters(self):
-        active_tabs = self.soo_tabs if self.stackedWidget.currentIndex() == 0 else self.moo_tabs
+        active_tabs = self.activePage()
         if active_tabs.edit_window.isVisible():
             active_tabs.edit_window.activateWindow()
         else:
             active_tabs.edit_window.show()
     
     def saveParameters(self):
-        """Go through all the tabs and save the parameters as a dictionary, where the key is the tab name
-        and the value is a dictionary with the parameters. dont forget to save the operators"""
-
-        edit_window = self.soo_tabs.edit_window if self.stackedWidget.currentIndex() == 0 else self.moo_tabs.edit_window
-        
-        parameters = {}
-        for _, tab in edit_window.tabs.items():
-            parameters[tab.key] = tab.tableToDict()
+        active_tabs = self.activePage()
+        active_tabs.edit_window.saveParameters()
             
-        # Open file dialog to select the save location
-        file_dialog = QFileDialog()
-        file_dialog.setAcceptMode(QFileDialog.AcceptSave)
-        file_dialog.setDefaultSuffix('.pickle')
-        file_dialog.setNameFilter('Pickle Files (*.pickle)')
-        file_dialog.setWindowTitle('Save Parameters')
-        
-        if file_dialog.exec_() == QFileDialog.Accepted:
-            file_path = file_dialog.selectedFiles()[0]
-            
-            # Save options_dict as a pickle file
-            with open(file_path, 'wb') as file:
-                pickle.dump(parameters, file)
-    
     def loadParameters(self):
-        """Load the parameters"""
-        active_tabs = self.soo_tabs if self.stackedWidget.currentIndex() == 0 else self.moo_tabs
-
-        active_tabs.edit_window.close()
-        active_tabs.edit_window.deleteLater()
+        active_tabs = self.activePage()
+        active_tabs.edit_window.loadParameters()
+        self.editParameters()
         
-        # Open file dialog to select the file to load
-        file_dialog = QFileDialog()
-        file_dialog.setAcceptMode(QFileDialog.AcceptOpen)
-        file_dialog.setDefaultSuffix('.pickle')
-        file_dialog.setNameFilter('Pickle Files (*.pickle)')
-        file_dialog.setWindowTitle('Load Parameters')
-        
-        if file_dialog.exec_() == QFileDialog.Accepted:
-            file_path = file_dialog.selectedFiles()[0]
-            
-            # Load the pickle file
-            with open(file_path, 'rb') as file:
-                parameters = pickle.load(file)
-                
-                # Set the parameters
-                active_tabs.setEditWindow(parameters)
-                self.editParameters()
-                
 class MainTabsWidget(QTabWidget):
 
-    def __init__(self, main_window: MyMainWindow, run_options: dict, parameters: dict, label: str) -> None:
+    def __init__(self, run_options: dict, parameters: dict) -> None:
         super().__init__()
 
         loadUi(DESIGNER_MAIN_TABS, self)
         
         ############################ GENERAL #################################
         
-        self.main_window = main_window
         self.run_counter = 0
         self.tables_dict = { PROB_KEY: self.prob_table, ALGO_KEY: self.algo_table, 
                             PI_KEY: self.pi_table, TERM_KEY: self.term_table}     
@@ -207,8 +185,24 @@ class MainTabsWidget(QTabWidget):
         self.tabBar().setTabButton(0, QTabBar.RightSide, spacer)        
         self.tabBar().setTabButton(1, QTabBar.RightSide, spacer)
         
+        # set the n_seeds spinbox
+        spin_box = QSpinBox()
+        spin_box.setMinimum(1)
+        spin_box.setMaximum(99)
+        spin_box.setAlignment(Qt.AlignCenter)
+        spin_box.setStyleSheet("QSpinBox { min-width: 80px; min-height: 40px; }")
+        widget = QWidget()
+        layout = QHBoxLayout(widget)
+        layout.addWidget(spin_box)
+        layout.setAlignment(Qt.AlignCenter)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.n_seeds_table.setCellWidget(0, 0, widget)    
+        
+        self.seedsSpinBox = spin_box
+        
         ############################ EDIT WINDOW ##############################
         
+        self.edit_window = None
         self.setEditWindow(parameters)
         
         ############################ RUN TAB #################################
@@ -217,9 +211,7 @@ class MainTabsWidget(QTabWidget):
         missing_keys = set(RUN_OPTIONS_KEYS) - set(run_options.keys())
         for key in missing_keys:
             run_options[key] = [] if key != N_SEEDS_KEY else 1
-        self.run_options = run_options
 
-        self.soo_label.setText(label)
         self.initialComboBoxItems(parameters)
         self.runOptions_to_tables(run_options)
         
@@ -229,15 +221,15 @@ class MainTabsWidget(QTabWidget):
         ############################ RESULTS TAB #################################
         
         # open, save and erase buttons                            
-        self.save_button.clicked.connect(self.saveAllResults)
-        self.open_button.clicked.connect(self.openAllResults)
-        self.erase_button.clicked.connect(self.eraseAllResults)
+        self.save_results_button.clicked.connect(self.saveAllResults)
+        self.open_results_button.clicked.connect(self.openAllResults)
+        self.erase_results_button.clicked.connect(self.eraseAllResults)
 
     def setEditWindow(self, parameters: dict):
         """Set the edit window with the parameters"""
         
         # create edit window
-        self.edit_window = EditWindow(self.main_window, parameters)
+        self.edit_window = EditWindow(parameters)
         self.edit_window.itemUpdates.connect(self.updateComboBoxItems)
 
     def closeTab(self, index):
@@ -255,23 +247,12 @@ class MainTabsWidget(QTabWidget):
     def initialComboBoxItems(self, parameters):
         """Set one comboBox for each table with the initial items from the parameters"""
         
-        # items for each combobox
-        self.comboBox_items = []
         keys = RUN_OPTIONS_KEYS.copy() 
         keys.remove(N_SEEDS_KEY)
-        for key in keys:
+        
+        for key in keys: 
+            table = self.tables_dict[key]
             items = [obj_id for obj_id in parameters[key].keys() if ArgsAreSet(parameters[key])]
-            self.comboBox_items.append(items)    
-        
-        # columns with comboboxes
-        tables_list = [self.prob_table, self.algo_table, self.pi_table, self.term_table]
-        
-        for table, items in zip(tables_list, self.comboBox_items): 
-            # strech the table to fit the window
-            table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch) 
-            table.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
-
-            # add one combobox with the items 
             combobox = MyComboBox(items, table=table, add_rows= table != self.term_table)
             table.setCellWidget(0, 0, combobox)
                         
@@ -279,9 +260,6 @@ class MainTabsWidget(QTabWidget):
         """Assumes the table has only one combobox. Repeats the comboboxes to the correct number of rows
         and sets the index to the correspondent item in the list. Returns a string with the items that are not available"""
         
-        if table_options == []:
-            return ""
-
         # set the number of rows
         rows = max(min_rows, len(table_options))  
         table.setRowCount(rows)
@@ -319,8 +297,8 @@ class MainTabsWidget(QTabWidget):
         missing_options += self.setTable(self.pi_table, run_options[PI_KEY], DEFAULT_ROW_NUMBERS[2])
         missing_options += self.setTable(self.term_table, run_options[TERM_KEY], DEFAULT_ROW_NUMBERS[3])
 
-        self.n_seeds_SpinBox.setValue(run_options[N_SEEDS_KEY])
-        
+        self.seedsSpinBox.setValue(run_options[N_SEEDS_KEY]) 
+           
         if missing_options != "":
             MyMessageBox(f"The following run options are not available: {missing_options[:-2]}. \nTo choose them, please add"
                                    " the correspondent IDs to the respective table through the 'Edit Parameters' option of the menu bar.")
@@ -332,16 +310,16 @@ class MainTabsWidget(QTabWidget):
         keys.remove(N_SEEDS_KEY)
         for key, table in self.tables_dict.items():
             run_options[key] = [table.cellWidget(row, 0).currentText() for row in range(table.rowCount()) if table.cellWidget(row, 0).currentText() != ""]
-        run_options[N_SEEDS_KEY] = self.n_seeds_SpinBox.value()
+        run_options[N_SEEDS_KEY] = self.seedsSpinBox.value()
         
         return run_options
     
     def getRunObject(self):
 
-        moo = self.soo_label.text() == 'Multi Objective Optimization'
+        moo = self.moo_button.isChecked()
         
         # get seed values
-        n_seeds = self.n_seeds_SpinBox.value()
+        n_seeds = self.seedsSpinBox.value()
         
         tabs = self.edit_window.tabs
         
@@ -419,6 +397,7 @@ class MainTabsWidget(QTabWidget):
         self.setCurrentIndex(1)     
                    
     ### Results tab methods ###
+    
     def noResults(self):
         """Return True if there are no results"""
         if self.results_layout.count() == RESULT_LAYOUT_WIDGETS:

@@ -1,9 +1,11 @@
-from numpy import inf
-from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QTableWidget, QFrame, QTabBar, QWidget, QPushButton
+from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QTableWidget, QFrame, QTabBar, QWidget, QPushButton, QFileDialog
 from PyQt5.uic import loadUi
-from PyQt5.QtCore import pyqtSignal, QTimer
+from PyQt5.QtCore import pyqtSignal
 
-from frontend.my_widgets import MyTextEdit, MyComboBox, ScientificDoubleSpinBox, ScientificSpinBox, MyCheckBox, MyMessageBox
+from numpy import inf
+import pickle
+
+from frontend.my_widgets import MyLineEdit, MyComboBox, ScientificDoubleSpinBox, ScientificSpinBox, MyCheckBox, MyMessageBox, MyWidgetsFrame
 from utils.debug import debug_print
 from utils.defines import (DESIGNER_EDIT_WINDOW, DESIGNER_EDIT_TAB, NO_DEFAULT, OPERATORS, ID_COL, OPERATORS_ARGS_DICT, 
                            RUN_OPTIONS_ARGS_DICT, ALGO_KEY, REF_DIR_KEY, PI_KEY, VARIANT) 
@@ -12,28 +14,22 @@ def ArgsAreSet(dic: dict) -> bool:
     # check if any of the values in the dict is == NO_DEFAULT
     return not any([value == NO_DEFAULT for value in dic.values()]) 
 
-
 class EditWindow(QDialog):
     itemUpdates = pyqtSignal(str,list) 
     operatorUpdates = pyqtSignal(str,list)
-    def __init__(self, main_window, parameters: dict):
+    def __init__(self, parameters: dict):
         super().__init__()
 
         loadUi(DESIGNER_EDIT_WINDOW, self)
+        self.widgets_frame = MyWidgetsFrame()
         self.setWindowTitle("Edit Parameters")
-
-        self.main_window = main_window
-        self.parameters = parameters
         
-        self.tabs = {tab_key: EditTab(self, tab_key, tab_args) for tab_key, tab_args in OPERATORS_ARGS_DICT.items()}            
-        self.tabs.update({tab_key: EditTab(self, tab_key, tab_args) for tab_key, tab_args in RUN_OPTIONS_ARGS_DICT.items()})
-
         # set open_operators and open_run_options buttons
         self.open_operators.clicked.connect(self.openOperators)
         self.open_run_options.clicked.connect(self.openRunOptions)
         self.open_all_tabs.clicked.connect(self.openAllTabs)
-        self.save_parameters.clicked.connect(self.main_window.saveParameters)
-        self.load_parameters.clicked.connect(self.main_window.loadParameters)
+        self.save_parameters.clicked.connect(self.saveParameters)
+        self.load_parameters.clicked.connect(self.loadParameters)
         self.helpButton.clicked.connect(self.help)
         self.tabWidget.tabCloseRequested.connect(self.closeTab)
 
@@ -42,6 +38,16 @@ class EditWindow(QDialog):
         spacer.setFixedHeight(20)
         spacer.setFixedWidth(1)
         self.tabWidget.tabBar().setTabButton(0, QTabBar.RightSide, spacer)
+
+        self.setTabs(parameters)
+    
+    def setTabs(self, parameters: dict):
+        # close all tabs except the first one
+        while self.tabWidget.count() > 1:
+            self.tabWidget.removeTab(1)
+            
+        self.tabs = {tab_key: EditTab(self, tab_key, tab_args, parameters) for tab_key, tab_args in OPERATORS_ARGS_DICT.items()}            
+        self.tabs.update({tab_key: EditTab(self, tab_key, tab_args, parameters) for tab_key, tab_args in RUN_OPTIONS_ARGS_DICT.items()})
 
     def closeTab(self, index):
         # close the tab with the index
@@ -73,9 +79,51 @@ class EditWindow(QDialog):
         MyMessageBox("Click on \"Edit Run Options\" to edit their parameters. Click on \"Edit Operators\" to edit "
                      "the operators parameters that are then used in the algorithms. Click on \"Save Parameters\" "
                      "to save the parameters to a file.", "Help", warning_icon=False)
+
+    def saveParameters(self):
+        """Go through all the tabs and save the parameters as a dictionary, where the key is the tab name
+        and the value is a dictionary with the parameters. dont forget to save the operators"""
         
+        parameters = {}
+        for _, tab in self.tabs.items():
+            parameters[tab.key] = tab.tableToDict()
+            
+        # Open file dialog to select the save location
+        file_dialog = QFileDialog()
+        file_dialog.setAcceptMode(QFileDialog.AcceptSave)
+        file_dialog.setDefaultSuffix('.pickle')
+        file_dialog.setNameFilter('Pickle Files (*.pickle)')
+        file_dialog.setWindowTitle('Save Parameters')
+        
+        if file_dialog.exec_() == QFileDialog.Accepted:
+            file_path = file_dialog.selectedFiles()[0]
+            
+            # Save options_dict as a pickle file
+            with open(file_path, 'wb') as file:
+                pickle.dump(parameters, file)
+    
+    def loadParameters(self):
+        """Load the parameters"""
+        
+        # Open file dialog to select the file to load
+        file_dialog = QFileDialog()
+        file_dialog.setAcceptMode(QFileDialog.AcceptOpen)
+        file_dialog.setDefaultSuffix('.pickle')
+        file_dialog.setNameFilter('Pickle Files (*.pickle)')
+        file_dialog.setWindowTitle('Load Parameters')
+        
+        if file_dialog.exec_() == QFileDialog.Accepted:
+            file_path = file_dialog.selectedFiles()[0]
+            
+            # Load the pickle file
+            with open(file_path, 'rb') as file:
+                parameters = pickle.load(file)
+                
+                # Set the parameters
+                self.setTabs(parameters)
+
 class EditTab(QFrame):
-    def __init__(self, edit_window: EditWindow, key: str, tab_args: tuple):
+    def __init__(self, edit_window: EditWindow, key: str, tab_args: tuple, parameters: dict):
         super().__init__()
         
         loadUi(DESIGNER_EDIT_TAB, self)
@@ -83,23 +131,23 @@ class EditTab(QFrame):
         self.edit_window = edit_window
         self.key = key
         self.name, label, self.get_function, _ = tab_args
-        self.table_dict = edit_window.parameters[self.key]
+        self.table_dict = parameters[self.key]
         self.default_ids = list(self.table_dict.keys())        
         self.classes = [self.table_dict[key]["class"] for key in self.default_ids]
         self.label.setText(label)
         self.helpButton.clicked.connect(self.variantsHelp)
                 
         if key == ALGO_KEY:
-            self.setAlgorithmTab()
+            self.setAlgorithmTab(parameters)
 
         self.dictToTable(self.table_dict)
     
     ###### GENERAL METHODS ######
     
-    def setAlgorithmTab(self):
+    def setAlgorithmTab(self, parameters: dict):
 
         # define operator combobox items
-        self.operator_comboBox_items = {key: [key] + list(self.edit_window.parameters[key].keys()) for key in OPERATORS} 
+        self.operator_comboBox_items = {key: [key] + list(parameters[key].keys()) for key in OPERATORS} 
 
         # add the operators button to the algorithm tab
         self.operators_button = QPushButton("Edit Operators")
@@ -117,14 +165,13 @@ class EditTab(QFrame):
     
     def dictToTable(self, table_dict: dict):
         
-        n_cols = max([len(row_dict) for row_dict in table_dict.values()]) * 2 + 1  # +1 to add the button column
+        # +1 to add the button column (at least 4 columns)
+        n_cols = max([len(row_dict) for row_dict in table_dict.values()] + [3]) * 2 + 1  
         self.table.setColumnCount(n_cols)
-
-        # set col names
-        for i in range(ID_COL+2, n_cols, 2):
-            self.table.setHorizontalHeaderItem(i, QTableWidgetItem("Arg" + str(int(i-1))))
-            self.table.setHorizontalHeaderItem(i+1, QTableWidgetItem("Value"))
-
+        
+        # erase the column headers from the 5th column onwards
+        for col in range(4, n_cols):
+            self.table.setHorizontalHeaderItem(col, QTableWidgetItem(""))
         variants = {}
         row = 0
         # set the table items from the table, each row is a list of the arguments and values of the class
@@ -143,7 +190,10 @@ class EditTab(QFrame):
     def addDefault(self, class_name: str, id:str, args_dict:dict, row:int):
         
         # add the id and class name in the first columns
-        self.setTablePair(self.table, row, ID_COL, id, class_name, editable=False)
+        id_widget = MyLineEdit(id, "object_id", self.edit_window.widgets_frame, True)
+        self.table.setCellWidget(row, ID_COL, id_widget)
+        class_widget = MyLineEdit(class_name, "default_class", self.edit_window.widgets_frame, True)
+        self.table.setCellWidget(row, ID_COL+1, class_widget)
         
         # add the arguments and values in the rest of the columns
         for col, (arg, value) in zip(range(ID_COL+2, self.table.columnCount(), 2), list(args_dict.items())): 
@@ -167,17 +217,17 @@ class EditTab(QFrame):
         # set the text edit with table to check if the id is unique
         id = id if id is not None else class_name + VARIANT
         
-        text_edit = MyTextEdit(id, self)
-        self.table.setCellWidget(row, ID_COL, text_edit)
+        id_widget = MyLineEdit(id, "object_id", self.edit_window.widgets_frame, tab=self)
+        self.table.setCellWidget(row, ID_COL, id_widget)
         
         # connect the signal to the slot to update the items in the other tables
         if self.key in RUN_OPTIONS_ARGS_DICT.keys():
-            text_edit.itemsSignal.connect(self.edit_window.itemUpdates.emit)
+            id_widget.itemsSignal.connect(self.edit_window.itemUpdates.emit)
         else:
-            text_edit.itemsSignal.connect(self.edit_window.operatorUpdates.emit)
+            id_widget.itemsSignal.connect(self.edit_window.operatorUpdates.emit)
                     
         # add a MyComboBox in the new row and set it to the class name
-        combo_box = MyComboBox(self.classes, table=self.table, col=ID_COL+1, row=row)
+        combo_box = MyComboBox(self.classes, table=self.table, col=ID_COL+1, row=row, copy_style="variant_class", widgets_frame=self.edit_window.widgets_frame)
         self.table.setCellWidget(row, ID_COL+1, combo_box)
         self.table.cellWidget(row, ID_COL+1).setCurrentIndex(self.classes.index(class_name))
 
@@ -191,28 +241,27 @@ class EditTab(QFrame):
         # add a remove button in the new row
         remove_button = QPushButton("Remove")
         remove_button.setStyleSheet("color: red;")        
-        remove_button.clicked.connect(lambda: self.removeVariant(text_edit))        
+        remove_button.clicked.connect(lambda: self.removeVariant(id_widget))        
         self.table.setCellWidget(row, 0, remove_button)
 
-    def removeVariant(self, text_edit: MyTextEdit):
+    def removeVariant(self, id_widget: MyLineEdit):
         # find the row through the button
-        row = self.table.indexAt(text_edit.pos()).row()
-        print(f"Removing row {row}")
+        row = self.table.indexAt(id_widget.pos()).row()
         # emit a signal to update the items in the other tables
-        items = text_edit.makeUnique()
-        items = [item for item in items if item != text_edit.text()]
-        text_edit.itemsSignal.emit(text_edit.tab.key, items)
+        items = id_widget.makeUnique()
+        items = [item for item in items if item != id_widget.text()]
+        id_widget.itemsSignal.emit(id_widget.tab.key, items)
         self.table.removeRow(row)
         
     def setTablePair(self, table: QTableWidget, row: int, col: int, arg: str, value, editable: bool = True) -> None:
         
         # Set the widget in the arg column (always text)
-        widget = MyTextEdit(arg, read_only=True)
+        widget = MyLineEdit(arg, "arg", self.edit_window.widgets_frame, True)
         table.setCellWidget(row, col, widget)    
         
         # Set the widget in the value column
         if isinstance(value, bool):
-            widget = MyCheckBox(value)
+            widget = MyCheckBox(value, self.edit_window.widgets_frame)
         elif isinstance(value, int):
             widget = ScientificSpinBox()
             widget.setValue(value)
@@ -228,18 +277,15 @@ class EditTab(QFrame):
             self.setOperatorComboBox(table, row, col, arg, value)
             return
         elif value is None:
-            widget = MyTextEdit(str(value))
-            widget.setStyleSheet("background-color: lightblue;")
+            widget = MyLineEdit(str(value), "none", self.edit_window.widgets_frame)
         # only option left is convert to string            
         elif not isinstance(value, str):
-            widget = MyTextEdit(str(value))
-            widget.setStyleSheet("background-color: lightred;")
+            widget = MyLineEdit(str(value), "value", self.edit_window.widgets_frame)
         # if the value is NO_DEFAULT, set the background to green
         elif value == NO_DEFAULT:
-            widget = MyTextEdit(NO_DEFAULT)
-            widget.setStyleSheet("background-color: lightyellow;")
+            widget = MyLineEdit(NO_DEFAULT, "no_def", self.edit_window.widgets_frame)
         else:
-            widget = MyTextEdit(value, read_only=not editable)
+            widget = MyLineEdit(value, "value", self.edit_window.widgets_frame, not editable)
         
         table.setCellWidget(row, col+1, widget)            
         
@@ -251,7 +297,7 @@ class EditTab(QFrame):
             index = items.index(value)
         else:
             index = -1
-        table.setCellWidget(row, col+1, MyComboBox(items, index, table=self.table, tab=self, key=arg))
+        table.setCellWidget(row, col+1, MyComboBox(items, index, table=self.table, tab=self, key=arg, copy_style="comboBox", widgets_frame=self.edit_window.widgets_frame))
                 
     ###### EXTRACT FROM TABLE ######
 
@@ -266,7 +312,7 @@ class EditTab(QFrame):
             row_id = self.table.cellWidget(row, ID_COL).text()
             row_dict = self.getArgsFromRow(self.table, row, get_operator_obj=False)
             table_dict[row_id] = row_dict
-            class_name = widget.text() if isinstance(widget, MyTextEdit) else widget.currentText()
+            class_name = widget.text() if isinstance(widget, MyLineEdit) else widget.currentText()
             table_dict[row_id]["class"] = class_name
             
         return table_dict
@@ -283,7 +329,7 @@ class EditTab(QFrame):
             
     def getObjectFromRow(self, table: QTableWidget, row, pf=None, n_obj=None):
         # get the object from the table
-        if isinstance(table.cellWidget(row, ID_COL+1), MyTextEdit):
+        if isinstance(table.cellWidget(row, ID_COL+1), MyLineEdit):
             class_name = table.cellWidget(row, ID_COL+1).text()
         else:
             class_name = table.cellWidget(row, ID_COL+1).currentText()
@@ -332,7 +378,7 @@ class EditTab(QFrame):
                 value = widget.isChecked()
             elif isinstance(widget, MyComboBox):
                 value = widget.currentText()
-            elif isinstance(widget, MyTextEdit):
+            elif isinstance(widget, MyLineEdit):
                 value = widget.text() if widget.text() != "None" else None
                 if widget.text() == NO_DEFAULT:
                     pass

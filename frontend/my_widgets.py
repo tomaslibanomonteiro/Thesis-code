@@ -2,12 +2,36 @@ import re
 from typing import Tuple
 
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QTableWidget, QComboBox, QMessageBox, QCheckBox, QSpinBox, QDoubleSpinBox, QTextEdit, QMenu, QAction
+from PyQt5.QtWidgets import (QTableWidget, QComboBox, QMessageBox, QCheckBox, QSpinBox, QDoubleSpinBox, 
+                             QLineEdit, QMenu, QAction, QFrame)
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QValidator
+from PyQt5.uic import loadUi
+from PyQt5.QtCore import Qt
 
-from utils.defines import ID_COL, VARIANT
+from numpy import inf
+from typing import Tuple
 
+from utils.defines import ID_COL, VARIANT, DESIGNER_WIDGETS_FRAME
+
+# spinBoxes variables
+decimal_point = re.escape(QtCore.QLocale().decimalPoint())
+exp_regex = r'(([+-]?\d+(' + decimal_point + r'\d*)?|' + decimal_point + r'\d+)([eE][+-]?\d+)?)'
+exp_float_re = re.compile(exp_regex)
+int_exp_regex = r'(([+-]?\d+(' + decimal_point + r'\d*)?|' + decimal_point + r'\d+)([eE][+]?\d+)?)'
+exp_int_re = re.compile(int_exp_regex)
+partial_int_re = re.compile(r'([+-]?(\d?))')
+valid_int_re = re.compile(r'([+-]?\d*)')
+partial_pos_int_regex = re.compile(r'([+]?(\d?))')
+partial_pos_int_re = re.compile(partial_pos_int_regex)
+partial_float_regex = r'([+-]?((\d*' + decimal_point + r'?))?\d*)'
+partial_float_re = re.compile(partial_float_regex)
+
+class MyWidgetsFrame(QFrame):
+    def __init__(self):
+        super().__init__()
+        # Load the .ui file
+        loadUi(DESIGNER_WIDGETS_FRAME, self)
 class MyMessageBox(QMessageBox):
     def __init__(self, text, title="Warning", warning_icon=True, execute = True):
         super().__init__()
@@ -18,25 +42,53 @@ class MyMessageBox(QMessageBox):
         self.setStandardButtons(QMessageBox.Ok)
         self.exec_() if execute else None
 
-class MyTextEdit(QTextEdit):
+class MyLineEdit(QLineEdit):
     itemsSignal = pyqtSignal(str, list)
-    def __init__(self, text="", tab=None, read_only=False):
+    def __init__(self, text="", copy_style=None, widgets_frame=None, read_only=False, tab=None):
         super().__init__()
-
-        self.setText(text)
-        self.setReadOnly(read_only)
+        
         self.tab = tab
         self.recorded_text = text
+        self.widgets_frame = widgets_frame
+        self.copy_style = copy_style
+        self.setText(text)
+        self.setReadOnly(read_only)
+        self.copyStyle(copy_style, widgets_frame)
         
-    def text(self):
-        return self.toPlainText()
+        
+            
+    def copyStyle(self, copy_style, widgets_frame):
+        if copy_style is None:
+            return  
+            
+        if copy_style == "object_id":
+            copy_widget = widgets_frame.object_id
+        elif copy_style == "arg":
+            copy_widget = widgets_frame.arg
+        elif copy_style == "value":
+            copy_widget = widgets_frame.value
+        elif copy_style == "no_def":
+            copy_widget = widgets_frame.no_def
+        elif copy_style == "none":
+            copy_widget = widgets_frame.none
+        elif copy_style == "default_class":
+            copy_widget = widgets_frame.default_class
+        else:
+            raise ValueError(f"Unknown copy style of MyLineEdit: {copy_style}")
+        
+        self.setStyleSheet(copy_widget.styleSheet())
 
     def focusOutEvent(self, event):
-        # emit a signal to update the comboboxes
+        
         self.setText(self.text().strip())
-        if self.recorded_text != self.text():
-            self.recorded_text = self.text()
+        # if the text is different from the recorded text, set style sheet and emit signal
+        if self.recorded_text != self.text(): 
+            if self.text() == "None": 
+                self.copyStyle("none", self.widgets_frame)
+            else: 
+                self.copyStyle("value", self.widgets_frame)
             self.emitSignal()
+            
         super().focusOutEvent(event)
         
     def emitSignal(self):
@@ -61,13 +113,12 @@ class MyTextEdit(QTextEdit):
         return items 
         
     def copy(self):
-        copy = MyTextEdit(self.text(), self.tab, self.isReadOnly())
-        copy.setStyleSheet(self.styleSheet())
+        copy = MyLineEdit(self.text(), self.copy_style, self.widgets_frame, self.isReadOnly(), self.tab)
         return copy
     
 class MyComboBox(QComboBox):
     def __init__(self, items=[], initial_index: int=-1, enabled: bool=True, table: QTableWidget=None, 
-                 col:int=0, row:int=None, add_rows:bool=False, tab=None, key=None):
+                 col:int=0, row:int=None, add_rows:bool=False, tab=None, key=None, copy_style=None, widgets_frame=None):
         super().__init__()
 
         self.table = table # table in which the combobox is located
@@ -76,8 +127,11 @@ class MyComboBox(QComboBox):
         self.row = row
         self.tab = tab
         self.key = key
+        self.copy_style = copy_style
+        self.widgets_frame = widgets_frame
         tab.edit_window.operatorUpdates.connect(self.receiveSignal) if key is not None else None
         
+        self.copyStyle(copy_style, widgets_frame)  
         self.addItems(items)
         self.setCurrentIndex(initial_index) 
         self.setEnabled(enabled)
@@ -103,7 +157,20 @@ class MyComboBox(QComboBox):
 
         # connect the currentIndexChanged signal to a slot that updates the table
         self.currentIndexChanged.connect(self.copyRowFromClass) if row is not None else None
+    
+    def copyStyle(self, copy_style, widgets_frame):
+        if copy_style is None:
+            return  
             
+        if copy_style == "variant_class":
+            copy_widget = widgets_frame.variant_class
+        elif copy_style == "comboBox":
+            copy_widget = widgets_frame.comboBox
+        else:
+            raise ValueError(f"Unknown copy style of MyComboBox: {copy_style}")
+        
+        self.setStyleSheet(copy_widget.styleSheet())
+        
     def showContextMenu(self, pos):
         self.context_menu.exec_(self.mapToGlobal(pos))
 
@@ -143,7 +210,7 @@ class MyComboBox(QComboBox):
         # find the row of the copy table that matches the current text
         for row_to_copy in range(self.table.rowCount()):
             widget = self.table.cellWidget(row_to_copy, self.col)
-            if isinstance(widget, MyTextEdit) and widget.text() == text:
+            if isinstance(widget, MyLineEdit) and widget.text() == text:
                 break
         
         # change id
@@ -180,38 +247,42 @@ class MyComboBox(QComboBox):
 
     def copy(self):
         items = [self.itemText(i) for i in range(self.count())]
-        copy = MyComboBox(items, self.currentIndex(), self.isEnabled(), self.table, self.col, self.row, self.add_rows, self.tab, self.key)
-        copy.setStyleSheet(self.styleSheet())
+        copy = MyComboBox(items, self.currentIndex(), self.isEnabled(), self.table, self.col, self.row, self.add_rows, self.tab, self.key, self.copy_style, self.widgets_frame)
         return copy
     
+class MyCheckBox(QCheckBox):
+    def __init__(self, checked=False, widgets_frame=None, enabled=True):
+        super().__init__()
+
+        self.widgets_frame = widgets_frame
+        self.copyStyle(widgets_frame)
+        self.setChecked(checked)
+        self.setEnabled(enabled)
+        
+        self.stateChanged.connect(self.updateText)
+        self.updateText(self.checkState())
+
+    def copyStyle(self, widgets_frame):
+        if widgets_frame is not None:  
+            self.setStyleSheet(widgets_frame.checkBox.styleSheet())
+        
+    def copy(self):
+        copy = MyCheckBox(self.isChecked(), self.widgets_frame, self.isEnabled())
+        return copy
+    
+    def updateText(self, state):
+        if state == Qt.Checked:
+            self.setText("True")
+        else:
+            self.setText("False")
+  
 """
 This code has been adapted from: https://gist.github.com/jdreaver/0be2e44981159d0854f5
 Changes made are support for PyQt5, localisation, better intermediate state detection and better stepping.
 Some inspiration taken from: https://github.com/pyqtgraph/pyqtgraph/blob/develop/pyqtgraph/widgets/SpinBox.py
 """
 
-decimal_point = re.escape(QtCore.QLocale().decimalPoint())
-int_exp_regex = r'(([+-]?\d+(' + decimal_point + r'\d*)?|' + decimal_point + r'\d+)([eE][+]?\d+)?)'
-exp_int_re = re.compile(int_exp_regex)
-partial_int_re = re.compile(r'([+-]?(\d?))')
-valid_int_re = re.compile(r'([+-]?\d*)')
-partial_pos_int_regex = re.compile(r'([+]?(\d?))')
-partial_pos_int_re = re.compile(partial_pos_int_regex)
-partial_float_regex = r'([+-]?((\d*' + decimal_point + r'?))?\d*)'
-partial_float_re = re.compile(partial_float_regex)
 
-class MyCheckBox(QCheckBox):
-    def __init__(self, checked=False, enabled=True):
-        super().__init__()
-
-        self.setChecked(checked)
-        self.setEnabled(enabled)
-    
-    def copy(self):
-        copy = MyCheckBox(self.isChecked(), self.isEnabled())
-        copy.setStyleSheet(self.styleSheet())
-        return copy
-  
 class IntValidator(QValidator):
     """
     Validates integer inputs for ScientificSpinBox
@@ -324,8 +395,6 @@ class ScientificSpinBox(QSpinBox):
         except OverflowError:
             self.setRange(-int(2 ** 31 - 1), int(2 ** 31 - 1))
 
-    from typing import Tuple
-
     def validate(self, string: str, position: int) -> Tuple[QValidator.State, str, int]:
         """
         Returns the validity of the string, using a QValidator object.
@@ -411,21 +480,11 @@ class ScientificSpinBox(QSpinBox):
         copy.setStyleSheet(self.styleSheet())
         return copy
 
-from numpy import inf
-
 """
 This code has been adapted from: https://gist.github.com/jdreaver/0be2e44981159d0854f5
 Changes made are support for PyQt5, localisation, better intermediate state detection and better stepping.
 Some inspiration taken from: https://github.com/pyqtgraph/pyqtgraph/blob/develop/pyqtgraph/widgets/SpinBox.py
 """
-
-decimal_point = re.escape(QtCore.QLocale().decimalPoint())
-exp_regex = r'(([+-]?\d+(' + decimal_point + r'\d*)?|' + decimal_point + r'\d+)([eE][+-]?\d+)?)'
-exp_float_re = re.compile(exp_regex)
-partial_int_re = re.compile(r'([+-]?(\d?))')
-partial_float_regex = r'([+-]?((\d*' + decimal_point + r'?))?\d*)'
-partial_float_re = re.compile(partial_float_regex)
-
 
 class FloatValidator(QValidator):
     """

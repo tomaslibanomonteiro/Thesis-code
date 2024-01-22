@@ -7,11 +7,14 @@
     <x>0</x>
     <y>0</y>
     <width>1008</width>
-    <height>606</height>
+    <height>577</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Frame</string>
+  </property>
+  <property name="windowOpacity">
+   <double>0.000000000000000</double>
   </property>
   <property name="frameShape">
    <enum>QFrame::NoFrame</enum>
@@ -25,7 +28,7 @@
      <x>10</x>
      <y>10</y>
      <width>991</width>
-     <height>591</height>
+     <height>561</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="layout" stretch="0,0,0">
@@ -119,6 +122,23 @@
     </item>
     <item>
      <widget class="QTableWidget" name="table">
+      <property name="font">
+       <font>
+        <family>Segoe UI Symbol</family>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QTableView { 
+    background-color: transparent; 
+}
+QTableView::item { 
+    background-color: transparent; 
+}
+QHeaderView::section {
+    background-color: white;
+	border:1px;
+}</string>
+      </property>
       <property name="frameShape">
        <enum>QFrame::NoFrame</enum>
       </property>
@@ -135,7 +155,7 @@
        <enum>Qt::ScrollBarAsNeeded</enum>
       </property>
       <property name="horizontalScrollBarPolicy">
-       <enum>Qt::ScrollBarAlwaysOn</enum>
+       <enum>Qt::ScrollBarAsNeeded</enum>
       </property>
       <property name="sizeAdjustPolicy">
        <enum>QAbstractScrollArea::AdjustToContents</enum>
@@ -159,7 +179,7 @@
        <enum>QAbstractItemView::ScrollPerItem</enum>
       </property>
       <property name="showGrid">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="gridStyle">
        <enum>Qt::DashLine</enum>
@@ -168,7 +188,7 @@
        <bool>false</bool>
       </property>
       <property name="wordWrap">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="cornerButtonEnabled">
        <bool>false</bool>
@@ -177,13 +197,13 @@
        <bool>true</bool>
       </attribute>
       <attribute name="horizontalHeaderCascadingSectionResizes">
-       <bool>true</bool>
+       <bool>false</bool>
       </attribute>
       <attribute name="horizontalHeaderDefaultSectionSize">
-       <number>90</number>
+       <number>100</number>
       </attribute>
       <attribute name="horizontalHeaderHighlightSections">
-       <bool>true</bool>
+       <bool>false</bool>
       </attribute>
       <attribute name="horizontalHeaderStretchLastSection">
        <bool>false</bool>
@@ -191,8 +211,14 @@
       <attribute name="verticalHeaderVisible">
        <bool>false</bool>
       </attribute>
+      <attribute name="verticalHeaderDefaultSectionSize">
+       <number>40</number>
+      </attribute>
       <attribute name="verticalHeaderHighlightSections">
        <bool>false</bool>
+      </attribute>
+      <attribute name="verticalHeaderShowSortIndicator" stdset="0">
+       <bool>true</bool>
       </attribute>
       <row>
        <property name="text">
@@ -226,72 +252,7 @@
       </column>
       <column>
        <property name="text">
-        <string>Arg1</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Value</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Arg 2</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Value</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Arg 3</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Value</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Arg4</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Value</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Arg 5</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Value</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Arg 6</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Value</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Arg 7</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Value</string>
+        <string>[Arg/Value:-&gt;</string>
        </property>
       </column>
       <item row="0" column="1">
@@ -302,6 +263,8 @@
      </widget>
     </item>
    </layout>
+   <zorder>table</zorder>
+   <zorder>line</zorder>
   </widget>
  </widget>
  <resources/>
