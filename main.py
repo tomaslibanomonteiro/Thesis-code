@@ -1,23 +1,23 @@
 from PyQt5.QtWidgets import QApplication
 from frontend.main_window import MyMainWindow
+from utils.defines import N_SEEDS_KEY, TERM_KEY, PI_KEY, ALGO_KEY, PROB_KEY
 
-CLICK_RUN_SOO = False
-CLICK_RUN_MOO = False
+moo_options = {
+    'moo': True,
+    N_SEEDS_KEY: 2,
+    TERM_KEY: ['n_eval'],
+    PI_KEY: ['gd', 'gd+', 'igd+', 'igd'],
+    ALGO_KEY: ['moead'],
+    PROB_KEY: ['carside']
+}
+
+soo_options = {}
 
 def main():
-    from tests.tests_declaration import run_options_soo_simple, run_options_soo_mixed, run_options_moo_simple, run_options_moo_mixed
     
-    # start the QApplication
     app = QApplication([])
-    main_window = MyMainWindow(run_options_moo=run_options_moo_mixed)
-    main_window.show()
-    
-    if CLICK_RUN_SOO:
-        main_window.soo_tabs.runButton()
-
-    elif CLICK_RUN_MOO:
-        main_window.moo_tabs.runButton()
-    
+    main_window = MyMainWindow(soo_options, moo_options)
+    main_window.show()    
     app.exec_()
         
 if __name__ == '__main__':

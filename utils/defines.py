@@ -80,3 +80,5 @@ RUN_OPTIONS_ARGS_DICT = {PROB_KEY: ('Problems', 'Edit Problems', get_problem, ge
                     TERM_KEY: ('Terminations', 'Edit Termination Criteria', get_termination, get_termination_options)}
 
 KEY_ARGS_DICT = {**OPERATORS_ARGS_DICT, **RUN_OPTIONS_ARGS_DICT}
+
+GET_OBJECT_ERROR = -1

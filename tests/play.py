@@ -1,33 +1,18 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QVBoxLayout, QWidget
+from backend.get import get_problem, get_algorithm
+from pymoo.optimize import minimize
 
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
+# Define the problem
+problem = get_problem("g1")
 
-        # Create QTextEdit and set its style
-        self.textEdit = QTextEdit(self)
-        self.textEdit.setStyleSheet("border: 0; border-right: 20px solid darkblue;")
-        
-        # Create a layout and add the QTextEdit to it
-        layout = QVBoxLayout()
-        layout.addWidget(self.textEdit)
+# Define the algorithm
+algorithm = get_algorithm("cmaes")
 
-        # Create a central widget, set the layout on it, and set it as the central widget
-        centralWidget = QWidget(self)
-        centralWidget.setLayout(layout)
-        self.setCentralWidget(centralWidget)
+# Optimize the problem
+result = minimize(problem,
+                  algorithm,
+                  seed=1,
+                  verbose=False)
 
-        # Set a fixed size for the central widget
-        centralWidget.setFixedSize(500, 500)  # Adjust the size as needed
-        a= None
-
-def main():
-    app = QApplication([])
-
-    window = MainWindow()
-    window.show()
-
-    app.exec_()
-
-if __name__ == "__main__":
-    main()
+# Print the optimal solution
+print("Best solution found:", result.X)
+print("Objective value:", result.F)

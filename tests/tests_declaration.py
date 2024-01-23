@@ -25,7 +25,7 @@ class Test():
         run_options_moo = self.options if self.moo else {}
         
         self.main_window = MyMainWindow(run_options_soo, run_options_moo, self.defaults_soo, self.defaults_moo)
-        self.run = self.main_window.getRunObject()
+        self.run = self.main_window.activePage().runButton()
         
         # start a python thread 
         self.my_thread.start()

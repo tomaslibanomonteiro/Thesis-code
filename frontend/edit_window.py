@@ -8,7 +8,7 @@ import pickle
 from frontend.my_widgets import MyLineEdit, MyComboBox, ScientificDoubleSpinBox, ScientificSpinBox, MyCheckBox, MyMessageBox, MyWidgetsFrame, MyEmptyLineEdit
 from utils.debug import debug_print
 from utils.defines import (DESIGNER_EDIT_WINDOW, DESIGNER_EDIT_TAB, NO_DEFAULT, OPERATORS, ID_COL, OPERATORS_ARGS_DICT, 
-                           RUN_OPTIONS_ARGS_DICT, ALGO_KEY, REF_DIR_KEY, PI_KEY, VARIANT) 
+                           RUN_OPTIONS_ARGS_DICT, ALGO_KEY, REF_DIR_KEY, PI_KEY, VARIANT, GET_OBJECT_ERROR) 
 
 def ArgsAreSet(dic: dict) -> bool:
     # check if any of the values in the dict is == NO_DEFAULT
@@ -362,14 +362,16 @@ class EditTab(QFrame):
         elif self.key == PI_KEY:
             if "pf" in args_dict and args_dict["pf"] == 'get from problem':
                 args_dict["pf"] = pf
-            
-        obj = self.get_function(class_name, **args_dict)
         
-        if obj is None:
-            raise Exception("Object ID matched, but problem getting it from the class", class_name, "in table from tab ", self.name)
-        else:
-            return obj
-        
+        try:     
+            obj = self.get_function(class_name, **args_dict)
+        except Exception as e:
+            MyMessageBox(f"Error trying to get {class_name} from tab {self.key}:\n{e}"
+                         "\nMake sure all arguments are correctly set for the respective class")
+            obj = GET_OBJECT_ERROR
+                         
+        return obj
+                
     def check_ref_dirs_dependency(self, args_dict, arg, n_obj):
         if arg in args_dict and args_dict[arg].startswith("n_obj*"):
             factor_str = args_dict[arg].split("*")[1]

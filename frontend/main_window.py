@@ -9,7 +9,7 @@ from backend.run import RunThread, SingleRunArgs
 from frontend.my_widgets import MyComboBox, MyMessageBox
 from frontend.edit_window import (EditWindow, ArgsAreSet)
 from frontend.main_window_frames import ResultFrame
-from utils.defines import (DESIGNER_MAIN, RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_MAIN_TABS, RESULT_LAYOUT_WIDGETS, 
+from utils.defines import (DESIGNER_MAIN, RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_MAIN_TABS, RESULT_LAYOUT_WIDGETS, GET_OBJECT_ERROR, 
                            MAX_RESULT_FRAMES, ALGO_KEY, PROB_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY, KEY_ARGS_DICT, MOO_PAGE, SOO_PAGE)
 class MyMainWindow(QMainWindow):
 
@@ -315,7 +315,7 @@ class MainTabsWidget(QTabWidget):
         
         return run_options
     
-    def getRunObject(self):
+    def getRunThread(self):
 
         moo = self.moo_button.isChecked()
         
@@ -330,7 +330,8 @@ class MainTabsWidget(QTabWidget):
             MyMessageBox("Please select a Termination Criteria.")
             return None
         term_object = tabs[TERM_KEY].getObjectFromID(term_id)
-        
+        if term_object is GET_OBJECT_ERROR:
+            return None
         # get run args, a list with the arguments for each individual run
         run_args =  []
         algo_id = None
@@ -339,6 +340,8 @@ class MainTabsWidget(QTabWidget):
             prob_id = self.prob_table.cellWidget(row, 0).currentText()
             if prob_id != "":
                 prob_object = tabs[PROB_KEY].getObjectFromID(prob_id)
+                if prob_object is GET_OBJECT_ERROR:
+                    return None
                 pf = prob_object.pareto_front() if prob_object.pareto_front else None
                 n_obj = prob_object.n_obj
                 
@@ -348,14 +351,18 @@ class MainTabsWidget(QTabWidget):
                     if algo_id != "":
                         algo_id = self.algo_table.cellWidget(row, 0).currentText()
                         algo_object = tabs[ALGO_KEY].getObjectFromID(algo_id, pf, n_obj)
-                        
+                        if algo_object is GET_OBJECT_ERROR:
+                            return None
                         # get pi objects (pi depends on prob pf)
                         pi_ids, pi_objects = [], []
                         for row in range(self.pi_table.rowCount()):
                             pi_id = self.pi_table.cellWidget(row, 0).currentText()
                             if pi_id != "":
                                 pi_ids.append(pi_id)
-                                pi_objects.append(tabs[PI_KEY].getObjectFromID(pi_id, pf, n_obj))
+                                pi_object = tabs[PI_KEY].getObjectFromID(pi_id, pf, n_obj)
+                                if pi_object is GET_OBJECT_ERROR:
+                                    return None
+                                pi_objects.append(pi_object)
                     
                         # check if any of the arguments is not set
                         if pi_ids == []:
@@ -384,13 +391,13 @@ class MainTabsWidget(QTabWidget):
             MyMessageBox("Please clear one of the results before running again.")
             return
         
-        run = self.getRunObject()
-        if run is None:
+        run_thread = self.getRunThread()
+        if run_thread is None:
             return
 
         # create a result frame. get the number of the run from the self.listWidget
         self.run_counter += 1
-        result_frame = ResultFrame(self, run, f"Run {self.run_counter}")
+        result_frame = ResultFrame(self, run_thread, f"Run {self.run_counter}")
         
         # add widget after the last widget in the layout but before the stretch
         self.results_layout.insertWidget(self.results_layout.count() - 1, result_frame)

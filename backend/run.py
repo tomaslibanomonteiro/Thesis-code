@@ -4,6 +4,7 @@ from pymoo.core.algorithm import Algorithm
 from pymoo.core.callback import Callback
 from pymoo.core.result import Result
 from pymoo.optimize import minimize
+from frontend.my_widgets import MyMessageBox
 
 from utils.debug import debug_print
 
@@ -39,6 +40,7 @@ class RunThread(QThread):
 
     def __init__(self, single_run_args: list, term_id, term_object, n_seeds: int, moo: bool):
         super().__init__()
+                
         self.n_seeds = n_seeds
         self.term_id = term_id
         self.term_object = term_object
@@ -48,22 +50,24 @@ class RunThread(QThread):
         self.dfs_dict = {}
         self.run_counter = 0
         self.total_single_runs = len(single_run_args)*n_seeds
-        self.is_running = True  # Add this flag
+        self.canceled = False  
+
+    def cancel(self):
+        self.canceled = True    
 
     def run(self):
         for run_args in self.single_run_args_list:
             for seed in range(self.n_seeds):
-                if not self.is_running:  # Check the flag here
+                if self.canceled:
                     return
                 self.progressUpdate(run_args.algo_id, run_args.prob_id, seed)
                 res = self.single_run(run_args, seed, self.term_object)
-                self.data = self.update_data(run_args, res, res.algorithm.callback)
+                if res is not None:
+                    self.data = self.update_data(run_args, res, res.algorithm.callback)
         
-        self.get_DFs_dict(run_args.pi_ids)
-        
-    def cancel(self):
-        self.is_running = False    
-        
+        if not self.canceled:
+            self.get_DFs_dict(run_args.pi_ids)
+                
     def progressUpdate(self, algo_id: str, prob_id: str, seed: int):
         """Update the progress bar and the text in the status bar"""
         
@@ -75,18 +79,27 @@ class RunThread(QThread):
         debug_print(f"{percentage:.0f}%  - ",text) #!
         
     def single_run(self, run_args: SingleRunArgs, seed: int, termination) -> Result:
-        res = minimize(algorithm=run_args.algo_object,
-                       problem=run_args.prob_object,
-                       termination=termination,
-                       seed=seed,
-                       verbose=False,
-                       save_history=False,
-                       progress_bar=True,
-                       callback=MyCallback())
-        
+        try:
+            res = minimize(algorithm=run_args.algo_object,
+                        problem=run_args.prob_object,
+                        termination=termination,
+                        seed=seed,
+                        verbose=False,
+                        save_history=False,
+                        progress_bar=True,
+                        callback=MyCallback())
+        except Exception as e: 
+            res = None
+            self.canceled = True
+            error_message = (f"Error while running {run_args.algo_id} on {run_args.prob_id}, seed {seed}:\n{e}"
+                             "\nPlease Make sure the algorithm is compatible with the problem.")
+            integer = -1
+            self.progressSignal.emit(error_message, integer)
+                
         return res
 
     def update_data(self, run_args: SingleRunArgs, res: Result, callback: MyCallback):
+                
         data = self.data
 
         run_length = len(callback.n_eval)

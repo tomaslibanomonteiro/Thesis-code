@@ -5,6 +5,8 @@ from utils.defines import DESIGNER_RUN_TAB, DESIGNER_RESULT_FRAME
 from matplotlib import pyplot as plt
 from PyQt5.QtWidgets import QFileDialog
 
+from frontend.my_widgets import MyMessageBox
+
 class ResultFrame(QFrame):
     def __init__(self, tabWidget: QTabWidget, run_thread: RunThread, run_name: str):
         super().__init__()
@@ -23,11 +25,13 @@ class ResultFrame(QFrame):
         # make the run in a separate thread (has to be called in another class) 
         self.run_thread = run_thread                
         self.run_thread.progressSignal.connect(self.receiveUpdate)
-        self.run_thread.start()
         self.run_thread.finished.connect(self.afterRun)
+        self.run_thread.start()
 
     def afterRun(self):
             """After the run is finished, add the tab to the run window and show it"""
+            if self.run_thread.canceled:
+                return
             index = self.tabWidget.addTab(RunTab(self.run_thread, self.run_name), self.run_name)
             self.tabWidget.setCurrentIndex(index)
             self.progressBar.setValue(100)
@@ -53,8 +57,12 @@ class ResultFrame(QFrame):
     
     def receiveUpdate(self, label: str, value: int):
         """Update the progress bar and label with the current run"""
-        self.progressBar.setValue(value)
-        self.progress_label.setText(label)
+        if value == -1:
+            MyMessageBox(label)
+            self.erase()
+        else:
+            self.progressBar.setValue(value)
+            self.progress_label.setText(label)
              
     def saveResults(self):
         """Save the results of the run"""
