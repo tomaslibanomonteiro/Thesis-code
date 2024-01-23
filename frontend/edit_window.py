@@ -200,10 +200,10 @@ class EditTab(QFrame):
         # add the arguments and values in the rest of the columns
         for col, (arg, value) in zip(range(ID_COL+2, self.table.columnCount(), 2), list(args_dict.items())): 
             self.setTablePair(self.table, row, col, arg, value)
-            final_col = col
+            final_col = col+2
         
         # set the rest of the items in the row non editable
-        for col1 in range(final_col+2, self.table.columnCount()):
+        for col1 in range(final_col, self.table.columnCount()):
             # Create a non-editable QLineEdit widget with a transparent background
             self.table.setCellWidget(row, col1, MyEmptyLineEdit())                  
             

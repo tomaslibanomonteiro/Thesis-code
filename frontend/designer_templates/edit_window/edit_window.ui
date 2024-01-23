@@ -240,8 +240,8 @@ p, li { white-space: pre-wrap; }
     <widget class="QPushButton" name="open_run_options">
      <property name="geometry">
       <rect>
-       <x>198</x>
-       <y>243</y>
+       <x>170</x>
+       <y>250</y>
        <width>103</width>
        <height>28</height>
       </rect>
@@ -265,9 +265,9 @@ p, li { white-space: pre-wrap; }
     <widget class="QWidget" name="horizontalLayoutWidget_2">
      <property name="geometry">
       <rect>
-       <x>590</x>
+       <x>620</x>
        <y>100</y>
-       <width>211</width>
+       <width>231</width>
        <height>265</height>
       </rect>
      </property>
