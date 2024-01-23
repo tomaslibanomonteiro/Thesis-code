@@ -6,14 +6,9 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1058</width>
-    <height>435</height>
+    <width>1076</width>
+    <height>482</height>
    </rect>
-  </property>
-  <property name="font">
-   <font>
-    <pointsize>20</pointsize>
-   </font>
   </property>
   <property name="windowTitle">
    <string>Frame</string>
@@ -27,82 +22,17 @@
   <widget class="QWidget" name="gridLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>110</x>
-     <y>90</y>
-     <width>911</width>
+     <x>30</x>
+     <y>160</y>
+     <width>1031</width>
      <height>221</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="2">
-     <widget class="QLineEdit" name="arg">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">QLineEdit {
-    background-color: #f5f5f5;  /* Very light grey */
-    border: none;
-	border-bottom: 1px solid grey;
-}</string>
-      </property>
-      <property name="text">
-       <string>Arg</string>
-      </property>
-      <property name="clearButtonEnabled">
-       <bool>false</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="0">
-     <widget class="QLineEdit" name="object_id_2">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">QLineEdit {
-    border: none;
-	border-bottom: 1px solid grey;
-}</string>
-      </property>
-      <property name="text">
-       <string>Object ID</string>
-      </property>
-      <property name="clearButtonEnabled">
-       <bool>false</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="3">
-     <widget class="QComboBox" name="comboBox">
-      <property name="styleSheet">
-       <string notr="true">QComboBox {
-    border: none;
-    border-bottom: 1px solid grey;
-}</string>
-      </property>
-      <item>
-       <property name="text">
-        <string>item1</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>item2</string>
-       </property>
-      </item>
-     </widget>
-    </item>
     <item row="1" column="1">
      <widget class="QComboBox" name="variant_class">
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
@@ -126,88 +56,7 @@
       </item>
      </widget>
     </item>
-    <item row="0" column="9">
-     <widget class="QCheckBox" name="checkBox">
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="1">
-     <widget class="QLineEdit" name="default_class">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">QLineEdit {
-    border: none;
-    border-right: 10px solid darkblue;
-	border-bottom: 1px solid grey;
-}</string>
-      </property>
-      <property name="text">
-       <string>Default Class</string>
-      </property>
-      <property name="frame">
-       <bool>false</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="4">
-     <widget class="QSpinBox" name="spinBox">
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="6">
-     <widget class="QLineEdit" name="value">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">QLineEdit {
-    border: none;
-	border-bottom: 1px solid grey;
-}</string>
-      </property>
-      <property name="text">
-       <string>Value</string>
-      </property>
-      <property name="clearButtonEnabled">
-       <bool>false</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="0">
-     <widget class="QLineEdit" name="object_id">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">QLineEdit {
-    border: none;
-	border-bottom: 1px solid grey;
-}</string>
-      </property>
-      <property name="text">
-       <string>Object ID</string>
-      </property>
-      <property name="clearButtonEnabled">
-       <bool>false</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="7">
+    <item row="0" column="8">
      <widget class="QLineEdit" name="no_def">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -230,7 +79,79 @@
       </property>
      </widget>
     </item>
-    <item row="0" column="8">
+    <item row="0" column="7">
+     <widget class="QLineEdit" name="value">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QLineEdit {
+    border: none;
+	border-bottom: 1px solid grey;
+}</string>
+      </property>
+      <property name="text">
+       <string>Value</string>
+      </property>
+      <property name="clearButtonEnabled">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QLineEdit" name="default_class">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QLineEdit {
+    border: none;
+    border-right: 10px solid darkblue;
+	border-bottom: 1px solid grey;
+	background-color: #f5f5f5;
+}</string>
+      </property>
+      <property name="text">
+       <string>Default Class</string>
+      </property>
+      <property name="frame">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="3">
+     <widget class="QComboBox" name="comboBox">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QComboBox {
+    border: none;
+    border-bottom: 1px solid grey;
+}</string>
+      </property>
+      <item>
+       <property name="text">
+        <string>item1</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>item2</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="0" column="9">
      <widget class="QLineEdit" name="none">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -242,7 +163,7 @@
        <string notr="true">QLineEdit {
     border: none;
 	border-bottom: 1px solid grey;
-    color: rgb(0, 0, 255)
+    color: rgb(0, 0, 255);
 }</string>
       </property>
       <property name="text">
@@ -253,7 +174,147 @@
       </property>
      </widget>
     </item>
+    <item row="0" column="0">
+     <widget class="QLineEdit" name="default_id">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QLineEdit {
+    border: none;
+	border-bottom: 1px solid grey;
+	background-color: #f5f5f5;
+}
+</string>
+      </property>
+      <property name="text">
+       <string>Default ID</string>
+      </property>
+      <property name="clearButtonEnabled">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="4">
+     <widget class="QSpinBox" name="spinBox">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QSpinBox{
+}</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="10">
+     <widget class="QCheckBox" name="checkBox">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QCheckBox{
+	background: white;
+	border-bottom: 1px solid grey;
+}</string>
+      </property>
+      <property name="text">
+       <string>True</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="2">
+     <widget class="QLineEdit" name="arg">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QLineEdit {
+    background-color: #f5f5f5;
+    border: none;
+	border-bottom: 1px solid grey;
+}</string>
+      </property>
+      <property name="text">
+       <string>Arg</string>
+      </property>
+      <property name="clearButtonEnabled">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="5">
+     <widget class="QDoubleSpinBox" name="doubleSpinBox">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QDoubleSpinBox{
+}</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLineEdit" name="variant_id">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QLineEdit {
+    border: none;
+	border-bottom: 1px solid grey;
+}
+</string>
+      </property>
+      <property name="text">
+       <string>Variant ID</string>
+      </property>
+      <property name="clearButtonEnabled">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
    </layout>
+  </widget>
+  <widget class="QTextBrowser" name="textBrowser">
+   <property name="geometry">
+    <rect>
+     <x>250</x>
+     <y>50</y>
+     <width>591</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <property name="html">
+    <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:7.8pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'MS Gothic'; font-size:12pt;&quot;&gt;font family and size are copied from the frame's default. Every widget here must have a styleSheet, even if it is empty, for the code to work properly&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
   </widget>
  </widget>
  <resources/>

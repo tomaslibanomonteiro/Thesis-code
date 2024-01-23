@@ -2,7 +2,7 @@ import re
 from typing import Tuple
 
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import (QTableWidget, QComboBox, QMessageBox, QCheckBox, QSpinBox, QDoubleSpinBox, 
+from PyQt5.QtWidgets import (QTableWidget, QComboBox, QMessageBox, QCheckBox, QSpinBox, QDoubleSpinBox,  
                              QLineEdit, QMenu, QAction, QFrame)
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QValidator
@@ -13,6 +13,18 @@ from numpy import inf
 from typing import Tuple
 
 from utils.defines import ID_COL, VARIANT, DESIGNER_WIDGETS_FRAME
+
+"""
+This code has been adapted from: https://gist.github.com/jdreaver/0be2e44981159d0854f5
+Changes made are support for PyQt5, localisation, better intermediate state detection and better stepping.
+Some inspiration taken from: https://github.com/pyqtgraph/pyqtgraph/blob/develop/pyqtgraph/widgets/SpinBox.py
+"""
+
+"""
+This code has been adapted from: https://gist.github.com/jdreaver/0be2e44981159d0854f5
+Changes made are support for PyQt5, localisation, better intermediate state detection and better stepping.
+Some inspiration taken from: https://github.com/pyqtgraph/pyqtgraph/blob/develop/pyqtgraph/widgets/SpinBox.py
+"""
 
 # spinBoxes variables
 decimal_point = re.escape(QtCore.QLocale().decimalPoint())
@@ -32,6 +44,51 @@ class MyWidgetsFrame(QFrame):
         super().__init__()
         # Load the .ui file
         loadUi(DESIGNER_WIDGETS_FRAME, self)
+        
+        # set the font of the widgets
+        font = self.font()
+        for i in range(self.gridLayout.count()):
+            widget = self.gridLayout.itemAt(i).widget()
+            if widget is not None:
+                curr_stylesheet = widget.styleSheet()
+                insert_index = curr_stylesheet.rfind('}')
+                if insert_index != -1:
+                    new_str = f"\nfont: {font.pointSize()}pt \"{font.family()}\";\n"
+                    new_stylesheet = curr_stylesheet[:insert_index] + new_str + curr_stylesheet[insert_index:]
+                    widget.setStyleSheet(new_stylesheet)              
+    
+    def copyStyleAndSizePolicy(self, widget, copy_key):
+        if copy_key == "default_id":
+            copy_widget = self.default_id
+        elif copy_key == "variant_id":
+            copy_widget = self.variant_id
+        elif copy_key == "arg":
+            copy_widget = self.arg
+        elif copy_key == "value":
+            copy_widget = self.value
+        elif copy_key == "no_def":
+            copy_widget = self.no_def
+        elif copy_key == "none":
+            copy_widget = self.none
+        elif copy_key == "default_class":
+            copy_widget = self.default_class
+        elif copy_key == "variant_class":
+            copy_widget = self.variant_class
+        elif copy_key == "comboBox":
+            copy_widget = self.comboBox
+        elif copy_key == "spinBox":
+            copy_widget = self.spinBox
+        elif copy_key == "doubleSpinBox":
+            copy_widget = self.doubleSpinBox
+        elif copy_key == "checkBox":
+            copy_widget = self.checkBox
+        else:
+            raise ValueError(f"Unknown copy style of MyWidgetsFrame: {copy_key}")
+        
+        widget.setStyleSheet(copy_widget.styleSheet())
+        widget.sizePolicy().setHorizontalPolicy(copy_widget.sizePolicy().horizontalPolicy())
+        widget.sizePolicy().setVerticalPolicy(copy_widget.sizePolicy().verticalPolicy())
+        
 class MyMessageBox(QMessageBox):
     def __init__(self, text, title="Warning", warning_icon=True, execute = True):
         super().__init__()
@@ -44,7 +101,7 @@ class MyMessageBox(QMessageBox):
 
 class MyLineEdit(QLineEdit):
     itemsSignal = pyqtSignal(str, list)
-    def __init__(self, text="", copy_style=None, widgets_frame=None, read_only=False, tab=None):
+    def __init__(self, text="", copy_style=None, widgets_frame:MyWidgetsFrame=None, read_only=False, tab=None):
         super().__init__()
         
         self.tab = tab
@@ -53,40 +110,17 @@ class MyLineEdit(QLineEdit):
         self.copy_style = copy_style
         self.setText(text)
         self.setReadOnly(read_only)
-        self.copyStyle(copy_style, widgets_frame)
+        self.widgets_frame.copyStyleAndSizePolicy(self, copy_style) if copy_style is not None else None
         
-        
-            
-    def copyStyle(self, copy_style, widgets_frame):
-        if copy_style is None:
-            return  
-            
-        if copy_style == "object_id":
-            copy_widget = widgets_frame.object_id
-        elif copy_style == "arg":
-            copy_widget = widgets_frame.arg
-        elif copy_style == "value":
-            copy_widget = widgets_frame.value
-        elif copy_style == "no_def":
-            copy_widget = widgets_frame.no_def
-        elif copy_style == "none":
-            copy_widget = widgets_frame.none
-        elif copy_style == "default_class":
-            copy_widget = widgets_frame.default_class
-        else:
-            raise ValueError(f"Unknown copy style of MyLineEdit: {copy_style}")
-        
-        self.setStyleSheet(copy_widget.styleSheet())
-
     def focusOutEvent(self, event):
         
         self.setText(self.text().strip())
         # if the text is different from the recorded text, set style sheet and emit signal
         if self.recorded_text != self.text(): 
             if self.text() == "None": 
-                self.copyStyle("none", self.widgets_frame)
+                self.widgets_frame.copyStyleAndSizePolicy(self, "none")
             else: 
-                self.copyStyle("value", self.widgets_frame)
+                self.widgets_frame.copyStyleAndSizePolicy(self, "value")
             self.emitSignal()
             
         super().focusOutEvent(event)
@@ -115,10 +149,21 @@ class MyLineEdit(QLineEdit):
     def copy(self):
         copy = MyLineEdit(self.text(), self.copy_style, self.widgets_frame, self.isReadOnly(), self.tab)
         return copy
+
+class MyEmptyLineEdit(QLineEdit):
+    def __init__(self):
+        super().__init__()
+        
+        self.setReadOnly(True)
+        self.setStyleSheet("background:transparent; border:none;")
+    
+    def copy(self):
+        copy = MyEmptyLineEdit()
+        return copy
     
 class MyComboBox(QComboBox):
     def __init__(self, items=[], initial_index: int=-1, enabled: bool=True, table: QTableWidget=None, 
-                 col:int=0, row:int=None, add_rows:bool=False, tab=None, key=None, copy_style=None, widgets_frame=None):
+                 col:int=0, row:int=None, add_rows:bool=False, tab=None, key=None, copy_style=None, widgets_frame:MyWidgetsFrame=None):
         super().__init__()
 
         self.table = table # table in which the combobox is located
@@ -131,7 +176,7 @@ class MyComboBox(QComboBox):
         self.widgets_frame = widgets_frame
         tab.edit_window.operatorUpdates.connect(self.receiveSignal) if key is not None else None
         
-        self.copyStyle(copy_style, widgets_frame)  
+        self.widgets_frame.copyStyleAndSizePolicy(self, copy_style) if copy_style is not None else None  
         self.addItems(items)
         self.setCurrentIndex(initial_index) 
         self.setEnabled(enabled)
@@ -157,20 +202,7 @@ class MyComboBox(QComboBox):
 
         # connect the currentIndexChanged signal to a slot that updates the table
         self.currentIndexChanged.connect(self.copyRowFromClass) if row is not None else None
-    
-    def copyStyle(self, copy_style, widgets_frame):
-        if copy_style is None:
-            return  
             
-        if copy_style == "variant_class":
-            copy_widget = widgets_frame.variant_class
-        elif copy_style == "comboBox":
-            copy_widget = widgets_frame.comboBox
-        else:
-            raise ValueError(f"Unknown copy style of MyComboBox: {copy_style}")
-        
-        self.setStyleSheet(copy_widget.styleSheet())
-        
     def showContextMenu(self, pos):
         self.context_menu.exec_(self.mapToGlobal(pos))
 
@@ -222,7 +254,6 @@ class MyComboBox(QComboBox):
         # change args
         for col in range(self.col+1, self.table.columnCount()):
             widget = self.table.cellWidget(row_to_copy, col)
-            # if it is a combobox, print the comboBox options
             if isinstance(widget, MyComboBox):
                 new_widget = widget.copy()
             new_widget = widget.copy() if widget is not None else None
@@ -255,17 +286,13 @@ class MyCheckBox(QCheckBox):
         super().__init__()
 
         self.widgets_frame = widgets_frame
-        self.copyStyle(widgets_frame)
+        self.widgets_frame.copyStyleAndSizePolicy(self, "checkBox") if widgets_frame is not None else None
         self.setChecked(checked)
         self.setEnabled(enabled)
         
         self.stateChanged.connect(self.updateText)
         self.updateText(self.checkState())
 
-    def copyStyle(self, widgets_frame):
-        if widgets_frame is not None:  
-            self.setStyleSheet(widgets_frame.checkBox.styleSheet())
-        
     def copy(self):
         copy = MyCheckBox(self.isChecked(), self.widgets_frame, self.isEnabled())
         return copy
@@ -276,17 +303,7 @@ class MyCheckBox(QCheckBox):
         else:
             self.setText("False")
   
-"""
-This code has been adapted from: https://gist.github.com/jdreaver/0be2e44981159d0854f5
-Changes made are support for PyQt5, localisation, better intermediate state detection and better stepping.
-Some inspiration taken from: https://github.com/pyqtgraph/pyqtgraph/blob/develop/pyqtgraph/widgets/SpinBox.py
-"""
-
-
 class IntValidator(QValidator):
-    """
-    Validates integer inputs for ScientificSpinBox
-    """
 
     @staticmethod
     def valid_integer_string(string: str) -> bool:
@@ -381,20 +398,20 @@ class IntValidator(QValidator):
 
 
 class ScientificSpinBox(QSpinBox):
-    """
-    Subclass of QSpinBox that allows for scientific notation and is locale independent.
-    """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, widgets_frame:MyWidgetsFrame=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.widgets_frame = widgets_frame
+        self.widgets_frame.copyStyleAndSizePolicy(self, "spinBox") if widgets_frame is not None else None
+        
         # On 64 bit windows, QSpinBox maximum size is limited to 32 bit, so check for this here:
         self.validator = IntValidator()
         try:
             self.setRange(-int(10e16), int(10e16)) #@IgnoreException
         except OverflowError:
             self.setRange(-int(2 ** 31 - 1), int(2 ** 31 - 1))
-
+        
     def validate(self, string: str, position: int) -> Tuple[QValidator.State, str, int]:
         """
         Returns the validity of the string, using a QValidator object.
@@ -470,21 +487,14 @@ class ScientificSpinBox(QSpinBox):
         self.lineEdit().setText(new_string)
 
     def copy(self):
-        copy = ScientificSpinBox()
+        copy = ScientificSpinBox(self.widgets_frame)
         copy.setRange(self.minimum(), self.maximum())
         copy.setValue(self.value())
         copy.setSingleStep(self.singleStep())
         copy.setPrefix(self.prefix())
         copy.setSuffix(self.suffix())
         copy.setDisplayIntegerBase(self.displayIntegerBase())
-        copy.setStyleSheet(self.styleSheet())
         return copy
-
-"""
-This code has been adapted from: https://gist.github.com/jdreaver/0be2e44981159d0854f5
-Changes made are support for PyQt5, localisation, better intermediate state detection and better stepping.
-Some inspiration taken from: https://github.com/pyqtgraph/pyqtgraph/blob/develop/pyqtgraph/widgets/SpinBox.py
-"""
 
 class FloatValidator(QValidator):
     """
@@ -569,15 +579,17 @@ class ScientificDoubleSpinBox(QDoubleSpinBox):
     Subclass of QDoubleSpinBox that allows for scientific notation and is locale independent.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, widgets_frame:MyWidgetsFrame=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         # Set nice default values:
+        self.widgets_frame = widgets_frame
+        self.widgets_frame.copyStyleAndSizePolicy(self, "doubleSpinBox") if widgets_frame is not None else None
         self.setMinimum(-inf)
         self.setMaximum(inf)
         self.validator = FloatValidator()
         self.setDecimals(1000)
-
+        
     def validate(self, string: str, position: int) -> Tuple[QValidator.State, str, int]:
         """
         Returns the validity of the string, using a QValidator object.
@@ -660,13 +672,11 @@ class ScientificDoubleSpinBox(QDoubleSpinBox):
         self.lineEdit().setText(new_string)
 
     def copy(self):
-        copy = ScientificDoubleSpinBox()
+        copy = ScientificDoubleSpinBox(self.widgets_frame)
         copy.setRange(self.minimum(), self.maximum())
         copy.setValue(self.value())
         copy.setSingleStep(self.singleStep())
         copy.setPrefix(self.prefix())
         copy.setSuffix(self.suffix())
-        copy.setDecimals(self.decimals())	
-        copy.setStyleSheet(self.styleSheet())
-  
+        copy.setDecimals(self.decimals())	        
         return copy

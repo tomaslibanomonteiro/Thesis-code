@@ -1,11 +1,11 @@
-from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QTableWidget, QFrame, QTabBar, QWidget, QPushButton, QFileDialog
+from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QTableWidget, QFrame, QTabBar, QWidget, QPushButton, QFileDialog, QLineEdit
 from PyQt5.uic import loadUi
 from PyQt5.QtCore import pyqtSignal
 
 from numpy import inf
 import pickle
 
-from frontend.my_widgets import MyLineEdit, MyComboBox, ScientificDoubleSpinBox, ScientificSpinBox, MyCheckBox, MyMessageBox, MyWidgetsFrame
+from frontend.my_widgets import MyLineEdit, MyComboBox, ScientificDoubleSpinBox, ScientificSpinBox, MyCheckBox, MyMessageBox, MyWidgetsFrame, MyEmptyLineEdit
 from utils.debug import debug_print
 from utils.defines import (DESIGNER_EDIT_WINDOW, DESIGNER_EDIT_TAB, NO_DEFAULT, OPERATORS, ID_COL, OPERATORS_ARGS_DICT, 
                            RUN_OPTIONS_ARGS_DICT, ALGO_KEY, REF_DIR_KEY, PI_KEY, VARIANT) 
@@ -188,17 +188,25 @@ class EditTab(QFrame):
             self.addVariant(row_dict.pop("class"), row_id, row_dict)
             
     def addDefault(self, class_name: str, id:str, args_dict:dict, row:int):
+        widgets_frame = self.edit_window.widgets_frame
         
         # add the id and class name in the first columns
-        id_widget = MyLineEdit(id, "object_id", self.edit_window.widgets_frame, True)
+        id_widget = MyLineEdit(id, "default_id", widgets_frame, True)
         self.table.setCellWidget(row, ID_COL, id_widget)
-        class_widget = MyLineEdit(class_name, "default_class", self.edit_window.widgets_frame, True)
+        class_widget = MyLineEdit(class_name, "default_class", widgets_frame, True)
         self.table.setCellWidget(row, ID_COL+1, class_widget)
         
+        final_col = ID_COL+2
         # add the arguments and values in the rest of the columns
         for col, (arg, value) in zip(range(ID_COL+2, self.table.columnCount(), 2), list(args_dict.items())): 
             self.setTablePair(self.table, row, col, arg, value)
-
+            final_col = col
+        
+        # set the rest of the items in the row non editable
+        for col1 in range(final_col+2, self.table.columnCount()):
+            # Create a non-editable QLineEdit widget with a transparent background
+            self.table.setCellWidget(row, col1, MyEmptyLineEdit())                  
+            
         # add "Add Variant" button at the end of the row
         add_variant_button = QPushButton("Add Variant")
         add_variant_button.setStyleSheet("color: green;")
@@ -207,6 +215,8 @@ class EditTab(QFrame):
         self.table.setCellWidget(row, 0, add_variant_button)
 
     def addVariant(self, class_name: str, id:str = None, args_dict:dict = None):
+        
+        widgets_frame = self.edit_window.widgets_frame
         
         row = self.table.rowCount()
         self.table.insertRow(row)
@@ -217,7 +227,7 @@ class EditTab(QFrame):
         # set the text edit with table to check if the id is unique
         id = id if id is not None else class_name + VARIANT
         
-        id_widget = MyLineEdit(id, "object_id", self.edit_window.widgets_frame, tab=self)
+        id_widget = MyLineEdit(id, "variant_id", widgets_frame, tab=self)
         self.table.setCellWidget(row, ID_COL, id_widget)
         
         # connect the signal to the slot to update the items in the other tables
@@ -227,7 +237,7 @@ class EditTab(QFrame):
             id_widget.itemsSignal.connect(self.edit_window.operatorUpdates.emit)
                     
         # add a MyComboBox in the new row and set it to the class name
-        combo_box = MyComboBox(self.classes, table=self.table, col=ID_COL+1, row=row, copy_style="variant_class", widgets_frame=self.edit_window.widgets_frame)
+        combo_box = MyComboBox(self.classes, table=self.table, col=ID_COL+1, row=row, copy_style="variant_class", widgets_frame=widgets_frame)
         self.table.setCellWidget(row, ID_COL+1, combo_box)
         self.table.cellWidget(row, ID_COL+1).setCurrentIndex(self.classes.index(class_name))
 
@@ -235,9 +245,17 @@ class EditTab(QFrame):
         if args_dict is not None: # set the default args in the new row
             for col in range(ID_COL+2, self.table.columnCount()):
                 self.table.cellWidget(row, col).deleteLater() if self.table.cellWidget(row, col) is not None else None
+            
+            final_col = ID_COL+2
             for col, (arg, value) in zip(range(ID_COL+2, self.table.columnCount(), 2), list(args_dict.items())):
                 self.setTablePair(self.table, row, col, arg, value)
+                final_col = col
         
+            # set the rest of the items in the row non editable
+            for col1 in range(final_col+2, self.table.columnCount()):
+                # Create a non-editable QLineEdit widget with a transparent background
+                self.table.setCellWidget(row, col1, MyEmptyLineEdit())                  
+
         # add a remove button in the new row
         remove_button = QPushButton("Remove")
         remove_button.setStyleSheet("color: red;")        
@@ -255,18 +273,19 @@ class EditTab(QFrame):
         
     def setTablePair(self, table: QTableWidget, row: int, col: int, arg: str, value, editable: bool = True) -> None:
         
+        widgets_frame = self.edit_window.widgets_frame
         # Set the widget in the arg column (always text)
-        widget = MyLineEdit(arg, "arg", self.edit_window.widgets_frame, True)
+        widget = MyLineEdit(arg, "arg", widgets_frame, True)
         table.setCellWidget(row, col, widget)    
         
         # Set the widget in the value column
         if isinstance(value, bool):
-            widget = MyCheckBox(value, self.edit_window.widgets_frame)
+            widget = MyCheckBox(value, widgets_frame)
         elif isinstance(value, int):
-            widget = ScientificSpinBox()
+            widget = ScientificSpinBox(widgets_frame)
             widget.setValue(value)
         elif isinstance(value, float):
-            widget = ScientificDoubleSpinBox()
+            widget = ScientificDoubleSpinBox(widgets_frame)
             if value == inf:
                 widget.setValue(widget.maximum())
             elif value == -inf:
@@ -277,15 +296,15 @@ class EditTab(QFrame):
             self.setOperatorComboBox(table, row, col, arg, value)
             return
         elif value is None:
-            widget = MyLineEdit(str(value), "none", self.edit_window.widgets_frame)
+            widget = MyLineEdit(str(value), "none", widgets_frame)
         # only option left is convert to string            
         elif not isinstance(value, str):
-            widget = MyLineEdit(str(value), "value", self.edit_window.widgets_frame)
+            widget = MyLineEdit(str(value), "value", widgets_frame)
         # if the value is NO_DEFAULT, set the background to green
         elif value == NO_DEFAULT:
-            widget = MyLineEdit(NO_DEFAULT, "no_def", self.edit_window.widgets_frame)
+            widget = MyLineEdit(NO_DEFAULT, "no_def", widgets_frame)
         else:
-            widget = MyLineEdit(value, "value", self.edit_window.widgets_frame, not editable)
+            widget = MyLineEdit(value, "value", widgets_frame, not editable)
         
         table.setCellWidget(row, col+1, widget)            
         
@@ -365,7 +384,7 @@ class EditTab(QFrame):
         args_dict = {}
         for col in range(ID_COL+2, table.columnCount(), 2):
             
-            if table.cellWidget(row, col) in [None, ""]:
+            if table.cellWidget(row, col) in [None, ""] or isinstance(table.cellWidget(row, col), MyEmptyLineEdit):
                 break
             arg = table.cellWidget(row, col).text()
             widget = table.cellWidget(row, col+1)
