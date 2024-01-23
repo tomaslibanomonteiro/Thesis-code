@@ -18,6 +18,7 @@ class MyMainWindow(QMainWindow):
         
         loadUi(DESIGNER_MAIN, self)
         
+        switch_page = run_options_soo == {} and run_options_moo != {}
         # create pages
         args = [(self.SOOpage, run_options_soo, parameters_soo, SOO_PAGE), (self.MOOpage, run_options_moo, parameters_moo, MOO_PAGE)]
         self.tabs = {page_index: self.createTabs(page, run_options, parameters) for page, run_options, parameters, page_index in args}         
@@ -47,7 +48,7 @@ class MyMainWindow(QMainWindow):
         self.tabs[SOO_PAGE].moo_button.setChecked(False)
         self.tabs[SOO_PAGE].soo_button.setChecked(True)
         self.stackedWidget.setCurrentIndex(SOO_PAGE)
-        self.switchPage() if run_options_soo == {} else None
+        self.switchPage() if switch_page else None
         
     ####### GENERAL METHODS #######
     
