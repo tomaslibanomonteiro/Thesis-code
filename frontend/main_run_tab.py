@@ -1,87 +1,19 @@
-from PyQt5.QtWidgets import QFrame, QTableWidget, QTableWidgetItem, QTabWidget, QCheckBox
+from PyQt5.QtWidgets import QFrame, QTableWidget, QTableWidgetItem, QCheckBox
 from PyQt5.uic import loadUi
 from backend.run import RunThread
-from utils.defines import DESIGNER_RUN_TAB, DESIGNER_RESULT_FRAME, PROB_KEY, ALGO_KEY, N_SEEDS_KEY, PI_KEY, N_GEN_KEY, N_EVAL_KEY
+from utils.defines import DESIGNER_RUN_TAB, PROB_KEY, ALGO_KEY, N_SEEDS_KEY, N_GEN_KEY, N_EVAL_KEY
 from matplotlib import pyplot as plt
 from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtCore import Qt
 from frontend.my_widgets import MyMessageBox
+from PyQt5.QtWidgets import QTableWidget, QFileDialog
+from PyQt5.QtCore import Qt
+from PyQt5.uic import loadUi
 
-class ResultFrame(QFrame):
-    def __init__(self, tabWidget: QTabWidget, run_thread: RunThread, run_name: str):
-        super().__init__()
-        loadUi(DESIGNER_RESULT_FRAME, self)
-        
-        self.run_name = run_name
-        self.label.setText(run_name)
-        self.tabWidget = tabWidget
-                
-        # cancel button
-        self.cancel_button.clicked.connect(self.cancel_run)
-
-        # make the run in a separate thread (has to be called in another class) 
-        self.run_thread = run_thread                
-        self.run_thread.progressSignal.connect(self.receiveUpdate)
-        self.run_thread.finished.connect(self.afterRun)
-        self.run_thread.start()
-
-    def afterRun(self):
-        """After the run is finished, add the tab to the run window and show it"""
-        if self.run_thread.canceled:
-            return
-        
-        self.tab = RunTab(self.run_thread, self.run_name)
-        self.progressBar.setValue(100)
-        self.progress_label.setText("")
-        self.save_run.setEnabled(True)
-        self.save_run.clicked.connect(self.tab.saveRun)
-        self.save_data.setEnabled(True)
-        self.save_data.clicked.connect(self.tab.saveData)
-        self.openTab_button.setEnabled(True)
-        self.openTab_button.clicked.connect(self.openTab)
-        self.openTab()
-
-        # change the erase button to cancel button
-        self.cancel_button.setText("Erase")
-        self.cancel_button.clicked.connect(self.erase)
+from backend.run import RunThread
+from frontend.my_widgets import MyMessageBox
+from utils.defines import (ALGO_KEY, PROB_KEY, N_SEEDS_KEY)
     
-    def closeTab(self, index):
-        """Close the tab at the given index"""
-        self.tabWidget.removeTab(index)       
-
-    def openTab(self):
-        """Check if any of the tabs has the same name as the run, if not, call afterRun"""
-        for i in range(self.tabWidget.count()):
-            if self.tabWidget.tabText(i) == self.run_name:
-                self.tabWidget.setCurrentIndex(i)
-                return
-        index = self.tabWidget.addTab(self.tab, self.run_name)
-        self.tabWidget.setCurrentIndex(index)
-    
-    def receiveUpdate(self, label: str, value: int):
-        """Update the progress bar and label with the current run"""
-        if value == -1:
-            MyMessageBox(label)
-            self.erase()
-        else:
-            self.progressBar.setValue(value)
-            self.progress_label.setText(label)
-                
-    def erase(self):
-        """Erase the run"""
-        self.tabWidget.results_layout.removeWidget(self)
-        # remove tab if it exists
-        for i in range(self.tabWidget.count()):
-            if self.tabWidget.tabText(i) == self.run_name:
-                self.tabWidget.removeTab(i)
-                break
-        self.deleteLater()     
-    
-    def cancel_run(self):
-        """Cancel the run"""
-        self.run_thread.cancel()
-        self.erase()
-        
 class RunTab(QFrame):
     def __init__(self, run_thread: RunThread, label: str):
         super().__init__()
