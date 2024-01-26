@@ -13,7 +13,7 @@ from PyQt5.uic import loadUi
 from backend.run import RunThread
 from frontend.my_widgets import MyMessageBox
 from utils.defines import (ALGO_KEY, PROB_KEY, N_SEEDS_KEY)
-    
+
 class RunTab(QFrame):
     def __init__(self, run_thread: RunThread, label: str):
         super().__init__()
@@ -170,7 +170,10 @@ class RunTab(QFrame):
                 algo_id = algo_ids[0]
                 self.plotParetoFront(prob_id, algo_id)
         elif self.plot_comboBox.currentText() == "Progress":
-            self.plotProgress(prob_id, algo_ids, pi_ids)
+            if len(pi_ids) == 0:
+                MyMessageBox("Select at least one performance indicator to plot the progress")
+            else:
+                self.plotProgress(prob_id, algo_ids, pi_ids)
         else:        
             raise ValueError("Plot by can only be Performance Indicator or Problem")
     
@@ -182,6 +185,8 @@ class RunTab(QFrame):
         # get the data for the given problem
         df_prob = self.run_thread.data[self.run_thread.data[PROB_KEY] == prob_id]
         
+        plt.close()
+        plt.figure()
         # get the data for the given algorithms
         for algo_id in algo_ids:
             df_algo = df_prob[df_prob[ALGO_KEY] == algo_id]
