@@ -4,12 +4,12 @@ from pymoo.core.algorithm import Algorithm
 from pymoo.core.callback import Callback
 from pymoo.core.result import Result
 from pymoo.optimize import minimize
-from frontend.my_widgets import MyMessageBox
-
-from utils.debug import debug_print
-
+from pymoo.indicators.hv import Hypervolume
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import QThread
+
+from utils.debug import debug_print
+from utils.defines import N_SEEDS_KEY, ALGO_KEY, PROB_KEY, N_EVAL_KEY, N_GEN_KEY
 
 class MyCallback(Callback):
 
@@ -47,7 +47,6 @@ class RunThread(QThread):
         self.single_run_args_list = single_run_args
         self.moo = moo
         self.data = pd.DataFrame()
-        self.dfs_dict = {}
         self.run_counter = 0
         self.total_single_runs = len(single_run_args)*n_seeds
         self.canceled = False  
@@ -56,6 +55,10 @@ class RunThread(QThread):
         self.canceled = True    
 
     def run(self):
+        #!
+        import debugpy
+        debugpy.debug_this_thread()
+         
         for run_args in self.single_run_args_list:
             for seed in range(self.n_seeds):
                 if self.canceled:
@@ -64,9 +67,6 @@ class RunThread(QThread):
                 res = self.single_run(run_args, seed, self.term_object)
                 if res is not None:
                     self.data = self.update_data(run_args, res, res.algorithm.callback)
-        
-        if not self.canceled:
-            self.get_DFs_dict(run_args.pi_ids)
                 
     def progressUpdate(self, algo_id: str, prob_id: str, seed: int):
         """Update the progress bar and the text in the status bar"""
@@ -104,11 +104,11 @@ class RunThread(QThread):
 
         run_length = len(callback.n_eval)
 
-        single_run = {'seed': [res.algorithm.seed] * run_length,
-                      'problem_id': [run_args.prob_id] * run_length,
-                      'algorithm_id': [run_args.algo_id] * run_length,
-                      'n_eval': callback.n_eval,
-                      'n_gen': callback.n_gen}
+        single_run = {N_SEEDS_KEY: [res.algorithm.seed] * run_length,
+                      PROB_KEY: [run_args.prob_id] * run_length,
+                      ALGO_KEY: [run_args.algo_id] * run_length,
+                      N_EVAL_KEY: callback.n_eval,
+                      N_GEN_KEY: callback.n_gen}
         
         # get the performance indicators values
         for pi_id, pi_object in zip(run_args.pi_ids, run_args.pi_object):
@@ -116,7 +116,11 @@ class RunThread(QThread):
                 # get the float values in the callback.best list
                 pi_data = [None if len(item) == 0 else float(item[0]) for item in callback.best]                    
             else:
-                pi_data = [pi_object.do(pf) for pf in callback.best]
+                if isinstance(pi_object, Hypervolume): # invert the hypervolume values
+                    pi_data = [-item for item in callback.best]
+                else:
+                    pi_data = [pi_object.do(pf) for pf in callback.best]
+            
             # add the data to the data frame    
             single_run[pi_id] = pi_data
         
@@ -124,32 +128,6 @@ class RunThread(QThread):
 
         return pd.concat([data, single_run])
         
-    def get_DFs_dict(self, pi_ids: list):
-        """ returns a dictionary of pi_ids, where each entry is a dataframe
-        where the columns are the different problems and the rows the different 
-        algorithms, and each cell is the mean of the performance indicator
-        of that combination across the different seeds"""
-        
-        # first get only the last generation for each combination of problem, algorithm and seed
-        last_gen = self.data.groupby(['problem_id', 'algorithm_id', 'seed']).last()
-        
-        # then get the mean of the performance indicator across the different seeds
-        result = last_gen.groupby(['problem_id', 'algorithm_id'])[pi_ids].mean()
-        
-        dfs_dict = {}
-        for pi_id in pi_ids:
-            dfs_dict[pi_id] = result[pi_id].unstack().T      
-            
-            # add another column with the sum of all the instances where the algorithm was the best for each problem 
-            if pi_id == "hv":
-                dfs_dict[pi_id]['voting'] = dfs_dict[pi_id].idxmax(axis=0).value_counts()
-                dfs_dict[pi_id]['voting'] = dfs_dict[pi_id]['voting'].fillna(0).astype(int)
-            else:
-                dfs_dict[pi_id]['voting'] = dfs_dict[pi_id].idxmin(axis=0).value_counts()
-                dfs_dict[pi_id]['voting'] = dfs_dict[pi_id]['voting'].fillna(0).astype(int)
-            
-        self.dfs_dict = dfs_dict
-    
     def save_data(self, filename: str):
         self.data.to_csv(filename, index=False)
         

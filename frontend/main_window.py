@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import (QHeaderView, QMainWindow, QTabWidget, QVBoxLayout, QTableWidget, QTabBar, 
+from PyQt5.QtWidgets import (QMainWindow, QTabWidget, QVBoxLayout, QTableWidget, QTabBar, 
                              QFileDialog, QWidget, QSpinBox, QHBoxLayout)
 from PyQt5.QtCore import Qt
 from PyQt5.uic import loadUi
@@ -238,7 +238,6 @@ class MainTabsWidget(QTabWidget):
         self.removeTab(index)
 
     ### Run tab methods ###
-    
     def updateComboBoxItems(self, key: str, items: list):
         """Update the items of the comboboxes in the run tab"""
         table = self.tables_dict[key] 

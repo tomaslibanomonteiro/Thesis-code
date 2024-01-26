@@ -56,6 +56,10 @@ ALGO_KEY = 'algorithm'
 PI_KEY = 'pi'
 TERM_KEY = 'term'
 N_SEEDS_KEY = 'n_seeds'
+
+# for the dataframes
+N_EVAL_KEY = 'n_eval'
+N_GEN_KEY = 'n_gen'
  
 # keys needed in a dictionary given to start the app ORDERED THE SAME AS THE APP!!
 RUN_OPTIONS_KEYS = [PROB_KEY, ALGO_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY]

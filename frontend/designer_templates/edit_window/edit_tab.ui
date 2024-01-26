@@ -132,10 +132,8 @@
        <bool>true</bool>
       </property>
       <property name="styleSheet">
-       <string notr="true">QTableView { 
+       <string notr="true">QAbstractScrollArea { 
     background-color: transparent; 
-}
-QHeaderView::section {
 }</string>
       </property>
       <property name="frameShape">

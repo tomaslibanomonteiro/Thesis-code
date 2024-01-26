@@ -162,7 +162,7 @@ class MyEmptyLineEdit(QLineEdit):
         return copy
     
 class MyComboBox(QComboBox):
-    def __init__(self, items=[], initial_index: int=-1, enabled: bool=True, table: QTableWidget=None, 
+    def __init__(self, items=[], initial_item:str="", enabled: bool=True, table: QTableWidget=None, 
                  col:int=0, row:int=None, add_rows:bool=False, tab=None, key=None, copy_style=None, widgets_frame:MyWidgetsFrame=None):
         super().__init__()
 
@@ -176,9 +176,10 @@ class MyComboBox(QComboBox):
         self.widgets_frame = widgets_frame
         tab.edit_window.operatorUpdates.connect(self.receiveSignal) if key is not None else None
         
+        self.setInsertPolicy(QComboBox.InsertAlphabetically)        
         self.widgets_frame.copyStyleAndSizePolicy(self, copy_style) if copy_style is not None else None  
         self.addItems(items)
-        self.setCurrentIndex(initial_index) 
+        self.setCurrentIndex(self.findText(initial_item))
         self.setEnabled(enabled)
 
         # create a custom context menu
@@ -265,20 +266,16 @@ class MyComboBox(QComboBox):
                     
     def updateItems(self, items:list):
         # store current text
-        current_text = self.currentText()
+        curr_text = self.currentText()
         # Clear the current items
         self.clear()
         # Add the new items
         self.addItems(items)
-        # check if the current text is in the new items
-        if current_text in items:
-            self.setCurrentText(current_text)
-        else:
-            self.setCurrentIndex(-1)
+        self.setCurrentIndex(self.findText(curr_text))
 
     def copy(self):
         items = [self.itemText(i) for i in range(self.count())]
-        copy = MyComboBox(items, self.currentIndex(), self.isEnabled(), self.table, self.col, self.row, self.add_rows, self.tab, self.key, self.copy_style, self.widgets_frame)
+        copy = MyComboBox(items, self.currentText(), self.isEnabled(), self.table, self.col, self.row, self.add_rows, self.tab, self.key, self.copy_style, self.widgets_frame)
         return copy
     
 class MyCheckBox(QCheckBox):

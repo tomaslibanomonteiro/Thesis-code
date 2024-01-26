@@ -8,7 +8,8 @@ import pickle
 from frontend.my_widgets import MyLineEdit, MyComboBox, ScientificDoubleSpinBox, ScientificSpinBox, MyCheckBox, MyMessageBox, MyWidgetsFrame, MyEmptyLineEdit
 from utils.debug import debug_print
 from utils.defines import (DESIGNER_EDIT_WINDOW, DESIGNER_EDIT_TAB, NO_DEFAULT, OPERATORS, ID_COL, OPERATORS_ARGS_DICT, 
-                           RUN_OPTIONS_ARGS_DICT, ALGO_KEY, REF_DIR_KEY, PI_KEY, VARIANT, GET_OBJECT_ERROR) 
+                           RUN_OPTIONS_ARGS_DICT, PROB_KEY, ALGO_KEY, TERM_KEY, PI_KEY, REF_DIR_KEY, CROSS_KEY, 
+                           DECOMP_KEY, MUT_KEY, SAMP_KEY, SEL_KEY, VARIANT, GET_OBJECT_ERROR)  
 
 def ArgsAreSet(dic: dict) -> bool:
     # check if any of the values in the dict is == NO_DEFAULT
@@ -24,15 +25,6 @@ class EditWindow(QDialog):
         self.widgets_frame = MyWidgetsFrame()
         self.setWindowTitle("Edit Parameters")
         
-        # set open_operators and open_run_options buttons
-        self.open_operators.clicked.connect(self.openOperators)
-        self.open_run_options.clicked.connect(self.openRunOptions)
-        self.open_all_tabs.clicked.connect(self.openAllTabs)
-        self.save_parameters.clicked.connect(self.saveParameters)
-        self.load_parameters.clicked.connect(self.loadParameters)
-        self.helpButton.clicked.connect(self.help)
-        self.tabWidget.tabCloseRequested.connect(self.closeTab)
-
         # Add a spacer so that the height remains the same when all other tabs are closed
         spacer = QWidget()
         spacer.setFixedHeight(20)
@@ -41,6 +33,31 @@ class EditWindow(QDialog):
 
         self.setTabs(parameters)
     
+        # set the buttons
+        self.open_operators.clicked.connect(self.openOperators)
+        self.open_run_options.clicked.connect(self.openRunOptions)
+        self.open_all_tabs.clicked.connect(self.openAllTabs)
+        self.save_parameters.clicked.connect(self.saveParameters)
+        self.load_parameters.clicked.connect(self.loadParameters)
+        self.helpButton.clicked.connect(self.help)
+        self.tabWidget.tabCloseRequested.connect(self.closeTab)
+        
+        # set the open tab buttons
+        self.open_algorithms.clicked.connect(lambda: self.openTab(ALGO_KEY))
+        self.open_pi.clicked.connect(lambda: self.openTab(PI_KEY))
+        self.open_problems.clicked.connect(lambda: self.openTab(PROB_KEY))
+        self.open_terminations.clicked.connect(lambda: self.openTab(TERM_KEY))
+        self.open_ref_dirs.clicked.connect(lambda: self.openTab(REF_DIR_KEY))
+        self.open_crossovers.clicked.connect(lambda: self.openTab(CROSS_KEY))
+        self.open_decompositions.clicked.connect(lambda: self.openTab(DECOMP_KEY))
+        self.open_mutations.clicked.connect(lambda: self.openTab(MUT_KEY))
+        self.open_samplings.clicked.connect(lambda: self.openTab(SAMP_KEY))
+        self.open_selections.clicked.connect(lambda: self.openTab(SEL_KEY))
+        
+    def openTab(self, tab_key: str):
+        self.tabWidget.addTab(self.tabs[tab_key], self.tabs[tab_key].name)
+        self.tabWidget.setCurrentIndex(self.tabWidget.count()-1)
+        
     def setTabs(self, parameters: dict):
         # close all tabs except the first one
         while self.tabWidget.count() > 1:
@@ -60,7 +77,7 @@ class EditWindow(QDialog):
             
         for tab_key in OPERATORS_ARGS_DICT.keys():
             self.tabWidget.addTab(self.tabs[tab_key], self.tabs[tab_key].name)
-        self.tabWidget.setCurrentIndex(len(self.tabWidget)-1)
+        self.tabWidget.setCurrentIndex(1)
         
     def openRunOptions(self):
         # close all tabs except the first one
@@ -69,7 +86,7 @@ class EditWindow(QDialog):
         
         for tab_key in RUN_OPTIONS_ARGS_DICT.keys():
             self.tabWidget.addTab(self.tabs[tab_key], self.tabs[tab_key].name)
-        self.tabWidget.setCurrentIndex(len(self.tabWidget)-1)    
+        self.tabWidget.setCurrentIndex(1)    
     
     def openAllTabs(self):
         for tab_key in self.tabs.keys():
@@ -147,7 +164,7 @@ class EditTab(QFrame):
     def setAlgorithmTab(self, parameters: dict):
 
         # define operator combobox items
-        self.operator_comboBox_items = {key: [key] + list(parameters[key].keys()) for key in OPERATORS} 
+        self.operator_comboBox_items = {key: list(parameters[key].keys()) for key in OPERATORS} 
 
         # add the operators button to the algorithm tab
         self.operators_button = QPushButton("Edit Operators")
@@ -312,11 +329,7 @@ class EditTab(QFrame):
 
         items = self.operator_comboBox_items[arg]
                 
-        if value not in [NO_DEFAULT, None]:
-            index = items.index(value)
-        else:
-            index = -1
-        table.setCellWidget(row, col+1, MyComboBox(items, index, table=self.table, tab=self, key=arg, copy_style="comboBox", widgets_frame=self.edit_window.widgets_frame))
+        table.setCellWidget(row, col+1, MyComboBox(items, value, table=self.table, tab=self, key=arg, copy_style="comboBox", widgets_frame=self.edit_window.widgets_frame))
                 
     ###### EXTRACT FROM TABLE ######
 
