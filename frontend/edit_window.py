@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QTableWidget, QFrame, QTabBar, QWidget, QPushButton, QFileDialog, QLineEdit
+from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QTableWidget, QFrame, QTabBar, QWidget, QPushButton, QFileDialog
 from PyQt5.uic import loadUi
 from PyQt5.QtCore import pyqtSignal
 
