@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1078</width>
-    <height>762</height>
+    <width>1057</width>
+    <height>677</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,10 +22,10 @@
   <widget class="QWidget" name="verticalLayoutWidget_2">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>20</y>
-     <width>1031</width>
-     <height>681</height>
+     <x>10</x>
+     <y>10</y>
+     <width>1041</width>
+     <height>661</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0">
@@ -153,16 +153,145 @@
        <number>23</number>
       </property>
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout_3">
+       <layout class="QVBoxLayout" name="horizontalLayout">
+        <property name="spacing">
+         <number>3</number>
+        </property>
         <item>
          <widget class="QLabel" name="label_2">
           <property name="text">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Show &lt;span style=&quot; font-weight:600;&quot;&gt;values of&lt;/span&gt;:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Showing &lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;values of&lt;/span&gt;:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
          </widget>
         </item>
-        <item alignment="Qt::AlignTop">
-         <widget class="QComboBox" name="voting_by">
+        <item alignment="Qt::AlignHCenter|Qt::AlignTop">
+         <widget class="QComboBox" name="values_comboBox">
+          <property name="minimumSize">
+           <size>
+            <width>181</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>181</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <property name="insertPolicy">
+           <enum>QComboBox::InsertAlphabetically</enum>
+          </property>
+          <property name="frame">
+           <bool>true</bool>
+          </property>
+          <item>
+           <property name="text">
+            <string>Problem</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Performance Indicator</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;With Id:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+         </widget>
+        </item>
+        <item alignment="Qt::AlignHCenter">
+         <widget class="QComboBox" name="selected_id">
+          <property name="minimumSize">
+           <size>
+            <width>181</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>181</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="insertPolicy">
+           <enum>QComboBox::InsertAlphabetically</enum>
+          </property>
+          <property name="frame">
+           <bool>true</bool>
+          </property>
+          <item>
+           <property name="text">
+            <string>perf ind 1</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="n_seeds_label">
+          <property name="text">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Averaged on: x seeds&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+         </widget>
+        </item>
+        <item alignment="Qt::AlignHCenter|Qt::AlignVCenter">
+         <widget class="QLabel" name="term_label">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Termination: &lt;br/&gt;(click to see parameters)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>10</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="Line" name="line_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_8">
+          <property name="text">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Plot&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+         </widget>
+        </item>
+        <item alignment="Qt::AlignHCenter">
+         <widget class="QComboBox" name="plot_comboBox">
           <property name="minimumSize">
            <size>
             <width>181</width>
@@ -186,106 +315,6 @@
           </property>
           <item>
            <property name="text">
-            <string>Performance Indicator</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Problem</string>
-           </property>
-          </item>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_3">
-          <property name="text">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;With Id:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QComboBox" name="selected">
-          <property name="minimumSize">
-           <size>
-            <width>181</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>181</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <weight>75</weight>
-            <bold>true</bold>
-           </font>
-          </property>
-          <property name="insertPolicy">
-           <enum>QComboBox::InsertAlphabetically</enum>
-          </property>
-          <property name="frame">
-           <bool>true</bool>
-          </property>
-          <item>
-           <property name="text">
-            <string>perf ind 1</string>
-           </property>
-          </item>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_4">
-          <property name="text">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Averaged on:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-         </widget>
-        </item>
-        <item alignment="Qt::AlignHCenter">
-         <widget class="QLabel" name="n_seeds_label">
-          <property name="text">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;n_seeds&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="Line" name="line_2">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_8">
-          <property name="text">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Plot&lt;/span&gt;:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QComboBox" name="plot_comboBox">
-          <property name="minimumSize">
-           <size>
-            <width>181</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>181</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="insertPolicy">
-           <enum>QComboBox::InsertAlphabetically</enum>
-          </property>
-          <property name="frame">
-           <bool>true</bool>
-          </property>
-          <item>
-           <property name="text">
             <string>Pareto Front</string>
            </property>
           </item>
@@ -297,7 +326,129 @@
          </widget>
         </item>
         <item>
+         <widget class="QLabel" name="label_9">
+          <property name="text">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Problem:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+         </widget>
+        </item>
+        <item alignment="Qt::AlignHCenter">
+         <widget class="QComboBox" name="plot_prob">
+          <property name="minimumSize">
+           <size>
+            <width>181</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>181</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="currentIndex">
+           <number>-1</number>
+          </property>
+          <property name="insertPolicy">
+           <enum>QComboBox::InsertAlphabetically</enum>
+          </property>
+          <property name="frame">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QToolBox" name="toolBox">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>200</width>
+            <height>200</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>181</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Plain</enum>
+          </property>
+          <property name="currentIndex">
+           <number>1</number>
+          </property>
+          <property name="tabSpacing">
+           <number>4</number>
+          </property>
+          <widget class="QWidget" name="page_3">
+           <attribute name="label">
+            <string>Algorithms</string>
+           </attribute>
+           <widget class="QWidget" name="gridLayoutWidget">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>201</width>
+              <height>151</height>
+             </rect>
+            </property>
+            <layout class="QGridLayout" name="algo_layout"/>
+           </widget>
+          </widget>
+          <widget class="QWidget" name="page_2">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>200</width>
+             <height>144</height>
+            </rect>
+           </property>
+           <attribute name="label">
+            <string>Performance Indicators</string>
+           </attribute>
+           <widget class="QWidget" name="gridLayoutWidget_2">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>201</width>
+              <height>151</height>
+             </rect>
+            </property>
+            <layout class="QGridLayout" name="pi_layout">
+             <property name="spacing">
+              <number>2</number>
+             </property>
+            </layout>
+           </widget>
+          </widget>
+         </widget>
+        </item>
+        <item alignment="Qt::AlignHCenter">
          <widget class="QPushButton" name="plot_button">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>93</width>
+            <height>0</height>
+           </size>
+          </property>
           <property name="text">
            <string>Plot</string>
           </property>
@@ -326,7 +477,7 @@
            <enum>Qt::LeftToRight</enum>
           </property>
           <property name="text">
-           <string>Double Click The ...</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Double Click &lt;/span&gt;on a header to see the &lt;span style=&quot; font-weight:600;&quot;&gt;Parameters &lt;/span&gt;of the object&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>

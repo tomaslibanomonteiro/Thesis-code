@@ -1,10 +1,10 @@
-from PyQt5.QtWidgets import QFrame, QTableWidget, QTableWidgetItem, QTabWidget
+from PyQt5.QtWidgets import QFrame, QTableWidget, QTableWidgetItem, QTabWidget, QCheckBox
 from PyQt5.uic import loadUi
 from backend.run import RunThread
 from utils.defines import DESIGNER_RUN_TAB, DESIGNER_RESULT_FRAME, PROB_KEY, ALGO_KEY, N_SEEDS_KEY, PI_KEY, N_GEN_KEY, N_EVAL_KEY
 from matplotlib import pyplot as plt
 from PyQt5.QtWidgets import QFileDialog
-
+from PyQt5.QtCore import Qt
 from frontend.my_widgets import MyMessageBox
 
 class ResultFrame(QFrame):
@@ -90,15 +90,20 @@ class RunTab(QFrame):
         # connections
         self.save_data.clicked.connect(self.saveData)
         self.save_run.clicked.connect(self.saveRun)
-        self.voting_by.currentIndexChanged.connect(self.changedVoting)
-        self.selected.currentIndexChanged.connect(self.changeTable)
+        self.values_comboBox.currentIndexChanged.connect(self.changedChosenValue)
+        self.selected_id.currentIndexChanged.connect(self.changeTable)
         self.table.horizontalHeader().sectionDoubleClicked.connect(lambda col: self.horizontalHeaderClick(col))
         self.table.verticalHeader().sectionDoubleClicked.connect(lambda row: self.VerticalHeaderClick(row))
+        self.plot_button.clicked.connect(self.plot)
         
         # set the label                         
         self.label.setText(label)
         seed_str = "seed" if run_thread.n_seeds == 1 else "seeds"
-        self.n_seeds_label.setText(f"{run_thread.n_seeds} {seed_str}")
+        self.n_seeds_label.setText(f"Averaged on: <b>{run_thread.n_seeds} {seed_str}</b>")
+        self.n_seeds_label.setAlignment(Qt.AlignCenter)
+        self.term_label.setText(f"Termination criteria: <b>{run_thread.term_id}</b> <br>(Double click to see parameters)")
+        self.term_label.setAlignment(Qt.AlignCenter)
+        self.term_label.mouseDoubleClickEvent = self.seeTermination
         
         # get the class variables
         self.run_thread = run_thread        
@@ -109,38 +114,61 @@ class RunTab(QFrame):
         self.avg_data = avg_data.groupby([PROB_KEY, ALGO_KEY]).mean().reset_index()
         # get column by name
         self.prob_ids = list(self.avg_data[PROB_KEY].unique())
-        
+        self.plot_prob.addItems(self.prob_ids)
+        self.algo_ids = list(self.avg_data[ALGO_KEY].unique())
         # set the table
-        self.changedVoting()
+        self.changedChosenValue()
+        self.setCheckBoxes()
+            
+    def setCheckBoxes(self):
+        """set the checkboxes for the given ids in the layout """
         
-    def changedVoting(self):
+        # put the algorithm checkboxs in self.algo_layout
+        for i, algo_id in enumerate(self.algo_ids):
+            checkbox = QCheckBox(algo_id)
+            if i % 2 == 0:
+                self.algo_layout.addWidget(checkbox, i // 2, 0)  # Add to col1
+            else:
+                self.algo_layout.addWidget(checkbox, i // 2, 1)  # Add to col2
+                
+        # put the performance indicator checkboxs in self.pi_layout 
+        for i, pi_id in enumerate(self.pi_ids):
+            checkbox = QCheckBox(pi_id)
+            if i % 2 == 0:
+                self.pi_layout.addWidget(checkbox, i // 2, 0)  # Add to col1
+            else:
+                self.pi_layout.addWidget(checkbox, i // 2, 1)  # Add to col2
+        
+        # set the first checkbox in each layout to checked
+        self.algo_layout.itemAt(0).widget().setChecked(True)
+        self.pi_layout.itemAt(0).widget().setChecked(True)
+        
+    def changedChosenValue(self):
         """Change the table widget to display the results for the selected performance indicator"""
-        
-        if self.voting_by.currentText() == "Performance Indicator":
+                
+        if self.values_comboBox.currentText() == "Performance Indicator":
             selected_items = self.pi_ids
-            self.double_click_label.setText("<b>Double click</b> on a <b>Problem</b> to plot the Algorithms on the Indicator through the generations")
-        elif self.voting_by.currentText() == "Problem":
+        elif self.values_comboBox.currentText() == "Problem":
             selected_items = self.prob_ids
-            self.double_click_label.setText("<b>Double click</b> on an <b>Algorithm</b> to plot the Indicators on the Problem through the generations")
         else:
             raise ValueError("Voting by can only be Performance Indicator or Problem")
         
-        self.selected.currentIndexChanged.disconnect(self.changeTable)
-        self.selected.clear()
-        self.selected.currentIndexChanged.connect(self.changeTable)
-        self.selected.addItems(selected_items)    
-        if self.selected.currentIndex() != 0:
-            self.selected.setCurrentIndex(0)
+        self.selected_id.currentIndexChanged.disconnect(self.changeTable)
+        self.selected_id.clear()
+        self.selected_id.currentIndexChanged.connect(self.changeTable)
+        self.selected_id.addItems(selected_items)    
+        if self.selected_id.currentIndex() != 0:
+            self.selected_id.setCurrentIndex(0)
         else:
-            self.selected.setCurrentIndex(0)
+            self.selected_id.setCurrentIndex(0)
             self.changeTable()
     
     def changeTable(self):
         # get the selected item id and the corresponding dataframe
-        selected_id = self.selected.currentText()
-        if self.voting_by.currentText() == "Performance Indicator":
+        selected_id = self.selected_id.currentText()
+        if self.values_comboBox.currentText() == "Performance Indicator":
             df = self.avg_data.pivot(index=ALGO_KEY, columns=PROB_KEY, values=selected_id)
-        elif self.voting_by.currentText() == "Problem":
+        elif self.values_comboBox.currentText() == "Problem":
             df = self.avg_data[self.avg_data[PROB_KEY] == selected_id]
             df.drop(columns=[N_GEN_KEY, N_EVAL_KEY, PROB_KEY], inplace=True)
             df = df.set_index(df.columns[0])
@@ -187,9 +215,6 @@ class RunTab(QFrame):
         if item is not None:
             print(f"Header {col} clicked, content: {item.text()}") #!
         text = item.text()
-        if self.voting_by.currentText() == "Performance Indicator":
-            pi_id = self.selected.currentText()
-            self.plotAlgos(text, pi_id)
         
     def VerticalHeaderClick(self, row):
         """Handle a click on a vertical header cell"""
@@ -197,47 +222,50 @@ class RunTab(QFrame):
         if item is not None:
             print(f"Header {row} clicked, content: {item.text()}") #!
         text = item.text()
-        if self.voting_by.currentText() == "Problem":
-            prob_id = self.selected.currentText()
-            self.plotIndicators(text, prob_id)
 
-    def plotAlgos(self, prob_id: str, pi_id: str):
-        """Plot the results of the optimization for a given problem and performance indicator"""
-
-        # get the data for the given problem
-        df = self.run_thread.data[self.run_thread.data[PROB_KEY] == prob_id]
-
-        # get df with columns: algorithm_id, seed, n_eval, n_gen, pi_id
-        df = df[[ALGO_KEY, N_SEEDS_KEY, N_EVAL_KEY, N_GEN_KEY, pi_id]]
-
-        # average across seeds
-        df = df.groupby([ALGO_KEY, N_EVAL_KEY, N_GEN_KEY]).mean()
-
-        # plot by algorithm, with n_eval on the x axis and pi_id on the y axis using matplotlib 
-        plt.figure()
-        plt.title(f"Problem: {prob_id}, Performance Indicator: {pi_id}")
-        for algo_id in df.index.levels[0]:
-            df_algo = df.loc[algo_id]
-            plt.plot(df_algo.index.get_level_values(N_EVAL_KEY), df_algo[pi_id], label=algo_id)
-
-        plt.xlabel(N_EVAL_KEY)
-        plt.ylabel(pi_id)
-        plt.legend()
-        plt.show()
-
-    def plotIndicators(self, algo_id: str, prob_id: str):
-        df = self.run_thread.data
-        df = df[(df[ALGO_KEY] == algo_id) & (df[PROB_KEY] == prob_id)]
-        df = df[[N_EVAL_KEY] + self.pi_ids]
-
-        # Plot the performance indicators
-        plt.figure()
-        plt.title(f'Problem: {prob_id}, Algorithm: {algo_id}')
-        for pi_id in self.pi_ids:
-            plt.plot(df[N_EVAL_KEY], df[pi_id], label=pi_id)
+    def plot(self):
+        """Plot the results"""
+        prob_id = self.plot_prob.currentText()
+        algo_ids = [self.algo_layout.itemAt(i).widget().text() for i in range(self.algo_layout.count()) if self.algo_layout.itemAt(i).widget().isChecked()]
+        pi_ids = [self.pi_layout.itemAt(i).widget().text() for i in range(self.pi_layout.count()) if self.pi_layout.itemAt(i).widget().isChecked()]
         
-        plt.xlabel(N_EVAL_KEY)
+        if len(algo_ids) == 0:
+            MyMessageBox("Select at least one algorithm to plot")
+        elif self.plot_comboBox.currentText() == "Pareto Front":
+            if len(algo_ids) > 1:
+                MyMessageBox("Select only one algorithm to plot the Pareto Front")
+            else:
+                algo_id = algo_ids[0]
+                self.plotParetoFront(prob_id, algo_id)
+        elif self.plot_comboBox.currentText() == "Progress":
+            self.plotProgress(prob_id, algo_ids, pi_ids)
+        else:        
+            raise ValueError("Plot by can only be Performance Indicator or Problem")
+    
+    def plotParetoFront(self, prob_id:str, algo_id:str):
+        print("plot pareto front to be implemented") #!
+        
+    def plotProgress(self, prob_id:str, algo_ids:list, pi_ids:list):
+        """Plot the progress of the checked algorithms for the given problem and checked performance indicators"""
+        # get the data for the given problem
+        df_prob = self.run_thread.data[self.run_thread.data[PROB_KEY] == prob_id]
+        
+        # get the data for the given algorithms
+        for algo_id in algo_ids:
+            df_algo = df_prob[df_prob[ALGO_KEY] == algo_id]
+            for pi_id in pi_ids:
+                # get the data for the given performance indicator
+                df_pi = df_algo[[N_EVAL_KEY, pi_id]]
+                # plot the data
+                plt.plot(df_pi[N_EVAL_KEY], df_pi[pi_id], label=f"{algo_id}/{pi_id}")    
+        # name the plot
+        plt.title(f'Progress on {prob_id}')
+        # add labels
+        plt.xlabel('Number of evaluations')
+        plt.ylabel('Performance Indicator')
+        # add legend
         plt.legend()
+        # show the plot
         plt.show()
         
     def saveData(self):
@@ -247,6 +275,10 @@ class RunTab(QFrame):
         fileName, _ = QFileDialog.getSaveFileName(self, "QFileDialog.getSaveFileName()", defaultName, "CSV Files (*.csv);;All Files (*)", options=options)
         if fileName:
             self.run_thread.data.to_csv(fileName, index=False)    
+    
+    def seeTermination(self, event):
+        """See the termination criteria"""
+        print("see termination to be implemented") #!
     
     def saveRun(self):
         """Save the run""" #!
