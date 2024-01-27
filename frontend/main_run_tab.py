@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QFrame, QTableWidget, QTableWidgetItem, QCheckBox
 from PyQt5.uic import loadUi
 from backend.run import RunThread
-from utils.defines import DESIGNER_RUN_TAB, PROB_KEY, ALGO_KEY, N_SEEDS_KEY, N_GEN_KEY, N_EVAL_KEY
+from utils.defines import DESIGNER_RUN_TAB, PROB_KEY, ALGO_KEY, N_SEEDS_KEY, N_GEN_KEY, N_EVAL_KEY, VOTING_KEY, PI_KEY, CLASS_KEY, TERM_KEY
 from matplotlib import pyplot as plt
 from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtCore import Qt
@@ -12,7 +12,6 @@ from PyQt5.uic import loadUi
 
 from backend.run import RunThread
 from frontend.my_widgets import MyMessageBox
-from utils.defines import (ALGO_KEY, PROB_KEY, N_SEEDS_KEY)
 
 class RunTab(QFrame):
     def __init__(self, run_thread: RunThread, label: str):
@@ -24,8 +23,8 @@ class RunTab(QFrame):
         self.save_run.clicked.connect(self.saveRun)
         self.values_comboBox.currentIndexChanged.connect(self.changedChosenValue)
         self.selected_id.currentIndexChanged.connect(self.changeTable)
-        self.table.horizontalHeader().sectionDoubleClicked.connect(lambda col: self.horizontalHeaderClick(col))
-        self.table.verticalHeader().sectionDoubleClicked.connect(lambda row: self.VerticalHeaderClick(row))
+        self.table.horizontalHeader().sectionDoubleClicked.connect(lambda col: self.headerClick(col, "horizontal"))
+        self.table.verticalHeader().sectionDoubleClicked.connect(lambda row: self.headerClick(row, "vertical"))
         self.plot_button.clicked.connect(self.plot)
         
         # set the label                         
@@ -104,13 +103,12 @@ class RunTab(QFrame):
             df = self.avg_data[self.avg_data[PROB_KEY] == selected_id]
             df.drop(columns=[N_GEN_KEY, N_EVAL_KEY, PROB_KEY], inplace=True)
             df = df.set_index(df.columns[0])
-            
         else:
             raise ValueError("Voting by can only be Performance Indicator or Problem")
     
         # add the voting column 
-        df['voting'] = df.idxmax(axis=0).value_counts()
-        df['voting'] = df['voting'].fillna(0).astype(int)
+        df[VOTING_KEY] = df.idxmax(axis=0).value_counts()
+        df[VOTING_KEY] = df[VOTING_KEY].fillna(0).astype(int)
 
         # update the table widget
         self.table.setEditTriggers(QTableWidget.NoEditTriggers) # make table non-editable
@@ -141,20 +139,24 @@ class RunTab(QFrame):
                         item.setFont(font)
                 self.table.setItem(i, j, item)
 
-    def horizontalHeaderClick(self, col):
-        """Handle a click on a horizontal header item"""
-        item = self.table.horizontalHeaderItem(col)
-        if item is not None:
-            print(f"Header {col} clicked, content: {item.text()}") #!
-        text = item.text()
+    def headerClick(self, x:int, orientation:str):
+        """Handle a click on a header item"""
         
-    def VerticalHeaderClick(self, row):
-        """Handle a click on a vertical header cell"""
-        item = self.table.verticalHeaderItem(row)
-        if item is not None:
-            print(f"Header {row} clicked, content: {item.text()}") #!
-        text = item.text()
-
+        if orientation == "horizontal":
+            item = self.table.horizontalHeaderItem(x)
+            key = PROB_KEY if self.values_comboBox.currentText() == "Performance Indicator" else PI_KEY
+        else:
+            item = self.table.verticalHeaderItem(x)
+            key = ALGO_KEY
+        if item is None or item.text() == "voting":
+            return
+        
+        id = item.text()
+        args = self.run_thread.parameters[key][id].copy()
+        clazz = args.pop(CLASS_KEY)
+        string = f"Parameters for {key} of class {clazz} with id \'{id}\': \n {args}"
+        MyMessageBox(string, 'Parameters', warning_icon=False)
+        
     def plot(self):
         """Plot the results"""
         prob_id = self.plot_prob.currentText()
@@ -208,14 +210,19 @@ class RunTab(QFrame):
     def saveData(self):
         """Save the results of the run"""
         options = QFileDialog.Options()
-        defaultName = f"{self.run_name}.csv"
+        defaultName = f"change_this.csv" #!
         fileName, _ = QFileDialog.getSaveFileName(self, "QFileDialog.getSaveFileName()", defaultName, "CSV Files (*.csv);;All Files (*)", options=options)
         if fileName:
             self.run_thread.data.to_csv(fileName, index=False)    
     
     def seeTermination(self, event):
         """See the termination criteria"""
-        print("see termination to be implemented") #!
+        id = self.run_thread.term_id
+        args = self.run_thread.parameters[TERM_KEY][id].copy()
+        clazz = args.pop(CLASS_KEY)
+        string = f"Parameters for {TERM_KEY} of class {clazz} with id \'{id}\': \n {args}"
+        MyMessageBox(string, 'Parameters', warning_icon=False)
+    
     
     def saveRun(self):
         """Save the run""" #!

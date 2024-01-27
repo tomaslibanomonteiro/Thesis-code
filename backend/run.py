@@ -38,9 +38,11 @@ class SingleRunArgs():
 class RunThread(QThread):
     progressSignal = pyqtSignal(str, int)
 
-    def __init__(self, single_run_args: list, term_id, term_object, n_seeds: int, moo: bool):
+    def __init__(self, single_run_args: list, term_id, term_object, n_seeds: int, moo: bool, parameters: dict, run_options: dict):
         super().__init__()
-                
+        
+        self.parameters = parameters
+        self.run_options = run_options
         self.n_seeds = n_seeds
         self.term_id = term_id
         self.term_object = term_object

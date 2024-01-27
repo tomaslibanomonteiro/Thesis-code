@@ -1,6 +1,6 @@
 import inspect
 
-from utils.defines import (NO_DEFAULT, OPERATORS, VALUE_TYPES, KEY_ARGS_DICT, MUT_KEY, CROSS_KEY, 
+from utils.defines import (NO_DEFAULT, OPERATORS, VALUE_TYPES, KEY_ARGS_DICT, MUT_KEY, CROSS_KEY, CLASS_KEY,
                            SEL_KEY, SAMP_KEY, DECOMP_KEY, REF_DIR_KEY, PROB_KEY, ALGO_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY)
 
 class Defaults():
@@ -68,7 +68,7 @@ class Defaults():
         sig = inspect.signature(cls.__init__)
         args_dict = {arg: param.default for arg, param in sig.parameters.items()}
         
-        ret_dict = {"class": get_name}    
+        ret_dict = {CLASS_KEY: get_name}    
         for arg, value in args_dict.items():   
             if value == inspect._empty:
                 value = NO_DEFAULT
@@ -99,7 +99,7 @@ class Defaults():
         for get_name, cls in get_list:
             if obj.__class__.__name__ == cls.__name__:
                 for op_id, op_dict in op_table.items():
-                    if get_name == op_dict['class']:
+                    if get_name == op_dict[CLASS_KEY]:
                         return op_id
                 
         raise Exception("unknown operator", obj)                

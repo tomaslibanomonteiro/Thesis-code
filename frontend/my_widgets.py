@@ -90,14 +90,14 @@ class MyWidgetsFrame(QFrame):
         widget.sizePolicy().setVerticalPolicy(copy_widget.sizePolicy().verticalPolicy())
         
 class MyMessageBox(QMessageBox):
-    def __init__(self, text, title="Warning", warning_icon=True, execute = True):
+    def __init__(self, text, title="Warning", warning_icon=True):
         super().__init__()
 
         self.setIcon(QMessageBox.Warning) if warning_icon else None
         self.setText(text)
         self.setWindowTitle(title)
         self.setStandardButtons(QMessageBox.Ok)
-        self.exec_() if execute else None
+        self.exec_()
 
 class MyLineEdit(QLineEdit):
     itemsSignal = pyqtSignal(str, list)

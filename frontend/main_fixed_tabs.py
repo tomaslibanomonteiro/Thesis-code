@@ -228,9 +228,12 @@ class MainTabsWidget(QTabWidget):
         elif run_args == []:
             MyMessageBox("Please select at least one Algorithm.")
             return None
+        else:
+            parameters = self.edit_window.getParameters()
+            run_options = self.runOptions_to_dict()
         
         # get the run objects and create the run window
-        return RunThread(run_args, term_id, term_object, n_seeds, moo)
+        return RunThread(run_args, term_id, term_object, n_seeds, moo, parameters, run_options)
 
     def runButton(self):
         """First start the run window, then start the run. The two are separated 

@@ -8,7 +8,7 @@ import pickle
 from frontend.my_widgets import MyLineEdit, MyComboBox, ScientificDoubleSpinBox, ScientificSpinBox, MyCheckBox, MyMessageBox, MyWidgetsFrame, MyEmptyLineEdit
 from utils.debug import debug_print
 from utils.defines import (DESIGNER_EDIT_WINDOW, DESIGNER_EDIT_TAB, NO_DEFAULT, OPERATORS, ID_COL, OPERATORS_ARGS_DICT, 
-                           RUN_OPTIONS_ARGS_DICT, PROB_KEY, ALGO_KEY, TERM_KEY, PI_KEY, REF_DIR_KEY, CROSS_KEY, 
+                           RUN_OPTIONS_ARGS_DICT, PROB_KEY, ALGO_KEY, TERM_KEY, PI_KEY, REF_DIR_KEY, CROSS_KEY, CLASS_KEY,
                            DECOMP_KEY, MUT_KEY, SAMP_KEY, SEL_KEY, VARIANT, GET_OBJECT_ERROR)  
 
 def ArgsAreSet(dic: dict) -> bool:
@@ -97,14 +97,22 @@ class EditWindow(QDialog):
                      "the operators parameters that are then used in the algorithms. Click on \"Save Parameters\" "
                      "to save the parameters to a file.", "Help", warning_icon=False)
 
-    def saveParameters(self):
-        """Go through all the tabs and save the parameters as a dictionary, where the key is the tab name
-        and the value is a dictionary with the parameters. dont forget to save the operators"""
+    def getParameters(self) -> dict:
+        """Go through all the tabs and get the parameters as a dictionary, where the key is the tab name
+        and the value is a dictionary with the parameters. dont forget to get the operators"""
         
         parameters = {}
         for _, tab in self.tabs.items():
             parameters[tab.key] = tab.tableToDict()
             
+        return parameters
+    
+    def saveParameters(self):
+        """Go through all the tabs and save the parameters as a dictionary, where the key is the tab name
+        and the value is a dictionary with the parameters. dont forget to save the operators"""
+        
+        parameters = self.getParameters()
+        
         # Open file dialog to select the save location
         file_dialog = QFileDialog()
         file_dialog.setAcceptMode(QFileDialog.AcceptSave)
@@ -150,7 +158,7 @@ class EditTab(QFrame):
         self.name, label, self.get_function, _ = tab_args
         self.table_dict = parameters[self.key]
         self.default_ids = list(self.table_dict.keys())        
-        self.classes = [self.table_dict[key]["class"] for key in self.default_ids]
+        self.classes = [self.table_dict[key][CLASS_KEY] for key in self.default_ids]
         self.label.setText(label)
         self.helpButton.clicked.connect(self.variantsHelp)
                 
@@ -194,15 +202,15 @@ class EditTab(QFrame):
         # set the table items from the table, each row is a list of the arguments and values of the class
         for row_id, row_dict in table_dict.items():
             # check if it is a variant or a default class and set the row accordingly
-            if row_dict["class"] == row_id:
+            if row_dict[CLASS_KEY] == row_id:
                 self.table.setRowCount(row+1)
-                self.addDefault(row_dict.pop("class"), row_id, row_dict, row)
+                self.addDefault(row_dict.pop(CLASS_KEY), row_id, row_dict, row)
                 row += 1
             else:
                 variants[row_id] = row_dict
                 
         for row_id, row_dict in variants.items():
-            self.addVariant(row_dict.pop("class"), row_id, row_dict)
+            self.addVariant(row_dict.pop(CLASS_KEY), row_id, row_dict)
             
     def addDefault(self, class_name: str, id:str, args_dict:dict, row:int):
         widgets_frame = self.edit_window.widgets_frame
@@ -345,7 +353,7 @@ class EditTab(QFrame):
             row_dict = self.getArgsFromRow(self.table, row, get_operator_obj=False)
             table_dict[row_id] = row_dict
             class_name = widget.text() if isinstance(widget, MyLineEdit) else widget.currentText()
-            table_dict[row_id]["class"] = class_name
+            table_dict[row_id][CLASS_KEY] = class_name
             
         return table_dict
 

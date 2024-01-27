@@ -56,7 +56,7 @@ ALGO_KEY = 'algorithm'
 PI_KEY = 'pi'
 TERM_KEY = 'term'
 N_SEEDS_KEY = 'n_seeds'
-
+CLASS_KEY = 'Class'
 # for the dataframes
 N_EVAL_KEY = 'n_eval'
 N_GEN_KEY = 'n_gen'
@@ -86,3 +86,5 @@ RUN_OPTIONS_ARGS_DICT = {PROB_KEY: ('Problems', 'Edit Problems', get_problem, ge
 KEY_ARGS_DICT = {**OPERATORS_ARGS_DICT, **RUN_OPTIONS_ARGS_DICT}
 
 GET_OBJECT_ERROR = -1
+
+VOTING_KEY = 'Voting'
