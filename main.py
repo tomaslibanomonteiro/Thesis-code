@@ -3,15 +3,20 @@ from frontend.main_window import MyMainWindow
 from utils.defines import N_SEEDS_KEY, TERM_KEY, PI_KEY, ALGO_KEY, PROB_KEY
 
 moo_options = {
-    'moo': True,
-    N_SEEDS_KEY: 1,
-    TERM_KEY: ['n_eval'],
-    PI_KEY: ['gd', 'gd+', 'igd+', 'igd'],
+    PROB_KEY: ['dtlz1', 'dtlz2'],
     ALGO_KEY: ['nsga2', 'nsga3'],
-    PROB_KEY: ['dtlz1', 'dtlz2']
+    PI_KEY: ['gd', 'gd+', 'igd+', 'igd'],
+    TERM_KEY: ['n_eval'],
+    N_SEEDS_KEY: 1
 }
 
-soo_options = {}
+soo_options = {
+    PROB_KEY: ['g5'],
+    ALGO_KEY: ['ga', 'pso'],
+    PI_KEY: ['best'],
+    TERM_KEY: ['n_eval'],
+    N_SEEDS_KEY: 5
+}
 
 def main():
     

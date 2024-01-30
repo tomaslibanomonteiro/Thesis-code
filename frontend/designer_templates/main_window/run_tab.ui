@@ -405,6 +405,14 @@
            <number>4</number>
           </property>
           <widget class="QWidget" name="page_3">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>200</width>
+             <height>144</height>
+            </rect>
+           </property>
            <attribute name="label">
             <string>Algorithms</string>
            </attribute>
@@ -441,7 +449,7 @@
               <height>151</height>
              </rect>
             </property>
-            <layout class="QGridLayout" name="pi_layout">
+            <layout class="QGridLayout" name="page2_layout">
              <property name="spacing">
               <number>2</number>
              </property>

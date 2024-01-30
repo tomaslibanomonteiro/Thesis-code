@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QTabWidget, QTableWidget, QTabBar, QWidget, QSpinBox
 from PyQt5.QtCore import Qt
 from PyQt5.uic import loadUi
 
-from backend.run import RunThread, SingleRunArgs
+from backend.run import RunThread, RunArgs
 from frontend.my_widgets import MyComboBox, MyMessageBox
 from frontend.edit_window import (EditWindow, ArgsAreSet)
 from frontend.main_run_tab import RunTab
@@ -220,7 +220,7 @@ class MainTabsWidget(QTabWidget):
                             return None
                     
                         # append the arguments for this run
-                        run_args.append(SingleRunArgs(prob_id, prob_object, algo_id, algo_object, pi_ids, pi_objects))
+                        run_args.append(RunArgs(prob_id, prob_object, algo_id, algo_object, pi_ids, pi_objects))
         
         if algo_id is None:
             MyMessageBox("Please select at least one Problem.")   

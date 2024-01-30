@@ -78,7 +78,7 @@ class MyMainWindow(QMainWindow):
             self.tabs[SOO_PAGE].soo_button.setChecked(True)
             self.stackedWidget.setCurrentIndex(SOO_PAGE)
     
-    ##### TODO!: Implement the functionality for the following actions
+    #####! TODO: Implement the functionality for the following actions
     
     def seeTutorial(self):
         # TODO: Implement the functionality for the See Tutorial action
@@ -135,7 +135,7 @@ class MyMainWindow(QMainWindow):
         active_tabs = self.activePage()
         active_tabs.saveAllResults()
         
-    ##### TODO: Implement the functionality for the following actions #####
+    #####! TODO: Implement the functionality for the following actions #####
 
     def loadResults(self):
         # TODO: Implement the functionality for the Load Results action

@@ -716,15 +716,18 @@ def get_performance_indicator_options(objectives = 'all'):
     from pymoo.indicators.igd import IGD
     from pymoo.indicators.igd_plus import IGDPlus
     from pymoo.indicators.rmetric import RMetric
-
-    class BEST():
+    import numpy as np
+    class BestSol():
+        """used in the case of single-objective optimization,just for code compatibility. 
+        Only returns the input, because it should consist of only the best solution"""
         def __init__(self, *args, **kwargs):
             pass
-        def do(self, lst, *args, **kwargs):
-            pass
+        
+        def do(self, solution_np_array, *args, **kwargs):
+            return solution_np_array[0][0] if len(solution_np_array) > 0 else np.nan
                  
     PERFORMANCE_INDICATOR_SINGLE = [
-        ("best", BEST)
+        ("best", BestSol)
     ]
         
     PERFORMANCE_INDICATOR_MULTI = [

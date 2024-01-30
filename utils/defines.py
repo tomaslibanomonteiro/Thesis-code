@@ -60,6 +60,7 @@ CLASS_KEY = 'Class'
 # for the dataframes
 N_EVAL_KEY = 'n_eval'
 N_GEN_KEY = 'n_gen'
+RUN_ID_KEY = 'run_id'
  
 # keys needed in a dictionary given to start the app ORDERED THE SAME AS THE APP!!
 RUN_OPTIONS_KEYS = [PROB_KEY, ALGO_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY]
