@@ -11,6 +11,7 @@ from utils.defines import DESIGNER_RUN_TAB, PROB_KEY, ALGO_KEY, N_SEEDS_KEY, N_G
 from backend.run import RunThread
 from frontend.my_widgets import MyMessageBox
 from backend.run import RunThread
+from pymoo.visualization.scatter import Scatter
 
 class MplCanvas(FigureCanvasQTAgg):
 
@@ -118,19 +119,22 @@ class RunTab(QFrame):
 
         # set the table
         self.changedChosenValue()
-        self.setCheckBoxes()
+        self.setCheckBoxes(set_algos=True)
 
-    def setCheckBoxes(self):
+    def setCheckBoxes(self, event=None, set_algos=False):
         """set the checkboxes for the given ids in the layout """
         
-        # put the algorithm checkboxs in self.algo_layout
-        for i, algo_id in enumerate(self.algo_ids):
-            checkbox = QCheckBox(algo_id)
-            if i % 2 == 0:
-                self.algo_layout.addWidget(checkbox, i // 2, 0)  # Add to col1
-            else:
-                self.algo_layout.addWidget(checkbox, i // 2, 1)  # Add to col2
-        
+        if set_algos:
+            # put the algorithm checkboxs in self.algo_layout
+            for i, algo_id in enumerate(self.algo_ids):
+                checkbox = QCheckBox(algo_id)
+                if i % 2 == 0:
+                    self.algo_layout.addWidget(checkbox, i // 2, 0)  # Add to col1
+                else:
+                    self.algo_layout.addWidget(checkbox, i // 2, 1)  # Add to col2
+            self.algo_layout.itemAt(0).widget().setChecked(True)
+            
+        # set the name of the second page of the toolbox
         if self.plot_comboBox.currentText() == "Pareto Front":
             ids = list(range(self.run_thread.n_seeds))
             self.toolBox.setItemText(1, "Seeds")
@@ -152,7 +156,6 @@ class RunTab(QFrame):
                 self.page2_layout.addWidget(checkbox, i // 2, 1)  # Add to col2
         
         # set the first checkbox in each layout to checked
-        self.algo_layout.itemAt(0).widget().setChecked(True)
         self.page2_layout.itemAt(0).widget().setChecked(True)
         
     def changedChosenValue(self):
@@ -229,7 +232,7 @@ class RunTab(QFrame):
         else:
             item = self.table.verticalHeaderItem(x)
             key = ALGO_KEY
-        if item is None or item.text() == "voting":
+        if item is None or item.text() == VOTING_KEY:
             return
         
         id = item.text()
