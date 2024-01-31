@@ -10,11 +10,10 @@ from PyQt5.uic import loadUi
 
 from backend.run import RunThread, RunArgs
 from frontend.my_widgets import MyComboBox, MyMessageBox
-from frontend.edit_window import (EditWindow, ArgsAreSet)
+from frontend.edit_window import EditWindow, ArgsAreSet
 from frontend.main_run_tab import RunTab
 from utils.defines import (RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_MAIN_TABS, RESULT_LAYOUT_WIDGETS, GET_OBJECT_ERROR, 
                            MAX_RESULT_FRAMES, ALGO_KEY, PROB_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY)
-
 
 class MainTabsWidget(QTabWidget):
 

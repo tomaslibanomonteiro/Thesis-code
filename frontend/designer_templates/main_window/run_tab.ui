@@ -320,7 +320,7 @@
            </size>
           </property>
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
           <property name="insertPolicy">
            <enum>QComboBox::InsertAlphabetically</enum>
@@ -561,7 +561,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>181</width>
+             <width>182</width>
              <height>144</height>
             </rect>
            </property>

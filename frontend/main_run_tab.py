@@ -7,11 +7,11 @@ matplotlib.use('Qt5Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
 
-from utils.defines import DESIGNER_RUN_TAB, PROB_KEY, ALGO_KEY, N_SEEDS_KEY, N_GEN_KEY, N_EVAL_KEY, VOTING_KEY, PI_KEY, CLASS_KEY, TERM_KEY, RUN_ID_KEY
+from utils.defines import DESIGNER_RUN_TAB, PROB_KEY, ALGO_KEY, N_SEEDS_KEY, N_GEN_KEY, N_EVAL_KEY, VOTING_KEY, PI_KEY, CLASS_KEY, TERM_KEY, RUN_ID_KEY, PLOT_PROGRESS_KEY, PLOT_PF_KEY
 from backend.run import RunThread
 from frontend.my_widgets import MyMessageBox
 from backend.run import RunThread
-from pymoo.visualization.scatter import Scatter
+
 
 class MplCanvas(FigureCanvasQTAgg):
 
@@ -20,34 +20,38 @@ class MplCanvas(FigureCanvasQTAgg):
         self.axes = fig.add_subplot(111)
         super(MplCanvas, self).__init__(fig)
 
-class PlotDialog(QWidget):
+class Plotter(QWidget):
 
-    def __init__(self, run_data, prob_id:str, algo_ids:list, pi_ids:list, title:str='Plot'):
+    def __init__(self, plot_mode, prob_id:str, prob_object, run_thread:RunThread, algo_ids:list, other_ids:list, title:str='Plot'):
         super().__init__()
+        
+        self.sc = MplCanvas()
+        self.run_thread = run_thread
+        self.prob_id = prob_id
+        self.prob_object = prob_object
+        self.algo_ids = algo_ids
+        self.other_ids = other_ids
 
-        sc = MplCanvas(width=5, height=4, dpi=100)
-        self.plotProgress(sc, run_data, prob_id, algo_ids, pi_ids)
+        if len(algo_ids) == 0 or len(other_ids) == 0:
+            MyMessageBox("Select at least one Algorithm and Performance Indicator/Seed to plot")
+            return
+        elif plot_mode == PLOT_PROGRESS_KEY:
+            self.plotProgress()
+        elif plot_mode == PLOT_PF_KEY:
+            self.plotParetoFront()
+        else:        
+            raise ValueError(f"Plot mode can only be {PLOT_PF_KEY} or {PLOT_PROGRESS_KEY}") 
 
-        # Create toolbar, passing canvas as first parament, parent (self, the CustomDialog) as second.
-        toolbar = NavigationToolbar2QT(sc, self)
-
-        layout = QVBoxLayout()
-        layout.addWidget(toolbar)
-        layout.addWidget(sc)
-
-        self.setLayout(layout)
-        self.setWindowTitle(title)
-        self.show()
-
-    def plotProgress(self, sc:MplCanvas, run_data, prob_id:str, algo_ids:list, pi_ids:list):
+    def plotProgress(self):
         """Plot the progress of the checked algorithms for the given problem and checked performance indicators"""
         # get the data for the given problem
-        df_prob = run_data[run_data[PROB_KEY] == prob_id]
+        data = self.run_thread.data.copy()
+        df_prob = data[data[PROB_KEY] == self.prob_id]
         
         # get the data for the given algorithms
-        for algo_id in algo_ids:
+        for algo_id in self.algo_ids:
             df_algo = df_prob[df_prob[ALGO_KEY] == algo_id]
-            for pi_id in pi_ids:
+            for pi_id in self.other_ids:
                 # get the data for the given performance indicator
                 df_pi = df_algo[[N_EVAL_KEY, pi_id]]
                 df_pi = df_pi.dropna(subset=[pi_id])  # Filter rows where pi_id has nan value
@@ -57,17 +61,42 @@ class PlotDialog(QWidget):
                 std = df_pi.groupby(N_EVAL_KEY)[pi_id].std()
 
                 # plot the data
-                sc.axes.plot(mean.index, mean.values, label=f"{algo_id}/{pi_id}")
-                sc.axes.fill_between(mean.index, (mean-std).values, (mean+std).values, alpha=0.2)
+                self.sc.axes.plot(mean.index, mean.values, label=f"{algo_id}/{pi_id}")
+                self.sc.axes.fill_between(mean.index, (mean-std).values, (mean+std).values, alpha=0.2)
                 
         # name the plot
-        sc.axes.set_title(f'Progress on problem: {prob_id}')
+        self.setWindowTitle(f'Ploting {PLOT_PROGRESS_KEY}')
+        self.sc.axes.set_title(f'Progress on problem: {self.prob_id}')
         # add labels
-        sc.axes.set_xlabel('Number of evaluations')
-        sc.axes.set_ylabel('Performance Indicator')
+        self.sc.axes.set_xlabel('Number of evaluations')
+        self.sc.axes.set_ylabel('Performance Indicator')
         # add legend
-        sc.axes.legend()
+        self.sc.axes.legend()
+
+        # Create toolbar, passing canvas as first parament, parent (self, the CustomDialog) as second.
+        toolbar = NavigationToolbar2QT(self.sc, self)
+
+        layout = QVBoxLayout()
+        layout.addWidget(toolbar)
+        layout.addWidget(self.sc)
+
+        self.setLayout(layout)
+        self.show()
+
+    def plotParetoFront(self):
+        """Plot the Pareto front of the checked algorithms for the given problem and checked seeds"""
+        # get the run_ids
+        # data = self.run_thread.data.copy()
+        # run_ids = data[data[PROB_KEY] == self.prob_id & data[ALGO_KEY].isin(self.algo_ids) & data[PI_KEY].isin(self.other_ids)][RUN_ID_KEY].unique()
         
+        from pymoo.visualization.scatter import Scatter
+        plot = Scatter(title=f"Pareto fronts on Problem: {self.prob_id}")
+        plot.legend = True
+        plot.add(self.prob_object.pareto_front(), label = self.prob_id)
+        
+        # copy the plot into the canvas
+        self.pareto_plot = plot.do()
+                
 class RunTab(QFrame):
     def __init__(self, run_thread: RunThread, label: str):
         super().__init__()
@@ -91,7 +120,7 @@ class RunTab(QFrame):
         self.algo_ids = list(self.term_data[ALGO_KEY].unique())
         
         # store the plot dialogs so they are not garbage collected
-        self.plot_dialogs = []
+        self.plot_widgets = []
         
         self.setUI(label)
         
@@ -105,6 +134,7 @@ class RunTab(QFrame):
         self.table.horizontalHeader().sectionDoubleClicked.connect(lambda col: self.headerClick(col, "horizontal"))
         self.table.verticalHeader().sectionDoubleClicked.connect(lambda row: self.headerClick(row, "vertical"))
         self.plot_button.clicked.connect(self.plot)
+        self.plot_comboBox.addItems([PLOT_PROGRESS_KEY, PLOT_PF_KEY])
         self.plot_comboBox.currentIndexChanged.connect(self.setCheckBoxes)
         self.plot_prob.addItems(self.prob_ids)
 
@@ -134,10 +164,10 @@ class RunTab(QFrame):
                 checkbox.setChecked(i == 0)
 
         # set the name of the second page of the toolbox
-        if self.plot_comboBox.currentText() == "Pareto Front":
+        if self.plot_comboBox.currentText() == PLOT_PF_KEY:
             ids = list(range(self.run_thread.n_seeds))
             self.toolBox.setItemText(1, "Seeds")
-        elif self.plot_comboBox.currentText() == "Progress":
+        elif self.plot_comboBox.currentText() == PLOT_PROGRESS_KEY:
             ids = self.pi_ids
             self.toolBox.setItemText(1, "Performance Indicators")
 
@@ -235,30 +265,23 @@ class RunTab(QFrame):
     def plot(self):
         """Plot the results"""
         prob_id = self.plot_prob.currentText()
+        prob_object = None
+        for run_args in self.run_thread.run_args_list:
+            if run_args.prob_id == prob_id:
+                prob_object = run_args.prob_object
+                break
+        if prob_object == None:
+            raise ValueError(f'Prob Object not found with id {prob_id}')
         
         algo_ids = [self.algo_table.cellWidget(i, 0).text() for i in range(self.algo_table.rowCount()) 
                     if self.algo_table.cellWidget(i, 0).isChecked()]
         
         other_ids = [self.page2_table.cellWidget(i, 0).text() for i in range(self.page2_table.rowCount()) 
-                    if self.page2_table.cellWidget(i, 0).isChecked()]        
-        if len(algo_ids) == 0:
-            MyMessageBox("Select at least one algorithm to plot")
-        elif self.plot_comboBox.currentText() == "Pareto Front":
-            if len(algo_ids) > 1:
-                MyMessageBox("Select only one algorithm to plot the Pareto Front")
-            else:
-                self.plotParetoFront(prob_id, algo_ids[0], other_ids)
-        elif self.plot_comboBox.currentText() == "Progress":
-            if len(other_ids) == 0:
-                MyMessageBox("Select at least one performance indicator to plot the progress")
-            else:
-                self.plot_dialogs.append(PlotDialog(self.run_thread.data, prob_id, algo_ids, other_ids))
-        else:        
-            raise ValueError("Plot by can only be Performance Indicator or Problem")
-    
-    def plotParetoFront(self, prob_id:str, algo_id:str, seeds:list):
-        print("plot pareto front to be implemented") #!
+                    if self.page2_table.cellWidget(i, 0).isChecked()]
                 
+        plot_mode = self.plot_comboBox.currentText()
+        self.plot_widgets.append(Plotter(plot_mode, prob_id, prob_object, self.run_thread, algo_ids, other_ids, title=f"{plot_mode} on problem: {prob_id}"))
+        
     def saveData(self):
         """Save the results of the run"""
         options = QFileDialog.Options()
