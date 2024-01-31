@@ -53,7 +53,7 @@ class RunArgs():
 class RunThread(QThread):
     progressSignal = pyqtSignal(str, int)
 
-    def __init__(self, run_args_list:list, term_id, term_object, n_seeds:int, moo:bool, parameters:dict, run_options:dict):
+    def __init__(self, run_args_list:list, term_id, term_object, n_seeds:int, moo:bool, parameters:dict, run_options:dict, fixed_seeds:bool):
         super().__init__()
         
         self.parameters = parameters
@@ -68,6 +68,7 @@ class RunThread(QThread):
         self.total_runs = len(run_args_list)*n_seeds
         self.canceled = False  
         self.best_sol = {} # dictionary of the best solution(s) for each run_id to plot the pf
+        self.fixed_seeds = fixed_seeds
 
     def cancel(self):
         self.canceled = True    
@@ -77,8 +78,9 @@ class RunThread(QThread):
         import debugpy
         debugpy.debug_this_thread()
         run_id = 0
+        seeds = np.arange(self.n_seeds) if self.fixed_seeds else np.random.choice(10000, size=self.n_seeds, replace=False)
         for run_args in self.run_args_list:
-            for seed in range(self.n_seeds):
+            for seed in seeds:
                 if self.canceled:
                     return
                 self.progressUpdate(run_args.algo_id, run_args.prob_id, seed)
@@ -108,7 +110,7 @@ class RunThread(QThread):
     def progressUpdate(self, algo_id: str, prob_id: str, seed: int):
         """Update the progress bar and the text in the status bar"""
         
-        text = f"Running algo {algo_id} on problem {prob_id}, seed {seed}"
+        text = f"Running Algorithm '{algo_id}' on Problem '{prob_id}', seed {seed}"
         percentage = self.run_counter/self.total_runs*100                
         self.run_counter += 1    
         self.progressSignal.emit(text, percentage)

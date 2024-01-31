@@ -69,7 +69,10 @@ class MainTabsWidget(QTabWidget):
         
         # set run button 
         self.run_button.clicked.connect(self.runButton)
-
+        self.fixed_seeds = self.fixed_seeds_checkBox.isChecked()
+        self.rand_seeds_checkBox.clicked.connect(self.setSeedCheckBoxes)
+        self.fixed_seeds_checkBox.clicked.connect(self.setSeedCheckBoxes)
+        
         ############################ RESULTS TAB #################################
         
         # open, save and erase buttons                            
@@ -89,6 +92,17 @@ class MainTabsWidget(QTabWidget):
         self.removeTab(index)
 
     ### Run tab methods ###
+    
+    def setSeedCheckBoxes(self):
+        if self.fixed_seeds:
+            self.fixed_seeds = False
+            self.rand_seeds_checkBox.setChecked(True)
+            self.fixed_seeds_checkBox.setChecked(False)
+        else:
+            self.fixed_seeds = True
+            self.fixed_seeds_checkBox.setChecked(True)
+            self.rand_seeds_checkBox.setChecked(False)
+            
     def updateComboBoxItems(self, key: str, items: list):
         """Update the items of the comboboxes in the run tab"""
         table = self.tables_dict[key] 
@@ -167,7 +181,7 @@ class MainTabsWidget(QTabWidget):
     
     def getRunThread(self):
 
-        moo = self.moo_button.isChecked()
+        moo = self.moo_checkBox.isChecked()
         
         # get seed values
         n_seeds = self.seedsSpinBox.value()
@@ -233,7 +247,7 @@ class MainTabsWidget(QTabWidget):
             run_options = self.runOptions_to_dict()
         
         # get the run objects and create the run window
-        return RunThread(run_args, term_id, term_object, n_seeds, moo, parameters, run_options)
+        return RunThread(run_args, term_id, term_object, n_seeds, moo, parameters, run_options, self.fixed_seeds)
 
     def runButton(self):
         """First start the run window, then start the run. The two are separated 
@@ -321,7 +335,7 @@ class ResultFrame(QFrame):
         self.save_data.setEnabled(True)
         self.save_data.clicked.connect(self.tab.saveData)
         self.openTab_button.setEnabled(True)
-        self.openTab_button.clicked.connect(self.openTab)
+        self.openTab_button.clicked.connect(self.openTab) 
         self.openTab()
 
         # change the erase button to cancel button

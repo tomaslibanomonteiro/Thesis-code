@@ -113,7 +113,7 @@ class RunTab(QFrame):
         seed_str = "seed" if self.run_thread.n_seeds == 1 else "seeds"
         self.n_seeds_label.setText(f"Averaged on: <b>{self.run_thread.n_seeds} {seed_str}</b>")
         self.n_seeds_label.setAlignment(Qt.AlignCenter)
-        self.term_label.setText(f"Termination criteria: <b>{self.run_thread.term_id}</b> <br>(Double click to see parameters)")
+        self.term_label.setText(f"Termination criteria: <b>{self.run_thread.term_id}</b> <br><font size='2'>(Double click to see parameters)</font>")
         self.term_label.setAlignment(Qt.AlignCenter)
         self.term_label.mouseDoubleClickEvent = self.seeTermination
 
@@ -122,18 +122,17 @@ class RunTab(QFrame):
         self.setCheckBoxes(set_algos=True)
 
     def setCheckBoxes(self, event=None, set_algos=False):
-        """set the checkboxes for the given ids in the layout """
-        
+        """set the checkboxes for the given ids in the tables"""
+
         if set_algos:
-            # put the algorithm checkboxs in self.algo_layout
+            # put the algorithm checkboxes in self.algo_table
+            self.algo_table.setRowCount(len(self.algo_ids))
+            self.algo_table.clear()
             for i, algo_id in enumerate(self.algo_ids):
                 checkbox = QCheckBox(algo_id)
-                if i % 2 == 0:
-                    self.algo_layout.addWidget(checkbox, i // 2, 0)  # Add to col1
-                else:
-                    self.algo_layout.addWidget(checkbox, i // 2, 1)  # Add to col2
-            self.algo_layout.itemAt(0).widget().setChecked(True)
-            
+                self.algo_table.setCellWidget(i, 0, checkbox)
+                checkbox.setChecked(i == 0)
+
         # set the name of the second page of the toolbox
         if self.plot_comboBox.currentText() == "Pareto Front":
             ids = list(range(self.run_thread.n_seeds))
@@ -142,21 +141,13 @@ class RunTab(QFrame):
             ids = self.pi_ids
             self.toolBox.setItemText(1, "Performance Indicators")
 
-        # remove current checkboxes
-        while self.page2_layout.count():
-            item = self.page2_layout.takeAt(0)
-            widget = item.widget()
-            widget.deleteLater()
-        # put the ids checkboxs in self.page2_layout 
+        # put the ids checkboxes in self.page2_table
+        self.page2_table.setRowCount(len(ids))
+        self.page2_table.clear()
         for i, id in enumerate(ids):
             checkbox = QCheckBox(str(id))
-            if i % 2 == 0:
-                self.page2_layout.addWidget(checkbox, i // 2, 0)  # Add to col1
-            else:
-                self.page2_layout.addWidget(checkbox, i // 2, 1)  # Add to col2
-        
-        # set the first checkbox in each layout to checked
-        self.page2_layout.itemAt(0).widget().setChecked(True)
+            self.page2_table.setCellWidget(i, 0, checkbox)
+            checkbox.setChecked(i == 0)
         
     def changedChosenValue(self):
         """Change the table widget to display the results for the selected performance indicator"""
@@ -240,13 +231,16 @@ class RunTab(QFrame):
         clazz = args.pop(CLASS_KEY)
         string = f"Parameters for {key} of class {clazz} with id \'{id}\': \n {args}"
         MyMessageBox(string, 'Parameters', warning_icon=False)
-        
+            
     def plot(self):
         """Plot the results"""
         prob_id = self.plot_prob.currentText()
-        algo_ids = [self.algo_layout.itemAt(i).widget().text() for i in range(self.algo_layout.count()) if self.algo_layout.itemAt(i).widget().isChecked()]
-        other_ids = [self.page2_layout.itemAt(i).widget().text() for i in range(self.page2_layout.count()) if self.page2_layout.itemAt(i).widget().isChecked()]
         
+        algo_ids = [self.algo_table.cellWidget(i, 0).text() for i in range(self.algo_table.rowCount()) 
+                    if self.algo_table.cellWidget(i, 0).isChecked()]
+        
+        other_ids = [self.page2_table.cellWidget(i, 0).text() for i in range(self.page2_table.rowCount()) 
+                    if self.page2_table.cellWidget(i, 0).isChecked()]        
         if len(algo_ids) == 0:
             MyMessageBox("Select at least one algorithm to plot")
         elif self.plot_comboBox.currentText() == "Pareto Front":

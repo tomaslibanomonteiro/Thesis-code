@@ -33,14 +33,14 @@ class MyMainWindow(QMainWindow):
         
         # connect the buttons of each tab to the respective actions
         for tab in self.tabs.values():
-            tab.soo_button.clicked.connect(self.switchPage)
-            tab.moo_button.clicked.connect(self.switchPage)
+            tab.soo_checkBox.clicked.connect(self.switchPage)
+            tab.moo_checkBox.clicked.connect(self.switchPage)
             tab.parameters_button.clicked.connect(self.editParameters)
 
         # Set the current page to the SOO or MOO page depending on the options given to start the app
         self.action_SwitchPage.setText("Change to MOO")
-        self.tabs[SOO_PAGE].moo_button.setChecked(False)
-        self.tabs[SOO_PAGE].soo_button.setChecked(True)
+        self.tabs[SOO_PAGE].soo_checkBox.setChecked(False)
+        self.tabs[SOO_PAGE].moo_checkBox.setChecked(True)
         self.stackedWidget.setCurrentIndex(SOO_PAGE)
         self.switchPage() if switch_page else None
         
@@ -68,14 +68,14 @@ class MyMainWindow(QMainWindow):
         if self.stackedWidget.currentIndex() == SOO_PAGE:
             self.action_SwitchPage.setText("Change to SOO")
             self.tabs[SOO_PAGE].edit_window.close()
-            self.tabs[MOO_PAGE].moo_button.setChecked(True)
-            self.tabs[MOO_PAGE].soo_button.setChecked(False)
+            self.tabs[MOO_PAGE].moo_checkBox.setChecked(True)
+            self.tabs[MOO_PAGE].soo_checkBox.setChecked(False)
             self.stackedWidget.setCurrentIndex(MOO_PAGE)
         else:
             self.action_SwitchPage.setText("Change to MOO")
             self.tabs[MOO_PAGE].edit_window.close()
-            self.tabs[SOO_PAGE].moo_button.setChecked(False)
-            self.tabs[SOO_PAGE].soo_button.setChecked(True)
+            self.tabs[SOO_PAGE].moo_checkBox.setChecked(False)
+            self.tabs[SOO_PAGE].soo_checkBox.setChecked(True)
             self.stackedWidget.setCurrentIndex(SOO_PAGE)
     
     #####! TODO: Implement the functionality for the following actions

@@ -31,7 +31,7 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>1114</width>
+      <width>1116</width>
       <height>611</height>
      </rect>
     </property>
@@ -144,7 +144,7 @@
             <number>0</number>
            </property>
            <item>
-            <widget class="QCheckBox" name="soo_button">
+            <widget class="QCheckBox" name="soo_checkBox">
              <property name="font">
               <font>
                <pointsize>9</pointsize>
@@ -156,7 +156,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="moo_button">
+            <widget class="QCheckBox" name="moo_checkBox">
              <property name="font">
               <font>
                <pointsize>9</pointsize>
@@ -761,8 +761,21 @@
              </item>
             </widget>
            </item>
+           <item>
+            <spacer name="verticalSpacer_4">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>30</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
            <item alignment="Qt::AlignHCenter">
-            <widget class="QCheckBox" name="rand_seeds_button">
+            <widget class="QCheckBox" name="rand_seeds_checkBox">
              <property name="font">
               <font>
                <pointsize>9</pointsize>
@@ -774,7 +787,7 @@
             </widget>
            </item>
            <item alignment="Qt::AlignHCenter">
-            <widget class="QCheckBox" name="fixed_seeds_button">
+            <widget class="QCheckBox" name="fixed_seeds_checkBox">
              <property name="font">
               <font>
                <pointsize>9</pointsize>
