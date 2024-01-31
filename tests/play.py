@@ -1,18 +1,60 @@
-from backend.get import get_problem, get_algorithm
-from pymoo.optimize import minimize
+import sys
+import matplotlib
+matplotlib.use('Qt5Agg')
 
-# Define the problem
-problem = get_problem("g1")
+from PyQt5 import QtCore, QtGui, QtWidgets
 
-# Define the algorithm
-algorithm = get_algorithm("cmaes")
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
+from matplotlib.figure import Figure
 
-# Optimize the problem
-result = minimize(problem,
-                  algorithm,
-                  seed=1,
-                  verbose=False)
 
-# Print the optimal solution
-print("Best solution found:", result.X)
-print("Objective value:", result.F)
+class MplCanvas(FigureCanvasQTAgg):
+
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = fig.add_subplot(111)
+        super(MplCanvas, self).__init__(fig)
+
+
+class PlotWindow(QtWidgets.QDialog):
+
+    def __init__(self, *args, **kwargs):
+        super(PlotWindow, self).__init__(*args, **kwargs)
+
+        sc = MplCanvas(self, width=5, height=4, dpi=100)
+        sc.axes.plot([0,1,2,3,4], [10,1,20,3,40])
+
+        # Create toolbar, passing canvas as first parament, parent (self, the MainWindow) as second.
+        toolbar = NavigationToolbar(sc, self)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(toolbar)
+        layout.addWidget(sc)
+
+        # Set the layout on the application's window
+        self.setLayout(layout)
+
+
+class MainWindow(QtWidgets.QMainWindow):
+
+    def __init__(self, *args, **kwargs):
+        super(MainWindow, self).__init__(*args, **kwargs)
+
+        self.button = QtWidgets.QPushButton("Plot", self)
+        self.button.clicked.connect(self.open_plot_window)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.button)
+
+        widget = QtWidgets.QWidget()
+        widget.setLayout(layout)
+        self.setCentralWidget(widget)
+
+    def open_plot_window(self):
+        self.plot_window = PlotWindow(self)
+        self.plot_window.show()
+
+
+app = QtWidgets.QApplication(sys.argv)
+w = MainWindow()
+app.exec_()

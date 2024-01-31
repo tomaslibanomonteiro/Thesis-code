@@ -783,6 +783,9 @@
              <property name="text">
               <string>Fixed Seeds    </string>
              </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
             </widget>
            </item>
            <item alignment="Qt::AlignHCenter">

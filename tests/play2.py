@@ -1,64 +1,60 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout, QPushButton, QLabel
+import matplotlib
+matplotlib.use('Qt5Agg')
 
-class TabCopyExample(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Tab Copy Example")
-        self.setGeometry(100, 100, 400, 300)
-        
-        self.tab_widget = QTabWidget(self)
-        self.setCentralWidget(self.tab_widget)
+from PyQt5 import QtCore, QtGui, QtWidgets
 
-        self.add_tab_button = QPushButton("Add New Tab", self)
-        self.add_tab_button.clicked.connect(self.add_new_tab)
-        
-        self.tab_widget.addTab(self.create_initial_tab(), "Tab 1")
-        self.tab_widget.addTab(self.create_initial_tab(), "Tab 2")
-        self.tab_widget.addTab(self.create_initial_tab(), "Tab 3")
-        
-        self.tab_widget.setTabsClosable(True)
-        self.tab_widget.tabCloseRequested.connect(self.close_tab)
-        
-        layout = QVBoxLayout()
-        layout.addWidget(self.add_tab_button)
-        layout.addWidget(self.tab_widget)
-        
-        central_widget = QWidget()
-        central_widget.setLayout(layout)
-        self.setCentralWidget(central_widget)
-    
-    def create_initial_tab(self):
-        tab = QWidget()
-        layout = QVBoxLayout()
-        label = QLabel("This is a tab content.")
-        layout.addWidget(label)
-        tab.setLayout(layout)
-        return tab
-    
-    def add_new_tab(self):
-        # Create a new tab
-        new_tab = QWidget()
-        new_tab_layout = QVBoxLayout()
-        
-        # Copy the content of the active tab to the new tab
-        active_tab_index = self.tab_widget.currentIndex()
-        active_tab = self.tab_widget.widget(active_tab_index)
-        for widget in active_tab.findChildren(QWidget):
-            widget_copy = widget.clone() if hasattr(widget, 'clone') else widget  # You may need to implement a custom clone method for your custom widgets
-            new_tab_layout.addWidget(widget_copy)
-        
-        # Add the new tab to the tab widget
-        self.tab_widget.addTab(new_tab, f"Tab {self.tab_widget.count() + 1}")
-        self.tab_widget.setCurrentWidget(new_tab)
-        self.tab_widget.setCurrentIndex(self.tab_widget.count() - 1)
-    
-    def close_tab(self, index):
-        if self.tab_widget.count() > 1:
-            self.tab_widget.removeTab(index)
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
+from matplotlib.figure import Figure
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    window = TabCopyExample()
-    window.show()
-    sys.exit(app.exec_())
+
+class MplCanvas(FigureCanvasQTAgg):
+
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = fig.add_subplot(111)
+        super(MplCanvas, self).__init__(fig)
+
+
+class CustomDialog(QtWidgets.QDialog):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        sc = MplCanvas(self, width=5, height=4, dpi=100)
+        sc.axes.plot([0,1,2,3,4], [10,1,20,3,40])
+
+        # Create toolbar, passing canvas as first parament, parent (self, the CustomDialog) as second.
+        toolbar = NavigationToolbar(sc, self)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(toolbar)
+        layout.addWidget(sc)
+
+        self.setLayout(layout)
+        self.show()
+
+
+class MainWindow(QtWidgets.QMainWindow):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        button = QtWidgets.QPushButton("Open Dialog", self)
+        button.clicked.connect(self.open_dialog)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(button)
+
+        widget = QtWidgets.QWidget()
+        widget.setLayout(layout)
+        self.setCentralWidget(widget)
+
+    def open_dialog(self):
+        dialog = CustomDialog(self)
+
+
+app = QtWidgets.QApplication(sys.argv)
+w = MainWindow()
+w.show()
+app.exec_()

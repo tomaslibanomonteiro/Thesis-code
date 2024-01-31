@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QTableWidget, QFrame, QTabBar, QWidget, QPushButton, QFileDialog
+from PyQt5.QtWidgets import QTableWidgetItem, QTableWidget, QFrame, QTabBar, QWidget, QPushButton, QFileDialog
 from PyQt5.uic import loadUi
 from PyQt5.QtCore import pyqtSignal
 
@@ -15,7 +15,7 @@ def ArgsAreSet(dic: dict) -> bool:
     # check if any of the values in the dict is == NO_DEFAULT
     return not any([value == NO_DEFAULT for value in dic.values()]) 
 
-class EditWindow(QDialog):
+class EditWindow(QWidget):
     itemUpdates = pyqtSignal(str,list) 
     operatorUpdates = pyqtSignal(str,list)
     def __init__(self, parameters: dict):
