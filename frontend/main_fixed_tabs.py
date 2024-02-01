@@ -12,7 +12,7 @@ from backend.run import RunThread, RunArgs
 from frontend.my_widgets import MyComboBox, MyMessageBox
 from frontend.edit_window import EditWindow, ArgsAreSet
 from frontend.main_run_tab import RunTab
-from utils.defines import (RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_MAIN_TABS, RESULT_LAYOUT_WIDGETS, GET_OBJECT_ERROR, 
+from utils.defines import (RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_FIXED_TABS, RESULT_LAYOUT_WIDGETS, GET_OBJECT_ERROR, 
                            MAX_RESULT_FRAMES, ALGO_KEY, PROB_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY)
 
 class MainTabsWidget(QTabWidget):
@@ -20,7 +20,7 @@ class MainTabsWidget(QTabWidget):
     def __init__(self, run_options: dict, parameters: dict) -> None:
         super().__init__()
 
-        loadUi(DESIGNER_MAIN_TABS, self)
+        loadUi(DESIGNER_FIXED_TABS, self)
         
         ############################ GENERAL #################################
         
@@ -313,7 +313,7 @@ class ResultFrame(QFrame):
         self.tabWidget = tabWidget
                 
         # cancel button
-        self.cancel_button.clicked.connect(self.cancel_run)
+        self.cancel_button.clicked.connect(self.cancelRun)
 
         # make the run in a separate thread (has to be called in another class) 
         self.run_thread = run_thread                
@@ -373,9 +373,11 @@ class ResultFrame(QFrame):
                 break
         self.deleteLater()     
     
-    def cancel_run(self):
+    def cancelRun(self):
         """Cancel the run"""
         self.run_thread.cancel()
         self.erase()
+    
+    def saveRun(self):
         """Save the run""" #!
         print("save run to be implemented")

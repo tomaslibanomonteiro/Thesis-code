@@ -261,6 +261,9 @@
            <attribute name="horizontalHeaderDefaultSectionSize">
             <number>185</number>
            </attribute>
+           <attribute name="horizontalHeaderHighlightSections">
+            <bool>false</bool>
+           </attribute>
            <attribute name="horizontalHeaderMinimumSectionSize">
             <number>90</number>
            </attribute>
@@ -382,6 +385,9 @@
            </attribute>
            <attribute name="horizontalHeaderDefaultSectionSize">
             <number>185</number>
+           </attribute>
+           <attribute name="horizontalHeaderHighlightSections">
+            <bool>false</bool>
            </attribute>
            <attribute name="horizontalHeaderMinimumSectionSize">
             <number>90</number>
@@ -508,6 +514,9 @@
            <attribute name="horizontalHeaderDefaultSectionSize">
             <number>185</number>
            </attribute>
+           <attribute name="horizontalHeaderHighlightSections">
+            <bool>false</bool>
+           </attribute>
            <attribute name="horizontalHeaderMinimumSectionSize">
             <number>90</number>
            </attribute>
@@ -618,6 +627,9 @@
            <attribute name="horizontalHeaderDefaultSectionSize">
             <number>185</number>
            </attribute>
+           <attribute name="horizontalHeaderHighlightSections">
+            <bool>false</bool>
+           </attribute>
            <attribute name="horizontalHeaderMinimumSectionSize">
             <number>90</number>
            </attribute>
@@ -720,6 +732,9 @@
              </attribute>
              <attribute name="horizontalHeaderDefaultSectionSize">
               <number>185</number>
+             </attribute>
+             <attribute name="horizontalHeaderHighlightSections">
+              <bool>false</bool>
              </attribute>
              <attribute name="horizontalHeaderMinimumSectionSize">
               <number>90</number>

@@ -9,7 +9,7 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import QThread
 
 from utils.debug import debug_print
-from utils.defines import N_SEEDS_KEY, ALGO_KEY, PROB_KEY, N_EVAL_KEY, N_GEN_KEY, RUN_ID_KEY
+from utils.defines import N_SEEDS_KEY, ALGO_KEY, PROB_KEY, N_EVAL_KEY, N_GEN_KEY
 
 class MyCallback(Callback):
 
@@ -67,7 +67,7 @@ class RunThread(QThread):
         self.run_counter = 0
         self.total_runs = len(run_args_list)*n_seeds
         self.canceled = False  
-        self.best_sol = {} # dictionary of the best solution(s) for each run_id to plot the pf
+        self.best_sol = {} # dictionary of the best solution(s) for each run to plot the pf
         self.fixed_seeds = fixed_seeds
 
     def cancel(self):
@@ -77,7 +77,6 @@ class RunThread(QThread):
         #!
         import debugpy
         debugpy.debug_this_thread()
-        run_id = 0
         seeds = np.arange(self.n_seeds) if self.fixed_seeds else np.random.choice(10000, size=self.n_seeds, replace=False)
         for run_args in self.run_args_list:
             for seed in seeds:
@@ -85,8 +84,7 @@ class RunThread(QThread):
                     return
                 self.progressUpdate(run_args.algo_id, run_args.prob_id, seed)
                 res = self.singleRun(run_args, seed, self.term_object)
-                self.updateData(run_args, res, seed, run_id, res.algorithm.callback)
-                run_id += 1
+                self.updateData(run_args, res, seed, res.algorithm.callback)
                 
     def singleRun(self, run_args: RunArgs, seed: int, termination) -> Result:
         try:
@@ -117,7 +115,7 @@ class RunThread(QThread):
         
         debug_print(f"{percentage:.0f}%  - ",text) #!
         
-    def updateData(self, run_args: RunArgs, res: Result, seed:int, run_id:int, callback: MyCallback):
+    def updateData(self, run_args: RunArgs, res: Result, seed:int, callback: MyCallback):
         
         if res is None:
             return
@@ -126,8 +124,7 @@ class RunThread(QThread):
 
         single_run_data = {N_SEEDS_KEY: [seed] * run_length,
                            PROB_KEY: [run_args.prob_id] * run_length,
-                           ALGO_KEY: [run_args.algo_id] * run_length, 
-                           RUN_ID_KEY: [run_id] * run_length}
+                           ALGO_KEY: [run_args.algo_id] * run_length}
         
         single_run_data.update(callback.data)
         if self.data.empty:
@@ -136,9 +133,10 @@ class RunThread(QThread):
             self.data = pd.concat([self.data, pd.DataFrame(single_run_data)])
         
         best_sol = res.algorithm.opt.get("F")[np.where(res.algorithm.opt.get("feasible"))[0]]
+        key = (run_args.prob_id, run_args.algo_id, seed)
         if len(best_sol) == 0:
-            self.best_sol[run_id] = np.nan
+            self.best_sol[key] = np.nan
         elif self.moo:
-            self.best_sol[run_id] = best_sol
+            self.best_sol[key] = best_sol
         else:
-            self.best_sol[run_id] = best_sol[0][0]        
+            self.best_sol[key] = best_sol[0][0]        

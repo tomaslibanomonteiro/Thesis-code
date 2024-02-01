@@ -7,25 +7,25 @@ matplotlib.use('Qt5Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
 
-from utils.defines import DESIGNER_RUN_TAB, PROB_KEY, ALGO_KEY, N_SEEDS_KEY, N_GEN_KEY, N_EVAL_KEY, VOTING_KEY, PI_KEY, CLASS_KEY, TERM_KEY, RUN_ID_KEY, PLOT_PROGRESS_KEY, PLOT_PF_KEY
+from utils.defines import DESIGNER_RUN_TAB, PROB_KEY, ALGO_KEY, N_SEEDS_KEY, N_GEN_KEY, N_EVAL_KEY, VOTING_KEY, PI_KEY, CLASS_KEY, TERM_KEY, PLOT_PROGRESS_KEY, PLOT_PS_KEY
 from backend.run import RunThread
 from frontend.my_widgets import MyMessageBox
 from backend.run import RunThread
 
-
 class MplCanvas(FigureCanvasQTAgg):
 
-    def __init__(self, width=5, height=4, dpi=100):
-        fig = Figure(figsize=(width, height), dpi=dpi)
-        self.axes = fig.add_subplot(111)
+    def __init__(self, width=5, height=4, dpi=100, fig=None, axes=None):
+        fig = Figure(figsize=(width, height), dpi=dpi) if fig is None else fig
+        self.axes = fig.add_subplot(111) if axes is None else axes
         super(MplCanvas, self).__init__(fig)
-
+    
 class Plotter(QWidget):
 
-    def __init__(self, plot_mode, prob_id:str, prob_object, run_thread:RunThread, algo_ids:list, other_ids:list, title:str='Plot'):
+    def __init__(self, plot_mode, prob_id:str, prob_object, run_thread:RunThread, algo_ids:list, other_ids:list):
         super().__init__()
         
-        self.sc = MplCanvas()
+        self.setAttribute(Qt.WA_DeleteOnClose)
+        self.sc = None
         self.run_thread = run_thread
         self.prob_id = prob_id
         self.prob_object = prob_object
@@ -37,14 +37,30 @@ class Plotter(QWidget):
             return
         elif plot_mode == PLOT_PROGRESS_KEY:
             self.plotProgress()
-        elif plot_mode == PLOT_PF_KEY:
-            self.plotParetoFront()
+        elif plot_mode == PLOT_PS_KEY:
+            if not self.run_thread.moo:
+                MyMessageBox("Plotting Pareto Fronts only works for Multi-Objective Optimization")
+                return
+            self.plotParetoFronts()
         else:        
-            raise ValueError(f"Plot mode can only be {PLOT_PF_KEY} or {PLOT_PROGRESS_KEY}") 
+            raise ValueError(f"Plot mode can only be {PLOT_PS_KEY} or {PLOT_PROGRESS_KEY}") 
+
+        # Create toolbar, passing canvas as first parament, parent (self, the CustomDialog) as second.
+        toolbar = NavigationToolbar2QT(self.sc, self)
+
+        layout = QVBoxLayout()
+        layout.addWidget(toolbar)
+        layout.addWidget(self.sc)
+
+        self.setLayout(layout)
+        self.show()
 
     def plotProgress(self):
         """Plot the progress of the checked algorithms for the given problem and checked performance indicators"""
         # get the data for the given problem
+        
+        self.sc = MplCanvas()
+        
         data = self.run_thread.data.copy()
         df_prob = data[data[PROB_KEY] == self.prob_id]
         
@@ -73,30 +89,36 @@ class Plotter(QWidget):
         # add legend
         self.sc.axes.legend()
 
-        # Create toolbar, passing canvas as first parament, parent (self, the CustomDialog) as second.
-        toolbar = NavigationToolbar2QT(self.sc, self)
-
-        layout = QVBoxLayout()
-        layout.addWidget(toolbar)
-        layout.addWidget(self.sc)
-
-        self.setLayout(layout)
-        self.show()
-
-    def plotParetoFront(self):
+    def plotParetoFronts(self):
         """Plot the Pareto front of the checked algorithms for the given problem and checked seeds"""
-        # get the run_ids
-        # data = self.run_thread.data.copy()
-        # run_ids = data[data[PROB_KEY] == self.prob_id & data[ALGO_KEY].isin(self.algo_ids) & data[PI_KEY].isin(self.other_ids)][RUN_ID_KEY].unique()
         
         from pymoo.visualization.scatter import Scatter
         plot = Scatter(title=f"Pareto fronts on Problem: {self.prob_id}")
         plot.legend = True
-        plot.add(self.prob_object.pareto_front(), label = self.prob_id)
         
-        # copy the plot into the canvas
-        self.pareto_plot = plot.do()
-                
+        # see if other ids contain 'Problem', if so, get it out of the list
+        if 'Problem' in self.other_ids:
+            if self.prob_object.pareto_front() is None:
+                MyMessageBox(f"Problem '{self.prob_id}' does not have a Pareto Front available")
+            else:
+                plot.add(self.prob_object.pareto_front(), label = self.prob_id)
+            self.other_ids.remove('Problem')
+            
+        self.other_ids = [int(id) for id in self.other_ids]
+        data = self.run_thread.data.copy()
+        filtered_data = data[(data[PROB_KEY] == self.prob_id) & data[ALGO_KEY].isin(self.algo_ids) & data[N_SEEDS_KEY].isin(self.other_ids)]
+        filtered_data = filtered_data[[PROB_KEY, ALGO_KEY, N_SEEDS_KEY]].drop_duplicates()
+        for prob_id, algo_id, n_seeds in filtered_data.values:
+            # get the best solution for each run_id
+            best_sol = self.run_thread.best_sol[(prob_id, algo_id, n_seeds)]
+            # plot the best solution
+            plot.add(best_sol, label = f"Algo: '{algo_id}'/Seed: {n_seeds}")
+        
+        plot.do()
+        
+        self.sc = MplCanvas(fig = plot.fig, axes=plot.ax)   
+        self.setWindowTitle(f'Ploting {PLOT_PS_KEY}')
+    
 class RunTab(QFrame):
     def __init__(self, run_thread: RunThread, label: str):
         super().__init__()
@@ -130,20 +152,28 @@ class RunTab(QFrame):
         self.save_data.clicked.connect(self.saveData)
         self.save_run.clicked.connect(self.saveRun)
         self.values_comboBox.currentIndexChanged.connect(self.changedChosenValue)
-        self.selected_id.currentIndexChanged.connect(self.changeTable)
         self.table.horizontalHeader().sectionDoubleClicked.connect(lambda col: self.headerClick(col, "horizontal"))
         self.table.verticalHeader().sectionDoubleClicked.connect(lambda row: self.headerClick(row, "vertical"))
         self.plot_button.clicked.connect(self.plot)
-        self.plot_comboBox.addItems([PLOT_PROGRESS_KEY, PLOT_PF_KEY])
+        self.selected_id.currentIndexChanged.connect(self.changeTable)
+        self.plot_comboBox.addItems([PLOT_PROGRESS_KEY, PLOT_PS_KEY])
         self.plot_comboBox.currentIndexChanged.connect(self.setCheckBoxes)
         self.plot_prob.addItems(self.prob_ids)
+        self.plot_comboBox.lineEdit().setAlignment(Qt.AlignCenter)
+        self.plot_comboBox.lineEdit().setReadOnly(True)
+        self.values_comboBox.lineEdit().setAlignment(Qt.AlignCenter)
+        self.values_comboBox.lineEdit().setReadOnly(True)
+        self.selected_id.lineEdit().setAlignment(Qt.AlignCenter)
+        self.selected_id.lineEdit().setReadOnly(True)
+        self.plot_prob.lineEdit().setAlignment(Qt.AlignCenter)
+        self.plot_prob.lineEdit().setReadOnly(True)
 
         # set the labels                         
         self.label.setText(label)
         seed_str = "seed" if self.run_thread.n_seeds == 1 else "seeds"
         self.n_seeds_label.setText(f"Averaged on: <b>{self.run_thread.n_seeds} {seed_str}</b>")
         self.n_seeds_label.setAlignment(Qt.AlignCenter)
-        self.term_label.setText(f"Termination criteria: <b>{self.run_thread.term_id}</b> <br><font size='2'>(Double click to see parameters)</font>")
+        self.term_label.setText(f"Termination criteria: <b>{self.run_thread.term_id}</b> <br>(Double click to see parameters)</font>")
         self.term_label.setAlignment(Qt.AlignCenter)
         self.term_label.mouseDoubleClickEvent = self.seeTermination
 
@@ -154,31 +184,30 @@ class RunTab(QFrame):
     def setCheckBoxes(self, event=None, set_algos=False):
         """set the checkboxes for the given ids in the tables"""
 
-        if set_algos:
-            # put the algorithm checkboxes in self.algo_table
-            self.algo_table.setRowCount(len(self.algo_ids))
-            self.algo_table.clear()
-            for i, algo_id in enumerate(self.algo_ids):
-                checkbox = QCheckBox(algo_id)
-                self.algo_table.setCellWidget(i, 0, checkbox)
-                checkbox.setChecked(i == 0)
 
-        # set the name of the second page of the toolbox
-        if self.plot_comboBox.currentText() == PLOT_PF_KEY:
-            ids = list(range(self.run_thread.n_seeds))
-            self.toolBox.setItemText(1, "Seeds")
+        if self.plot_comboBox.currentText() == PLOT_PS_KEY:
+            ids = ["Problem"] + [seed for seed in self.run_thread.data[N_SEEDS_KEY].unique()]
+            self.checkBox_table.setHorizontalHeaderItem(1, QTableWidgetItem("Prob/Seed"))
         elif self.plot_comboBox.currentText() == PLOT_PROGRESS_KEY:
             ids = self.pi_ids
-            self.toolBox.setItemText(1, "Performance Indicators")
+            self.checkBox_table.setHorizontalHeaderItem(1, QTableWidgetItem("Perf. Ind."))
 
-        # put the ids checkboxes in self.page2_table
-        self.page2_table.setRowCount(len(ids))
-        self.page2_table.clear()
+        # put the ids checkboxes in self.checkBox_table second column
+        row_count = max(len(self.algo_ids), len(ids))
+        self.checkBox_table.setRowCount(row_count)
+        # clear column 2
+        [self.checkBox_table.setCellWidget(i, 1, None) for i in range(row_count)]
         for i, id in enumerate(ids):
             checkbox = QCheckBox(str(id))
-            self.page2_table.setCellWidget(i, 0, checkbox)
+            self.checkBox_table.setCellWidget(i, 1, checkbox)
             checkbox.setChecked(i == 0)
         
+        if set_algos:
+            for i, algo_id in enumerate(self.algo_ids):
+                checkbox = QCheckBox(algo_id)
+                self.checkBox_table.setCellWidget(i, 0, checkbox)
+                checkbox.setChecked(i == 0)
+                
     def changedChosenValue(self):
         """Change the table widget to display the results for the selected performance indicator"""
                 
@@ -206,7 +235,7 @@ class RunTab(QFrame):
             df = self.term_data.pivot(index=ALGO_KEY, columns=PROB_KEY, values=selected_id)
         elif self.values_comboBox.currentText() == "Problem":
             df = self.term_data[self.term_data[PROB_KEY] == selected_id].copy()
-            df.drop(columns=[N_GEN_KEY, N_EVAL_KEY, PROB_KEY, RUN_ID_KEY], inplace=True)
+            df.drop(columns=[N_GEN_KEY, N_EVAL_KEY, PROB_KEY], inplace=True)
             df = df.set_index(df.columns[0])
         else:
             raise ValueError("Voting by can only be Performance Indicator or Problem")
@@ -273,14 +302,15 @@ class RunTab(QFrame):
         if prob_object == None:
             raise ValueError(f'Prob Object not found with id {prob_id}')
         
-        algo_ids = [self.algo_table.cellWidget(i, 0).text() for i in range(self.algo_table.rowCount()) 
-                    if self.algo_table.cellWidget(i, 0).isChecked()]
+        table = self.checkBox_table
+        algo_ids = [table.cellWidget(i, 0).text() for i in range(len(self.algo_ids)) 
+                    if table.cellWidget(i, 0).isChecked()]
         
-        other_ids = [self.page2_table.cellWidget(i, 0).text() for i in range(self.page2_table.rowCount()) 
-                    if self.page2_table.cellWidget(i, 0).isChecked()]
+        other_ids = [table.cellWidget(i, 1).text() for i in range(table.rowCount()) 
+                    if table.cellWidget(i, 1) is not None and table.cellWidget(i, 1).isChecked()]
                 
         plot_mode = self.plot_comboBox.currentText()
-        self.plot_widgets.append(Plotter(plot_mode, prob_id, prob_object, self.run_thread, algo_ids, other_ids, title=f"{plot_mode} on problem: {prob_id}"))
+        self.plot_widgets.append(Plotter(plot_mode, prob_id, prob_object, self.run_thread, algo_ids, other_ids))
         
     def saveData(self):
         """Save the results of the run"""
@@ -297,7 +327,8 @@ class RunTab(QFrame):
         clazz = args.pop(CLASS_KEY)
         string = f"Parameters for {TERM_KEY} of class {clazz} with id \'{id}\': \n {args}"
         MyMessageBox(string, 'Parameters', warning_icon=False)
-    
+        
     def saveRun(self):
         """Save the run""" #!
         print("save run to be implemented")
+    

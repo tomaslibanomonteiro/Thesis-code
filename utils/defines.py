@@ -2,7 +2,7 @@
 
 # main window
 DESIGNER_MAIN = 'frontend/designer_templates/main_window/main_window.ui' 
-DESIGNER_MAIN_TABS = 'frontend/designer_templates/main_window/main_tabs.ui'
+DESIGNER_FIXED_TABS = 'frontend/designer_templates/main_window/fixed_tabs.ui'
 DESIGNER_RUN_TAB = 'frontend/designer_templates/main_window/run_tab.ui'
 DESIGNER_RESULT_FRAME = 'frontend/designer_templates/main_window/result_frame.ui'
 
@@ -60,7 +60,6 @@ CLASS_KEY = 'Class'
 # for the dataframes
 N_EVAL_KEY = 'n_eval'
 N_GEN_KEY = 'n_gen'
-RUN_ID_KEY = 'run_id'
  
 # keys needed in a dictionary given to start the app ORDERED THE SAME AS THE APP!!
 RUN_OPTIONS_KEYS = [PROB_KEY, ALGO_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY]
@@ -91,4 +90,4 @@ GET_OBJECT_ERROR = -1
 VOTING_KEY = 'Voting'
 
 PLOT_PROGRESS_KEY = 'Progress'
-PLOT_PF_KEY = 'Pareto Front'
+PLOT_PS_KEY = 'Pareto Sets'

@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QFileDialog
 from PyQt5.uic import loadUi
 import pickle
+from PyQt5.QtCore import QCoreApplication
 
 from backend.defaults import Defaults
 from frontend.main_fixed_tabs import MainTabsWidget
@@ -158,3 +159,7 @@ class MyMainWindow(QMainWindow):
         active_tabs = self.activePage()
         active_tabs.edit_window.loadParameters()
         self.editParameters()
+
+    def closeEvent(self, event):
+        self.close()
+        exit(0)

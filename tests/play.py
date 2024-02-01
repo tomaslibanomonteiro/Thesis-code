@@ -1,13 +1,25 @@
+from pymoo.algorithms.moo.nsga3 import NSGA3
 from pymoo.problems import get_problem
-from pymoo.visualization.scatter import Scatter
+from pymoo.optimize import minimize
+# import get_reference_directions
+from pymoo.util.ref_dirs import get_reference_directions
 
-# get the dtlz1 problem
-problem = get_problem("dtlz1")
+# Define the problem
+problem = get_problem("dtlz1", n_obj=4)
 
-# get the Pareto front of the problem
-pareto_front = problem.pareto_front()
+ref_dirs = get_reference_directions("das-dennis", 4, n_partitions=12)
 
-# create a scatter plot of the Pareto front
-scatter = Scatter(title="DTLZ1 Pareto Front")
-scatter.add(pareto_front)
-scatter.show()
+# Define the algorithm
+algorithm = NSGA3(ref_dirs=ref_dirs)
+
+# Enable verbose output
+algorithm.verbose = True
+
+# Run the optimization
+res = minimize(problem, algorithm)
+
+# Print the results
+print("Best solution found:")
+print(res.X)
+print("Objective values:")
+print(res.F)

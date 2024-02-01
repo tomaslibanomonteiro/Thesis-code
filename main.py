@@ -11,11 +11,11 @@ moo_options = {
 }
 
 soo_options = {
-    # PROB_KEY: ['ackley', 'g1'],
-    # ALGO_KEY: ['ga', 'pso'],
-    # PI_KEY: ['best'],
-    # TERM_KEY: ['n_eval'],
-    # N_SEEDS_KEY: 3
+    PROB_KEY: ['ackley', 'g1'],
+    ALGO_KEY: ['ga', 'pso'],
+    PI_KEY: ['best'],
+    TERM_KEY: ['n_eval'],
+    N_SEEDS_KEY: 3
 }
 
 def main():
