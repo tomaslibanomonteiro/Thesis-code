@@ -1,60 +1,14 @@
-import sys
-import matplotlib
-matplotlib.use('Qt5Agg')
+from pymoo.factory import get_problem
+from pymoo.visualization.fitness_landscape import FitnessLandscape
+import numpy as np
+# Define the problem
+problem = get_problem("ackley")
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+args = dict(cmap="summer", rstride=1, cstride=1, alpha=0.2)
+plot = FitnessLandscape(problem, 'surface', 50, kwargs_surface=args)
 
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
-from matplotlib.figure import Figure
-
-
-class MplCanvas(FigureCanvasQTAgg):
-
-    def __init__(self, parent=None, width=5, height=4, dpi=100):
-        fig = Figure(figsize=(width, height), dpi=dpi)
-        self.axes = fig.add_subplot(111)
-        super(MplCanvas, self).__init__(fig)
-
-
-class CustomDialog(QtWidgets.QDialog):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        sc = MplCanvas(self, width=5, height=4, dpi=100)
-        sc.axes.plot([0,1,2,3,4], [10,1,20,3,40])
-
-        # Create toolbar, passing canvas as first parament, parent (self, the CustomDialog) as second.
-        toolbar = NavigationToolbar(sc, self)
-
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(toolbar)
-        layout.addWidget(sc)
-
-        self.setLayout(layout)
-        self.show()
-
-
-class MainWindow(QtWidgets.QMainWindow):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        button = QtWidgets.QPushButton("Open Dialog", self)
-        button.clicked.connect(self.open_dialog)
-
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(button)
-
-        widget = QtWidgets.QWidget()
-        widget.setLayout(layout)
-        self.setCentralWidget(widget)
-
-    def open_dialog(self):
-        dialog = CustomDialog(self)
-
-
-app = QtWidgets.QApplication(sys.argv)
-w = MainWindow()
-w.show()
-app.exec_()
+# plot a big red dot at 0,0,0
+plot.do()
+point = np.array([0, 0, 12])
+plot.ax.scatter(*point, color='red', s=100)
+plot.show()

@@ -66,8 +66,12 @@ class RunThread(QThread):
         self.data = pd.DataFrame()
         self.run_counter = 0
         self.total_runs = len(run_args_list)*n_seeds
-        self.canceled = False  
-        self.best_sol = {} # dictionary of the best solution(s) for each run to plot the pf
+        self.canceled = False
+        # dictionary of the best generation for each run to plot later
+        # if it is a MOO problem, contains only the objective values of the best pareto set
+        # if it is a SOO problem, contains the coordinates in decision space followed by the objective space value
+        # of the last generation  
+        self.best_gen = {} 
         self.fixed_seeds = fixed_seeds
 
     def cancel(self):
@@ -132,11 +136,33 @@ class RunThread(QThread):
         else:
             self.data = pd.concat([self.data, pd.DataFrame(single_run_data)])
         
-        best_sol = res.algorithm.opt.get("F")[np.where(res.algorithm.opt.get("feasible"))[0]]
+        optimal_pareto = res.algorithm.opt.get("F")[np.where(res.algorithm.opt.get("feasible"))[0]]
         key = (run_args.prob_id, run_args.algo_id, seed)
-        if len(best_sol) == 0:
-            self.best_sol[key] = np.nan
+        
+        if len(optimal_pareto) == 0:
+            # no feasible solution found
+            self.best_gen[key] = np.nan
         elif self.moo:
-            self.best_sol[key] = best_sol
+            # store best pareto set
+            self.best_gen[key] = optimal_pareto
         else:
-            self.best_sol[key] = best_sol[0][0]        
+            # for SOO, record the best value coordinates in decision space followed by the value in objective space
+            best_sol = np.concatenate((res.algorithm.opt.get("X")[0], optimal_pareto[0]))
+
+            # Get all solutions from the last generation
+            last_generation = res.algorithm.pop
+
+            # Get the decision variables and objective values for each solution
+            decision_variables = np.array([indiv.get("X") for indiv in last_generation])
+            objective_values = np.array([indiv.get("F") for indiv in last_generation])
+
+            solutions = np.array([np.concatenate((x, f)) for x, f in zip(decision_variables, objective_values)])
+
+            # concatenate the best solution to the solutions array
+            solutions = np.vstack((best_sol, solutions))
+            
+            # Sort the solutions by objective value
+            solutions = solutions[solutions[:, -1].argsort()]
+
+            # Store the solutions
+            self.best_gen[key] = solutions

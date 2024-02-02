@@ -7,10 +7,14 @@ matplotlib.use('Qt5Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
 
-from utils.defines import DESIGNER_RUN_TAB, PROB_KEY, ALGO_KEY, N_SEEDS_KEY, N_GEN_KEY, N_EVAL_KEY, VOTING_KEY, PI_KEY, CLASS_KEY, TERM_KEY, PLOT_PROGRESS_KEY, PLOT_PS_KEY
+from utils.defines import (DESIGNER_RUN_TAB, PROB_KEY, ALGO_KEY, N_SEEDS_KEY, N_GEN_KEY, N_EVAL_KEY, VOTING_KEY, PI_KEY,
+                           CLASS_KEY, TERM_KEY, PLOT_PROGRESS_KEY, PLOT_PS_KEY, PLOT_PC_KEY, PLOT_FL_KEY)
 from backend.run import RunThread
 from frontend.my_widgets import MyMessageBox
 from backend.run import RunThread
+from pymoo.visualization.scatter import Scatter, Plot
+from pymoo.visualization.pcp import PCP
+from pymoo.visualization.fitness_landscape import FitnessLandscape
 
 class MplCanvas(FigureCanvasQTAgg):
 
@@ -32,19 +36,25 @@ class Plotter(QWidget):
         self.algo_ids = algo_ids
         self.other_ids = other_ids
 
-        if len(algo_ids) == 0 or len(other_ids) == 0:
-            MyMessageBox("Select at least one Algorithm and Performance Indicator/Seed to plot")
+        if len(algo_ids) == 0:
+            MyMessageBox("Select at least one Algorithm to plot")
+            return
+        elif len(other_ids) == 0 and plot_mode != PLOT_FL_KEY:
+            MyMessageBox("Select at least one Seed/Problem to plot")
             return
         elif plot_mode == PLOT_PROGRESS_KEY:
             self.plotProgress()
         elif plot_mode == PLOT_PS_KEY:
-            if not self.run_thread.moo:
-                MyMessageBox("Plotting Pareto Fronts only works for Multi-Objective Optimization")
-                return
-            self.plotParetoFronts()
+            self.plotParetoSets()
+        elif plot_mode == PLOT_PC_KEY:
+            self.plotPCP()
+        elif plot_mode == PLOT_FL_KEY:
+            self.plotFitnessLandscape()
         else:        
-            raise ValueError(f"Plot mode can only be {PLOT_PS_KEY} or {PLOT_PROGRESS_KEY}") 
+            raise ValueError(f"Plot mode can only be {PLOT_PROGRESS_KEY}, {PLOT_PC_KEY}, {PLOT_PS_KEY} or {PLOT_FL_KEY}") 
 
+        if self.sc is None:
+            return
         # Create toolbar, passing canvas as first parament, parent (self, the CustomDialog) as second.
         toolbar = NavigationToolbar2QT(self.sc, self)
 
@@ -53,6 +63,7 @@ class Plotter(QWidget):
         layout.addWidget(self.sc)
 
         self.setLayout(layout)
+        self.setWindowTitle(f'Ploting Mode: {plot_mode}')
         self.show()
 
     def plotProgress(self):
@@ -81,7 +92,6 @@ class Plotter(QWidget):
                 self.sc.axes.fill_between(mean.index, (mean-std).values, (mean+std).values, alpha=0.2)
                 
         # name the plot
-        self.setWindowTitle(f'Ploting {PLOT_PROGRESS_KEY}')
         self.sc.axes.set_title(f'Progress on problem: {self.prob_id}')
         # add labels
         self.sc.axes.set_xlabel('Number of evaluations')
@@ -89,13 +99,28 @@ class Plotter(QWidget):
         # add legend
         self.sc.axes.legend()
 
-    def plotParetoFronts(self):
+    def plotPCP(self):
+        """Plot the Parallel Coordinates of the checked algorithms for the given problem and checked seeds"""
+            
+        plot = PCP()
+        
+        # see if other ids contain 'Problem', if so, get it out of the list
+        if 'Problem' in self.other_ids:
+            pareto_front = self.prob_object.pareto_front()
+            if pareto_front is None:
+                MyMessageBox(f"Problem '{self.prob_id}' does not have a Pareto Front available")
+            else:
+                plot.add(pareto_front, label = self.prob_id)
+            self.other_ids.remove('Problem')
+            
+        self.plotSolutions(plot)        
+        self.sc.axes.set_title(f"Paralel Coordinates on Problem: {self.prob_id}", y=1.05)
+
+    def plotParetoSets(self):
         """Plot the Pareto front of the checked algorithms for the given problem and checked seeds"""
-        
-        from pymoo.visualization.scatter import Scatter
-        plot = Scatter(title=f"Pareto fronts on Problem: {self.prob_id}")
-        plot.legend = True
-        
+            
+        plot = Scatter(title=f"Scatter Plot on Problem: {self.prob_id}")
+    
         # see if other ids contain 'Problem', if so, get it out of the list
         if 'Problem' in self.other_ids:
             if self.prob_object.pareto_front() is None:
@@ -104,20 +129,35 @@ class Plotter(QWidget):
                 plot.add(self.prob_object.pareto_front(), label = self.prob_id)
             self.other_ids.remove('Problem')
             
+        self.plotSolutions(plot)
+        
+    def plotFitnessLandscape(self):
+        """Plot the fitness landscape of the checked algorithms for the given problem and checked seeds"""
+        
+        plot = MyFitnessLandscape(self.prob_object, title=f"Fitness Landscape on Problem: {self.prob_id}")
+        self.plotSolutions(plot)
+            
+    def plotSolutions(self, plot:Plot, **kwargs):
+        
+        plot.legend = True
         self.other_ids = [int(id) for id in self.other_ids]
         data = self.run_thread.data.copy()
         filtered_data = data[(data[PROB_KEY] == self.prob_id) & data[ALGO_KEY].isin(self.algo_ids) & data[N_SEEDS_KEY].isin(self.other_ids)]
         filtered_data = filtered_data[[PROB_KEY, ALGO_KEY, N_SEEDS_KEY]].drop_duplicates()
+        
         for prob_id, algo_id, n_seeds in filtered_data.values:
             # get the best solution for each run_id
-            best_sol = self.run_thread.best_sol[(prob_id, algo_id, n_seeds)]
+            best_gen = self.run_thread.best_gen[(prob_id, algo_id, n_seeds)]
             # plot the best solution
-            plot.add(best_sol, label = f"Algo: '{algo_id}'/Seed: {n_seeds}")
+            plot.add(best_gen, label = f"Algo: '{algo_id}'/Seed: {n_seeds}", **kwargs)
         
         plot.do()
+        handles, labels = plot.ax.get_legend_handles_labels()
+        # Using dict to remove duplicates, preserving the order
+        by_label = dict(zip(labels, handles))
+        plot.ax.legend(by_label.values(), by_label.keys())
         
         self.sc = MplCanvas(fig = plot.fig, axes=plot.ax)   
-        self.setWindowTitle(f'Ploting {PLOT_PS_KEY}')
     
 class RunTab(QFrame):
     def __init__(self, run_thread: RunThread, label: str):
@@ -156,7 +196,8 @@ class RunTab(QFrame):
         self.table.verticalHeader().sectionDoubleClicked.connect(lambda row: self.headerClick(row, "vertical"))
         self.plot_button.clicked.connect(self.plot)
         self.selected_id.currentIndexChanged.connect(self.changeTable)
-        self.plot_comboBox.addItems([PLOT_PROGRESS_KEY, PLOT_PS_KEY])
+        items = [PLOT_PROGRESS_KEY, PLOT_PS_KEY, PLOT_PC_KEY] if self.run_thread.moo else [PLOT_FL_KEY, PLOT_PROGRESS_KEY]
+        self.plot_comboBox.addItems(items)
         self.plot_comboBox.currentIndexChanged.connect(self.setCheckBoxes)
         self.plot_prob.addItems(self.prob_ids)
         self.plot_comboBox.lineEdit().setAlignment(Qt.AlignCenter)
@@ -185,10 +226,14 @@ class RunTab(QFrame):
         """set the checkboxes for the given ids in the tables"""
 
 
-        if self.plot_comboBox.currentText() == PLOT_PS_KEY:
-            ids = ["Problem"] + [seed for seed in self.run_thread.data[N_SEEDS_KEY].unique()]
-            self.checkBox_table.setHorizontalHeaderItem(1, QTableWidgetItem("Prob/Seed"))
-        elif self.plot_comboBox.currentText() == PLOT_PROGRESS_KEY:
+        if self.plot_comboBox.currentText() != PLOT_PROGRESS_KEY:
+            ids = [seed for seed in self.run_thread.data[N_SEEDS_KEY].unique()]
+            header = "Seed"
+            if self.plot_comboBox.currentText() in [PLOT_PS_KEY, PLOT_PC_KEY]:
+                ids = ["Problem"] + ids
+                header = "Prob/Seed" 
+            self.checkBox_table.setHorizontalHeaderItem(1, QTableWidgetItem(header))
+        else:
             ids = self.pi_ids
             self.checkBox_table.setHorizontalHeaderItem(1, QTableWidgetItem("Perf. Ind."))
 
@@ -331,4 +376,52 @@ class RunTab(QFrame):
     def saveRun(self):
         """Save the run""" #!
         print("save run to be implemented")
-    
+
+
+class MyFitnessLandscape(FitnessLandscape):
+    def __init__(self,
+                 problem,
+                 _type="surface",
+                 n_samples=30,
+                 colorbar=False,
+                 contour_levels=30,
+                 kwargs_surface=dict(cmap="summer", rstride=1, cstride=1, alpha=0.2),
+                 kwargs_contour=None,
+                 kwargs_contour_labels=None,
+                 **kwargs):
+        
+        super().__init__(problem, _type, n_samples, colorbar, contour_levels, kwargs_surface, kwargs_contour, kwargs_contour_labels, **kwargs)
+        super().do()
+        
+    def add(self, points, label, **kwargs):
+        # get the points coordinates from the points arg
+        cutoff = 10
+        best_point = points[0, :]
+        if len(points[:, 0]) > cutoff:
+            points = points[np.random.choice(len(points[:, 0]), cutoff, replace=False), :]
+            word = 'random'
+        else:
+            word = '(all)'
+        gen_label = label + f"\n({len(points[:, 0])} {word} points of last gen)"
+        best_label = label + f"\n(Best point)"
+        
+        # if points have 2 dimensions, add the third dimension with the fitness value
+        if len(points[0]) in [2, 3]:
+            x,y,z = points[:, 0], points[:, 1], 0
+            best_x, best_y, best_z = best_point[0], best_point[1], 0
+            if len(points[0]) == 3:
+                z, best_z = points[:, 2], best_point[2]
+        else:
+            MyMessageBox(f"Points have {len(points[0])} dimensions, only 2 or 3 are supported")
+            return
+        
+        self.ax.scatter(x, y, z, s=50, label=gen_label, alpha=0.8, **kwargs)
+        self.ax.scatter(best_x, best_y, best_z, s=100, label=best_label, alpha=1, **kwargs)
+        
+        # set the axes maximum and minimum values to the best and worst points
+        # self.ax.set_xlim([min(np.min(x),best_x), max(np.max(x),best_x)])
+        # self.ax.set_ylim([min(np.min(y),best_y), max(np.max(y),best_y)])
+        # self.ax.set_zlim([min(np.min(z),best_z), max(np.max(z),best_z)]) if len(points[0]) == 3 else None
+        
+    def do(self):
+        pass

@@ -42,7 +42,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="SOOpage"/>
     <widget class="QWidget" name="MOOpage"/>
@@ -110,7 +110,7 @@
   </action>
   <action name="action_SwitchPage">
    <property name="text">
-    <string>Single Objective Optimization</string>
+    <string>Switch to MOO</string>
    </property>
   </action>
   <action name="action_LoadRunOptions">

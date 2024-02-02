@@ -14,6 +14,7 @@ class MyMainWindow(QMainWindow):
         loadUi(DESIGNER_MAIN, self)
         
         switch_page = run_options_soo == {} and run_options_moo != {}
+        
         # create pages
         args = [(self.SOOpage, run_options_soo, parameters_soo, SOO_PAGE), (self.MOOpage, run_options_moo, parameters_moo, MOO_PAGE)]
         self.tabs = {page_index: self.createTabs(page, run_options, parameters) for page, run_options, parameters, page_index in args}         
@@ -38,11 +39,9 @@ class MyMainWindow(QMainWindow):
             tab.moo_checkBox.clicked.connect(self.switchPage)
             tab.parameters_button.clicked.connect(self.editParameters)
 
-        # Set the current page to the SOO or MOO page depending on the options given to start the app
-        self.action_SwitchPage.setText("Change to MOO")
-        self.tabs[SOO_PAGE].soo_checkBox.setChecked(False)
-        self.tabs[SOO_PAGE].moo_checkBox.setChecked(True)
-        self.stackedWidget.setCurrentIndex(SOO_PAGE)
+        # Set the current page to MOO if SOO has empty run options
+        self.tabs[MOO_PAGE].moo_checkBox.setChecked(True)
+        self.tabs[MOO_PAGE].soo_checkBox.setChecked(False)
         self.switchPage() if switch_page else None
         
     ####### GENERAL METHODS #######
@@ -67,16 +66,20 @@ class MyMainWindow(QMainWindow):
     def switchPage(self):
         """Switch between SOO and MOO pages, and change the menu bar accordingly"""
         if self.stackedWidget.currentIndex() == SOO_PAGE:
-            self.action_SwitchPage.setText("Change to SOO")
+            self.action_SwitchPage.setText("Switch to SOO")
             self.tabs[SOO_PAGE].edit_window.close()
             self.tabs[MOO_PAGE].moo_checkBox.setChecked(True)
             self.tabs[MOO_PAGE].soo_checkBox.setChecked(False)
+            self.tabs[SOO_PAGE].moo_checkBox.setChecked(False)
+            self.tabs[SOO_PAGE].soo_checkBox.setChecked(True)
             self.stackedWidget.setCurrentIndex(MOO_PAGE)
         else:
-            self.action_SwitchPage.setText("Change to MOO")
+            self.action_SwitchPage.setText("Switch to MOO")
             self.tabs[MOO_PAGE].edit_window.close()
             self.tabs[SOO_PAGE].moo_checkBox.setChecked(False)
             self.tabs[SOO_PAGE].soo_checkBox.setChecked(True)
+            self.tabs[MOO_PAGE].moo_checkBox.setChecked(True)
+            self.tabs[MOO_PAGE].soo_checkBox.setChecked(False)
             self.stackedWidget.setCurrentIndex(SOO_PAGE)
     
     #####! TODO: Implement the functionality for the following actions

@@ -11,18 +11,20 @@ moo_options = {
 }
 
 soo_options = {
-    PROB_KEY: ['ackley', 'g1'],
+    PROB_KEY: ['ackley', 'griewank', 'rastrigin'],
     ALGO_KEY: ['ga', 'pso'],
     PI_KEY: ['best'],
     TERM_KEY: ['n_eval'],
-    N_SEEDS_KEY: 3
+    N_SEEDS_KEY: 1
 }
 
 def main():
     
     app = QApplication([])
     main_window = MyMainWindow(soo_options, moo_options)
-    main_window.activePage().runButton()
+    main_window.tabs[0].runButton()
+    main_window.tabs[1].runButton()
+    
     main_window.show()    
     app.exec_()
         

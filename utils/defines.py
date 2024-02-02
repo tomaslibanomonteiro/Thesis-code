@@ -91,3 +91,5 @@ VOTING_KEY = 'Voting'
 
 PLOT_PROGRESS_KEY = 'Progress'
 PLOT_PS_KEY = 'Pareto Sets'
+PLOT_PC_KEY = 'Parallel Coordinates'
+PLOT_FL_KEY = 'Fitness Landscape'
