@@ -151,7 +151,7 @@ class Plotter(QWidget):
     def __init__(self, plot_mode, prob_id:str, prob_object, run_thread:RunThread, algo_ids:list, other_ids:list, title='Plot'):
         super().__init__()
         
-        self.setAttribute(Qt.WA_DeleteOnClose)
+        self.plot_mode = plot_mode
         self.sc = None
         self.run_thread = run_thread
         self.prob_id = prob_id
@@ -165,19 +165,17 @@ class Plotter(QWidget):
         elif len(other_ids) == 0 and plot_mode != PLOT_FL_KEY:
             MyMessageBox("Select at least one Seed/Problem to plot")
             return
-        elif plot_mode == PLOT_PROGRESS_KEY:
-            self.plotProgress()
-        elif plot_mode == PLOT_PS_KEY:
-            self.plotParetoSets()
-        elif plot_mode == PLOT_PC_KEY:
-            self.plotPCP()
-        elif plot_mode == PLOT_FL_KEY:
-            self.plotFitnessLandscape()
-        else:        
-            raise ValueError(f"Plot mode can only be {PLOT_PROGRESS_KEY}, {PLOT_PC_KEY}, {PLOT_PS_KEY} or {PLOT_FL_KEY}") 
-
+        else:
+            try:
+                self.plotRespectiveMode()
+            except Exception as e:
+                MyMessageBox(f"Could not plot in mode {plot_mode}. The following error occurred:\n{e}")
+                return
+            
         if self.sc is None:
+            MyMessageBox(f"Could not plot in mode {plot_mode}. No source was created")
             return
+        
         # Create toolbar, passing canvas as first parament, parent (self, the CustomDialog) as second.
         toolbar = NavigationToolbar2QT(self.sc, self)
 
@@ -188,6 +186,18 @@ class Plotter(QWidget):
         self.setLayout(layout)
         self.setWindowTitle(title)
         self.show()
+
+    def plotRespectiveMode(self):
+        if self.plot_mode == PLOT_PROGRESS_KEY:
+            self.plotProgress()
+        elif self.plot_mode == PLOT_PS_KEY:
+            self.plotParetoSets()
+        elif self.plot_mode == PLOT_PC_KEY:
+            self.plotPCP()
+        elif self.plot_mode == PLOT_FL_KEY:
+            self.plotFitnessLandscape()
+        else:        
+            raise ValueError(f"Plot mode can only be {PLOT_PROGRESS_KEY}, {PLOT_PC_KEY}, {PLOT_PS_KEY} or {PLOT_FL_KEY}") 
 
     def plotProgress(self):
         """Plot the progress of the checked algorithms for the given problem and checked performance indicators"""
