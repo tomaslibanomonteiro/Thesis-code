@@ -31,7 +31,7 @@ class Defaults():
             self.dict[ALGO_KEY]['ctaea']['selection'] = 'restricted_mating_ctaea'
             self.dict[ALGO_KEY]['rnsga3']['selection'] = 'tournament_by_cv_then_random'
         
-        self.dict[TERM_KEY]['n_eval']['n_max_evals'] = 100
+        self.dict[TERM_KEY]['n_eval']['n_max_evals'] = 2000
         self.dict[TERM_KEY]['n_gen']['n_max_gen'] = 40
         self.dict[TERM_KEY]['fmin']['fmin'] = 1
         self.dict[TERM_KEY]['time']['max_time'] = 10

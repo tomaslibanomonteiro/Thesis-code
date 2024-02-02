@@ -23,7 +23,7 @@ def main():
     app = QApplication([])
     main_window = MyMainWindow(soo_options, moo_options)
     main_window.tabs[0].runButton()
-    main_window.tabs[1].runButton()
+    # main_window.tabs[1].runButton()
     
     main_window.show()    
     app.exec_()
