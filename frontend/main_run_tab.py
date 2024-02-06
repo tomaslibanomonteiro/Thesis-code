@@ -9,6 +9,7 @@ from utils.plotting import Plotter
 from backend.run import RunThread
 from frontend.my_widgets import MyMessageBox
 from backend.run import RunThread
+    
 class RunTab(QFrame):
     def __init__(self, run_thread: RunThread, label: str):
         super().__init__()
@@ -157,15 +158,15 @@ class RunTab(QFrame):
                 # set voting column                
                 if j == len(df.columns)-1:
                     item = QTableWidgetItem(str(df.iloc[i, -1]))
+                    if df.iloc[i, -1] == df.iloc[:, -1].max():
+                        setBold(item)
                 # set value columns
                 else:
                     nice_string = "{:.3e}".format(df.iloc[i, j]) 
                     item = QTableWidgetItem(nice_string)
                     # set text to bold if it is the smallest value in the column
                     if df.iloc[i, j] == df.iloc[:, j].min():
-                        font = item.font()
-                        font.setBold(True)
-                        item.setFont(font)
+                        setBold(item)
                 self.table.setItem(i, j, item)
 
     def headerClick(self, x:int, orientation:str):
@@ -227,3 +228,7 @@ class RunTab(QFrame):
         """Save the run""" #!
         print("save run to be implemented")
 
+def setBold(item):
+    font = item.font()
+    font.setBold(True)
+    item.setFont(font)

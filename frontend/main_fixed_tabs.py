@@ -12,7 +12,7 @@ from backend.run import RunThread, RunArgs
 from frontend.my_widgets import MyComboBox, MyMessageBox
 from frontend.edit_window import EditWindow, ArgsAreSet
 from frontend.main_run_tab import RunTab
-from utils.defines import (RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_FIXED_TABS, RESULT_LAYOUT_WIDGETS, GET_OBJECT_ERROR, 
+from utils.defines import (RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_FIXED_TABS, RESULT_LAYOUT_WIDGETS, 
                            MAX_RESULT_FRAMES, ALGO_KEY, PROB_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY)
 
 class MainTabsWidget(QTabWidget):
@@ -158,7 +158,8 @@ class MainTabsWidget(QTabWidget):
         # set the combo boxes and the default run_options
         missing_options = self.setTable(self.prob_table, run_options[PROB_KEY], DEFAULT_ROW_NUMBERS[0])
         missing_options += self.setTable(self.algo_table, run_options[ALGO_KEY], DEFAULT_ROW_NUMBERS[1])
-        missing_options += self.setTable(self.pi_table, run_options[PI_KEY], DEFAULT_ROW_NUMBERS[2])
+        min_rows = DEFAULT_ROW_NUMBERS[2] if self.moo_checkBox.isChecked() else 1
+        missing_options += self.setTable(self.pi_table, run_options[PI_KEY], min_rows)
         missing_options += self.setTable(self.term_table, run_options[TERM_KEY], DEFAULT_ROW_NUMBERS[3])
 
         self.seedsSpinBox.setValue(run_options[N_SEEDS_KEY]) 
@@ -178,76 +179,64 @@ class MainTabsWidget(QTabWidget):
         
         return run_options
     
-    def getRunThread(self):
-
-        moo = self.moo_checkBox.isChecked()
+    def getIDsFromTable(self, table: QTableWidget):
+        """Get the IDs from the table"""
         
-        # get seed values
-        n_seeds = self.seedsSpinBox.value()
+        tables = [self.prob_table, self.algo_table, self.pi_table, self.term_table]
+        names = ["Problem", "Algorithm", "Performance Indicator", "Termination Criteria"]
+        
+        ids = [table.cellWidget(row, 0).currentText() for row in range(table.rowCount()) if table.cellWidget(row, 0).currentText() != ""]
+        if ids == []:
+            MyMessageBox(f"Please select at least one {names[tables.index(table)]}.")
+        elif len(ids) != len(set(ids)):
+            MyMessageBox(f"Please selected {names[tables.index(table)]}s with different ids.")
+            ids = []
+        
+        return ids
+    
+    def getRunThread(self):
         
         tabs = self.edit_window.tabs
+            
+        # get run args, a list with the arguments for each individual run
+        run_args, algo_object, prob_object, pi_objects = [], None, None, []
+
+        # get problem object
+        for prob_id in self.getIDsFromTable(self.prob_table):
+            prob_object = tabs[PROB_KEY].getObjectFromID(prob_id)
+            pf = prob_object.pareto_front() if prob_object.pareto_front else None #!
+            n_obj = prob_object.n_obj if prob_object.n_obj else None #!
+            
+            # get algo objects (ref_dirs depends on n_obj) 
+            for algo_id in self.getIDsFromTable(self.algo_table):
+                algo_object = tabs[ALGO_KEY].getObjectFromID(algo_id, pf, n_obj)
+                
+                # get pi objects (pi depends on prob pf)
+                pi_ids, pi_objects = [], []
+                for pi_id in self.getIDsFromTable(self.pi_table):
+                    pi_ids.append(pi_id)
+                    pi_object = tabs[PI_KEY].getObjectFromID(pi_id, pf, n_obj)
+                    pi_objects.append(pi_object)
+        
+                # check if all objects are not None
+                if prob_object and algo_object and not (None in pi_objects):
+                    run_args.append(RunArgs(prob_id, prob_object, algo_id, algo_object, pi_ids, pi_objects))
+                else:
+                    return None
         
         # get the termination object
-        term_id = self.term_table.cellWidget(0, 0).currentText()
-        if term_id == "":
-            MyMessageBox("Please select a Termination Criteria.")
-            return None
-        term_object = tabs[TERM_KEY].getObjectFromID(term_id)
-        if term_object is GET_OBJECT_ERROR:
-            return None
-        # get run args, a list with the arguments for each individual run
-        run_args =  []
-        algo_id = None
-        # get problem object
-        for row in range(self.prob_table.rowCount()):
-            prob_id = self.prob_table.cellWidget(row, 0).currentText()
-            if prob_id != "":
-                prob_object = tabs[PROB_KEY].getObjectFromID(prob_id)
-                if prob_object is GET_OBJECT_ERROR:
-                    return None
-                pf = prob_object.pareto_front() if prob_object.pareto_front else None
-                n_obj = prob_object.n_obj
-                
-                # get algo objects (ref_dirs depends on n_obj) 
-                for row in range(self.algo_table.rowCount()):
-                    algo_id = self.algo_table.cellWidget(row, 0).currentText()
-                    if algo_id != "":
-                        algo_id = self.algo_table.cellWidget(row, 0).currentText()
-                        algo_object = tabs[ALGO_KEY].getObjectFromID(algo_id, pf, n_obj)
-                        if algo_object is GET_OBJECT_ERROR:
-                            return None
-                        # get pi objects (pi depends on prob pf)
-                        pi_ids, pi_objects = [], []
-                        for row in range(self.pi_table.rowCount()):
-                            pi_id = self.pi_table.cellWidget(row, 0).currentText()
-                            if pi_id != "":
-                                pi_ids.append(pi_id)
-                                pi_object = tabs[PI_KEY].getObjectFromID(pi_id, pf, n_obj)
-                                if pi_object is GET_OBJECT_ERROR:
-                                    return None
-                                pi_objects.append(pi_object)
-                    
-                        # check if any of the arguments is not set
-                        if pi_ids == []:
-                            MyMessageBox("Please select at least one Performance Indicator.")
-                            return None
-                    
-                        # append the arguments for this run
-                        run_args.append(RunArgs(prob_id, prob_object, algo_id, algo_object, pi_ids, pi_objects))
-        
-        if algo_id is None:
-            MyMessageBox("Please select at least one Problem.")   
-            return None      
-        elif run_args == []:
-            MyMessageBox("Please select at least one Algorithm.")
-            return None
-        else:
+        term_id = self.getIDsFromTable(self.term_table)
+        term_object = tabs[TERM_KEY].getObjectFromID(term_id[0]) if term_id != [] else None
+
+        if prob_object and algo_object and not (None in pi_objects) and pi_objects != [] and term_object:
+            moo = self.moo_checkBox.isChecked()
+            n_seeds = self.seedsSpinBox.value()
             parameters = self.edit_window.getParameters()
             run_options = self.runOptions_to_dict()
+            return RunThread(run_args, term_id, term_object, n_seeds, moo, parameters, run_options, self.fixed_seeds)
+        else:
+            return None
         
-        # get the run objects and create the run window
-        return RunThread(run_args, term_id, term_object, n_seeds, moo, parameters, run_options, self.fixed_seeds)
-
     def runButton(self):
         """First start the run window, then start the run. The two are separated 
         so that in a test scenario the threads from this window can be trailed 

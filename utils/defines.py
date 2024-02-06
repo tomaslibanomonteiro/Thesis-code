@@ -85,8 +85,6 @@ RUN_OPTIONS_ARGS_DICT = {PROB_KEY: ('Problems', 'Edit Problems', get_problem, ge
 
 KEY_ARGS_DICT = {**OPERATORS_ARGS_DICT, **RUN_OPTIONS_ARGS_DICT}
 
-GET_OBJECT_ERROR = -1
-
 VOTING_KEY = 'Voting'
 
 PLOT_PROGRESS_KEY = 'Progress'

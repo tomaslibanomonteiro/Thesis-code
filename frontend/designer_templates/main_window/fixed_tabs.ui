@@ -655,7 +655,7 @@
            </row>
            <column>
             <property name="text">
-             <string>Choose Termination</string>
+             <string>Choose Termin.</string>
             </property>
             <property name="font">
              <font>
