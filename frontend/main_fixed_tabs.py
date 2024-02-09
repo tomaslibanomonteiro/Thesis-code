@@ -13,9 +13,9 @@ from backend.run import RunThread, RunArgs
 from frontend.my_widgets import MyComboBox, MyMessageBox
 from frontend.edit_window import EditWindow, ArgsAreSet
 from frontend.main_run_tab import RunTab
-from utils.defines import (RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_FIXED_TABS, HISTORY_LAYOUT_WIDGETS, 
-                           MAX_HISTORY_FRAMES, ALGO_KEY, PROB_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY, MOO_KEY)
-from utils.utils import myFileManager, showAndRaise
+from utils.defines import (RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_FIXED_TABS, HISTORY_LAYOUT_WIDGETS, RUN_OPTIONS_ARGS_DICT,
+                           MAX_HISTORY_FRAMES, ALGO_KEY, PROB_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY, MOO_KEY, OPERATORS_ARGS_DICT)
+from utils.utils import myFileManager, showAndRaise, getAvailableName
 
 class MainTabsWidget(QTabWidget):
 
@@ -55,8 +55,8 @@ class MainTabsWidget(QTabWidget):
         
         ############################ EDIT WINDOW ##############################
         
-        self.edit_window = None
-        self.setEditWindow(parameters)
+        self.edit_window = EditWindow(parameters, self.moo_checkBox.isChecked())
+        self.edit_window.itemUpdates.connect(self.updateComboBoxItems)
         
         ############################ RUN TAB #################################
         
@@ -66,7 +66,7 @@ class MainTabsWidget(QTabWidget):
             run_options[key] = [] if key != N_SEEDS_KEY else 1
 
         self.initialComboBoxItems(parameters)
-        self.runOptions_to_tables(run_options)
+        self.dictToTables(run_options)
         
         # set run button 
         self.run_button.clicked.connect(self.runButton)
@@ -82,14 +82,7 @@ class MainTabsWidget(QTabWidget):
         self.open_all_tabs.clicked.connect(self.openAllTabs)
         self.load_run.clicked.connect(self.loadRun)
         self.erase_all_runs.clicked.connect(self.eraseAllRuns)
-
-    def setEditWindow(self, parameters: dict):
-        """Set the edit window with the parameters"""
         
-        # create edit window
-        self.edit_window = EditWindow(parameters)
-        self.edit_window.itemUpdates.connect(self.updateComboBoxItems)
-
     def closeTab(self, index):
         # close the tab with the index
         self.removeTab(index)
@@ -152,7 +145,7 @@ class MainTabsWidget(QTabWidget):
                 
         return missing_options
                 
-    def runOptions_to_tables(self, run_options: dict):
+    def dictToTables(self, run_options: dict):
         
         missing_keys = set(RUN_OPTIONS_KEYS) - set(run_options.keys())
             
@@ -172,7 +165,7 @@ class MainTabsWidget(QTabWidget):
             MyMessageBox(f"The following run options are not available: {missing_options[:-2]}. \nTo choose them, please add"
                                    " the correspondent IDs to the respective table through the 'Edit Parameters' option of the menu bar.")
             
-    def runOptions_to_dict(self):
+    def tablesToDict(self):
         """Get the run options from the table into a dictionary"""
         run_options = {}
         keys = RUN_OPTIONS_KEYS.copy()
@@ -241,13 +234,13 @@ class MainTabsWidget(QTabWidget):
                 # get the rest of the parameters
                 moo = self.moo_checkBox.isChecked()
                 n_seeds = self.seedsSpinBox.value()
-                parameters = self.edit_window.getParameters()
-                run_options = self.runOptions_to_dict()
+                parameters = self.edit_window.tabsToDict()
+                run_options = self.tablesToDict()
                 return RunThread(run_args, term_id, term_object, n_seeds, moo, parameters, run_options, self.fixed_seeds)
         else:
             return None
     
-    def setProgressFrame(self, run_thread: RunThread):
+    def setProgressFrame(self, run_thread: RunThread, name:str=None):
         
         if self.history_layout.count() > MAX_HISTORY_FRAMES + HISTORY_LAYOUT_WIDGETS - 1:
             MyMessageBox("Please clear one of the Runs before adding another.")
@@ -255,7 +248,12 @@ class MainTabsWidget(QTabWidget):
         
         # create a progress frame. get the number of the run from the self.listWidget
         self.run_counter += 1
-        progress_frame = ProgressFrame(self, run_thread, f"Run {self.run_counter}")
+        
+        if name is None:
+            name = f"Run {self.run_counter}"
+        curr_names = [self.history_layout.itemAt(i).widget().run_name for i in range(HISTORY_LAYOUT_WIDGETS-1, self.history_layout.count()-1)]
+        name = getAvailableName(name, curr_names)
+        progress_frame = ProgressFrame(self, run_thread, name)
         
         # add widget after the last widget in the layout but before the stretch
         self.history_layout.insertWidget(self.history_layout.count() - 1, progress_frame)
@@ -273,7 +271,7 @@ class MainTabsWidget(QTabWidget):
 
     def saveRunOptions(self):
         """Save the run options"""
-        options_dict = self.runOptions_to_dict()
+        options_dict = self.tablesToDict()
         
         moo = "MOO" if self.moo_checkBox.isChecked() else "SOO"
         # Open file dialog to select the save location
@@ -283,10 +281,10 @@ class MainTabsWidget(QTabWidget):
         """Load the run options"""
 
         # Open file dialog to select the file to load
-        options_dict = myFileManager('Load Run Options', keys_to_check=RUN_OPTIONS_KEYS, moo=self.moo_checkBox.isChecked())
+        options_dict, _ = myFileManager('Load Run Options', keys_to_check=RUN_OPTIONS_KEYS, moo=self.moo_checkBox.isChecked())
         
         if options_dict is not None:
-            self.runOptions_to_tables(options_dict)
+            self.dictToTables(options_dict)
     
     ### History tab methods ###
     
@@ -330,17 +328,33 @@ class MainTabsWidget(QTabWidget):
         
     def loadRun(self):
         moo = self.moo_checkBox.isChecked()
-        keys = ['parameters', 'run_options', 'n_seeds', 'term_id', 'run_args_list', 'data', 'run_counter', 'total_runs', 'canceled', 'best_gen', 'fixed_seeds']
-        data = myFileManager('Load Run', keys_to_check=keys, moo=moo)
+        keys = ['parameters', 'run_options', 'data', 'best_gen', 'run_counter']
+        loaded_data, filename = myFileManager('Load Run', keys_to_check=keys, moo=moo)
 
-        if data is not None:
-            run_thread = RunThread(data['run_args_list'], data['term_id'], data['n_seeds'], moo, data['parameters'], data['run_options'], data['fixed_seeds'])
-            run_thread.data = data['data']
-            run_thread.best_gen = data['best_gen']
-            progress_frame = self.setProgressFrame(run_thread)
-            if progress_frame is not None:
-                progress_frame.afterRun()
-        
+        if loaded_data is not None:
+            if not (isinstance(loaded_data['run_options'], dict) and isinstance(loaded_data['parameters'], dict)):
+                MyMessageBox("The Run dictionary is not in the correct format. Must have 'parameters' and 'run_options' keys.")
+                return
+            param_keys = list(OPERATORS_ARGS_DICT.keys()) + list(RUN_OPTIONS_ARGS_DICT.keys()) + [MOO_KEY]
+            if set(loaded_data['parameters'].keys()) != set(param_keys):
+                MyMessageBox(f"The parameters must have the following keys: {param_keys}.")
+                return
+            if set(loaded_data['run_options'].keys()) != set(RUN_OPTIONS_KEYS + [MOO_KEY]):
+                MyMessageBox(f"The run options must have the following keys: {RUN_OPTIONS_KEYS + [MOO_KEY]}.")
+                return
+            curr_parameters = self.edit_window.tabsToDict()
+            curr_run_options = self.tablesToDict()
+            self.edit_window.dictToTabs(loaded_data['parameters'])
+            self.dictToTables(loaded_data['run_options'])
+            run_thread = self.getRunThread()
+            self.edit_window.dictToTabs(curr_parameters)
+            self.dictToTables(curr_run_options)
+            if run_thread is not None:
+                run_thread.data, run_thread.best_gen, run_thread.run_counter = loaded_data['data'], loaded_data['best_gen'], loaded_data['run_counter']
+                progress_frame = self.setProgressFrame(run_thread, filename)
+                if progress_frame is not None:
+                    progress_frame.afterRun()
+                            
 class ProgressFrame(QFrame):
     def __init__(self, tabWidget: MainTabsWidget, run_thread: RunThread, run_name: str):
         super().__init__()
@@ -357,7 +371,6 @@ class ProgressFrame(QFrame):
         self.run_thread = run_thread                
         self.run_thread.progressSignal.connect(self.receiveUpdate)
         self.run_thread.finished.connect(self.afterRun)
-        self.run_thread.start()
 
     def afterRun(self):
         """After the run is finished, add the tab to the run window and show it"""
@@ -416,8 +429,8 @@ class ProgressFrame(QFrame):
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
         if reply == QMessageBox.Yes:
-            self.tabWidget.setEditWindow(self.run_thread.parameters)
-            self.tabWidget.runOptions_to_tables(self.run_thread.run_options)
+            self.tabWidget.edit_window.dictToTabs(self.run_thread.parameters)
+            self.tabWidget.dictToTables(self.run_thread.run_options)
             self.tabWidget.setCurrentIndex(0)
 
     def erase(self):

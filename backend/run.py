@@ -63,8 +63,8 @@ class RunThread(QThread):
         self.term_object = term_object
         self.run_args_list = run_args_list
         self.moo = moo
-        self.data = pd.DataFrame()
-        self.run_counter = 0
+        self.fixed_seeds = fixed_seeds
+        
         self.total_runs = len(run_args_list)*n_seeds
         self.canceled = False
         # dictionary of the best generation for each run to plot later
@@ -72,7 +72,8 @@ class RunThread(QThread):
         # if it is a SOO problem, contains the coordinates in decision space followed by the objective space value
         # of the last generation  
         self.best_gen = {} 
-        self.fixed_seeds = fixed_seeds
+        self.data = pd.DataFrame()
+        self.run_counter = 0
 
     def cancel(self):
         self.canceled = True    

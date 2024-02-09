@@ -19,13 +19,13 @@ def ArgsAreSet(dic: dict) -> bool:
 class EditWindow(QWidget):
     itemUpdates = pyqtSignal(str,list) 
     operatorUpdates = pyqtSignal(str,list)
-    def __init__(self, parameters: dict):
+    def __init__(self, parameters: dict, moo: bool):
         super().__init__()
 
         loadUi(DESIGNER_EDIT_WINDOW, self)
         
         self.widgets_frame = MyWidgetsFrame()
-        self.moo = parameters.pop(MOO_KEY)
+        self.moo = moo
         self.setWindowTitle("Edit Parameters")
         
         # Add a spacer so that the height remains the same when all other tabs are closed
@@ -34,7 +34,7 @@ class EditWindow(QWidget):
         spacer.setFixedWidth(1)
         self.tabWidget.tabBar().setTabButton(0, QTabBar.RightSide, spacer)
 
-        self.setTabs(parameters)
+        self.dictToTabs(parameters)
     
         # set the buttons
         self.open_operators.clicked.connect(self.openOperators)
@@ -61,7 +61,7 @@ class EditWindow(QWidget):
         self.tabWidget.addTab(self.tabs[tab_key], self.tabs[tab_key].name)
         self.tabWidget.setCurrentIndex(self.tabWidget.count()-1)
         
-    def setTabs(self, parameters: dict):
+    def dictToTabs(self, parameters: dict):
         # close all tabs except the first one
         while self.tabWidget.count() > 1:
             self.tabWidget.removeTab(1)
@@ -100,7 +100,7 @@ class EditWindow(QWidget):
                      "the operators parameters that are then used in the algorithms. Click on \"Save Parameters\" "
                      "to save the parameters to a file.", "Help", warning_icon=False)
 
-    def getParameters(self) -> dict:
+    def tabsToDict(self) -> dict:
         """Go through all the tabs and get the parameters as a dictionary, where the key is the tab name
         and the value is a dictionary with the parameters. dont forget to get the operators"""
         
@@ -115,7 +115,7 @@ class EditWindow(QWidget):
         """Go through all the tabs and save the parameters as a dictionary, where the key is the tab name
         and the value is a dictionary with the parameters. dont forget to save the operators"""
         
-        parameters = self.getParameters()
+        parameters = self.tabsToDict()
         moo = "MOO" if self.moo else "SOO"
         myFileManager('Save Parameters', f'{moo}_parameters', parameters)
     
@@ -124,10 +124,10 @@ class EditWindow(QWidget):
         
         # Open file dialog to select the file to load
         keys = list(OPERATORS_ARGS_DICT.keys()) + list(RUN_OPTIONS_ARGS_DICT.keys())
-        parameters = myFileManager('Load Parameters', keys_to_check=keys, moo=self.moo)
+        parameters, _ = myFileManager('Load Parameters', keys_to_check=keys, moo=self.moo)
 
         if parameters is not None:
-            self.setTabs(parameters)
+            self.dictToTabs(parameters)
                                 
 class EditTab(QFrame):
     def __init__(self, edit_window: EditWindow, key: str, tab_args: tuple, parameters: dict):

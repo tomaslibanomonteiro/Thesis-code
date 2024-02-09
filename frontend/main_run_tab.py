@@ -226,12 +226,15 @@ class RunTab(QFrame):
         
         data = {'parameters': self.run_thread.parameters,
                 'run_options': self.run_thread.run_options,
+                'best_gen': self.run_thread.best_gen,
+                'data': self.run_thread.data,
+                'run_counter': self.run_thread.run_counter,
                 'moo': self.run_thread.moo}
 
-        def_name = self.label.text().replace(" ", "_") + ".pickle"
+        def_name = self.label.text() + ".pickle"
         myFileManager('Save Run Thread', def_name, data)
         
     def saveResult(self):
         """Save the result of the run"""
-        name = self.label.text().replace("Run ", "Result_") + ".csv"
+        name = self.label.text().replace("Run", "Result") + ".csv"
         myFileManager('Save Run Data', name, self.run_thread.data, ".csv", "CSV Files (*.csv)")
