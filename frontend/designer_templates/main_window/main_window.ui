@@ -65,7 +65,7 @@
      <property name="title">
       <string>Save</string>
      </property>
-     <addaction name="action_SaveAllResults"/>
+     <addaction name="action_SaveAllRuns"/>
      <addaction name="action_SaveRunOptions"/>
      <addaction name="action_SaveParameters"/>
     </widget>
@@ -73,12 +73,12 @@
      <property name="title">
       <string>Load</string>
      </property>
-     <addaction name="action_LoadResults"/>
+     <addaction name="action_LoadRun"/>
      <addaction name="action_LoadRunOptions"/>
      <addaction name="action_LoadParameters"/>
     </widget>
-    <addaction name="menuLoad"/>
     <addaction name="menuSave"/>
+    <addaction name="menuLoad"/>
    </widget>
    <widget class="QMenu" name="menuOptions">
     <property name="title">
@@ -118,9 +118,9 @@
     <string>Run Options</string>
    </property>
   </action>
-  <action name="action_LoadResults">
+  <action name="action_LoadRun">
    <property name="text">
-    <string>Results</string>
+    <string>Run</string>
    </property>
   </action>
   <action name="action_SaveParameters">
@@ -151,6 +151,16 @@
   <action name="action_LoadParameters">
    <property name="text">
     <string>Parameters</string>
+   </property>
+  </action>
+  <action name="actionResults">
+   <property name="text">
+    <string>Results</string>
+   </property>
+  </action>
+  <action name="action_SaveAllRuns">
+   <property name="text">
+    <string>All Runs</string>
    </property>
   </action>
  </widget>

@@ -88,11 +88,11 @@ class RunThread(QThread):
                     return
                 self.progressUpdate(run_args.algo_id, run_args.prob_id, seed)
                 res = self.singleRun(run_args, seed, self.term_object)
-                self.updateData(run_args, res, seed, res.algorithm.callback)
+                self.updateData(run_args, res, seed, res.algorithm.callback) if res is not None else None
                 
     def singleRun(self, run_args: RunArgs, seed: int, termination) -> Result:
         try:
-            res = minimize(algorithm=run_args.algo_object,
+            res = minimize(algorithm=run_args.algo_object, #@IgnoreException
                         problem=run_args.prob_object,
                         termination=termination,
                         seed=seed,
@@ -114,16 +114,12 @@ class RunThread(QThread):
         
         text = f"Running Algorithm '{algo_id}' on Problem '{prob_id}', seed {seed}"
         percentage = self.run_counter/self.total_runs*100                
-        self.run_counter += 1    
         self.progressSignal.emit(text, percentage)
-        
         debug_print(f"{percentage:.0f}%  - ",text) #!
+        self.run_counter += 1    
         
     def updateData(self, run_args: RunArgs, res: Result, seed:int, callback: MyCallback):
-        
-        if res is None:
-            return
-        
+                
         run_length = len(callback.data[N_EVAL_KEY])
 
         single_run_data = {N_SEEDS_KEY: [seed] * run_length,

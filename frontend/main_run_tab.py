@@ -2,14 +2,16 @@ from PyQt5.QtWidgets import QFrame, QTableWidget, QTableWidgetItem, QCheckBox, Q
 from PyQt5.uic import loadUi
 from PyQt5.QtCore import Qt
 import numpy as np
+import pickle
 
 from utils.defines import (DESIGNER_RUN_TAB, PROB_KEY, ALGO_KEY, N_SEEDS_KEY, N_GEN_KEY, N_EVAL_KEY, VOTING_KEY, PI_KEY,
                            CLASS_KEY, TERM_KEY, PLOT_PROGRESS_KEY, PLOT_PS_KEY, PLOT_PC_KEY, PLOT_FL_KEY)
+from utils.utils import myFileManager, setBold
 from utils.plotting import Plotter
 from backend.run import RunThread
 from frontend.my_widgets import MyMessageBox
 from backend.run import RunThread
-    
+
 class RunTab(QFrame):
     def __init__(self, run_thread: RunThread, label: str):
         super().__init__()
@@ -40,12 +42,13 @@ class RunTab(QFrame):
     def setUI(self, label):
         
         # connections
-        self.save_data.clicked.connect(self.saveData)
+        self.save_result.clicked.connect(self.saveResult)
         self.save_run.clicked.connect(self.saveRun)
+        self.plot_button.clicked.connect(self.plot)
+        
         self.values_comboBox.currentIndexChanged.connect(self.changedChosenValue)
         self.table.horizontalHeader().sectionDoubleClicked.connect(lambda col: self.headerClick(col, "horizontal"))
         self.table.verticalHeader().sectionDoubleClicked.connect(lambda row: self.headerClick(row, "vertical"))
-        self.plot_button.clicked.connect(self.plot)
         self.selected_id.currentIndexChanged.connect(self.changeTable)
         items = [PLOT_PROGRESS_KEY, PLOT_PS_KEY, PLOT_PC_KEY] if self.run_thread.moo else [PLOT_FL_KEY, PLOT_PROGRESS_KEY]
         self.plot_comboBox.addItems(items)
@@ -187,6 +190,16 @@ class RunTab(QFrame):
         string = f"Parameters for {key} of class {clazz} with id \'{id}\': \n {args}"
         MyMessageBox(string, 'Parameters', warning_icon=False)
             
+    def seeTermination(self, event):
+        """See the termination criteria"""
+        id = self.run_thread.term_id
+        args = self.run_thread.parameters[TERM_KEY][id].copy()
+        clazz = args.pop(CLASS_KEY)
+        string = f"Parameters for {TERM_KEY} of class {clazz} with id \'{id}\': \n {args}"
+        MyMessageBox(string, 'Parameters', warning_icon=False)
+        
+    # buttons methods
+    
     def plot(self):
         """Plot the results"""
         prob_id = self.plot_prob.currentText()
@@ -207,28 +220,18 @@ class RunTab(QFrame):
                 
         plot_mode = self.plot_comboBox.currentText()
         self.plot_widgets.append(Plotter(plot_mode, prob_id, prob_object, self.run_thread, algo_ids, other_ids, self.label.text()))
-        
-    def saveData(self):
-        """Save the results of the run"""
-        options = QFileDialog.Options()
-        defaultName = f"change_this.csv" #!
-        fileName, _ = QFileDialog.getSaveFileName(self, "QFileDialog.getSaveFileName()", defaultName, "CSV Files (*.csv);;All Files (*)", options=options)
-        if fileName:
-            self.run_thread.data.to_csv(fileName, index=False)    
     
-    def seeTermination(self, event):
-        """See the termination criteria"""
-        id = self.run_thread.term_id
-        args = self.run_thread.parameters[TERM_KEY][id].copy()
-        clazz = args.pop(CLASS_KEY)
-        string = f"Parameters for {TERM_KEY} of class {clazz} with id \'{id}\': \n {args}"
-        MyMessageBox(string, 'Parameters', warning_icon=False)
-        
     def saveRun(self):
-        """Save the run""" #!
-        print("save run to be implemented")
+        """Save the run thread object"""
+        
+        data = {'parameters': self.run_thread.parameters,
+                'run_options': self.run_thread.run_options,
+                'moo': self.run_thread.moo}
 
-def setBold(item):
-    font = item.font()
-    font.setBold(True)
-    item.setFont(font)
+        def_name = self.label.text().replace(" ", "_") + ".pickle"
+        myFileManager('Save Run Thread', def_name, data)
+        
+    def saveResult(self):
+        """Save the result of the run"""
+        name = self.label.text().replace("Run ", "Result_") + ".csv"
+        myFileManager('Save Run Data', name, self.run_thread.data, ".csv", "CSV Files (*.csv)")

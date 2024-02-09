@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1133</width>
-    <height>737</height>
+    <height>660</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -119,22 +119,22 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="load_options_button">
-           <property name="enabled">
-            <bool>true</bool>
-           </property>
-           <property name="text">
-            <string>Load Options</string>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QPushButton" name="save_options_button">
            <property name="enabled">
             <bool>true</bool>
            </property>
            <property name="text">
             <string>Save Options</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="load_options_button">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="text">
+            <string>Load Options</string>
            </property>
           </widget>
          </item>
@@ -319,7 +319,7 @@
            </row>
            <column>
             <property name="text">
-             <string>Choose Problems</string>
+             <string>Problems</string>
             </property>
             <property name="font">
              <font>
@@ -444,7 +444,7 @@
            </row>
            <column>
             <property name="text">
-             <string>Choose Algorithms</string>
+             <string>Algorithms</string>
             </property>
             <property name="font">
              <font>
@@ -553,7 +553,7 @@
            <row/>
            <column>
             <property name="text">
-             <string>Choose Perf. Indic.</string>
+             <string>Perf. Indicators</string>
             </property>
             <property name="font">
              <font>
@@ -655,7 +655,7 @@
            </row>
            <column>
             <property name="text">
-             <string>Choose Termin.</string>
+             <string>Termination</string>
             </property>
             <property name="font">
              <font>
@@ -1291,7 +1291,7 @@
   </widget>
   <widget class="QWidget" name="results_tab">
    <attribute name="title">
-    <string>Results</string>
+    <string>Run History</string>
    </attribute>
    <widget class="QWidget" name="verticalLayoutWidget_2">
     <property name="geometry">
@@ -1302,7 +1302,7 @@
       <height>691</height>
      </rect>
     </property>
-    <layout class="QVBoxLayout" name="results_layout">
+    <layout class="QVBoxLayout" name="history_layout">
      <property name="spacing">
       <number>5</number>
      </property>
@@ -1333,22 +1333,22 @@
        <item>
         <widget class="QLabel" name="label_7">
          <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt; font-weight:600;&quot;&gt;Your Run Results will appear here&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt; font-weight:600;&quot;&gt;Your Runs will appear here&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="open_results_button">
+        <widget class="QPushButton" name="open_all_tabs">
          <property name="enabled">
           <bool>true</bool>
          </property>
          <property name="text">
-          <string>Open All</string>
+          <string>Open All Tabs</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="save_results_button">
+        <widget class="QPushButton" name="save_all_runs">
          <property name="enabled">
           <bool>true</bool>
          </property>
@@ -1358,24 +1358,34 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="save_results_button_2">
+        <widget class="QPushButton" name="save_all_results">
          <property name="enabled">
           <bool>true</bool>
          </property>
          <property name="text">
-          <string>Save All Data</string>
+          <string>Save All Results</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="erase_results_button">
+        <widget class="QPushButton" name="load_run">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="text">
+          <string>Load Run</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="erase_all_runs">
          <property name="text">
           <string>Erase All</string>
          </property>
         </widget>
        </item>
        <item>
-        <spacer name="horizontalSpacer_2">
+        <spacer name="horizontalSpacer_3">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>

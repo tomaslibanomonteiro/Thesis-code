@@ -1,14 +1,13 @@
-from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QFileDialog
+from PyQt5.QtWidgets import QMainWindow, QVBoxLayout
 from PyQt5.uic import loadUi
-import pickle
-from PyQt5.QtCore import QCoreApplication
 
 from backend.defaults import Defaults
 from frontend.main_fixed_tabs import MainTabsWidget
 from utils.defines import DESIGNER_MAIN, MOO_PAGE, SOO_PAGE
+from utils.utils import showAndRaise
 class MyMainWindow(QMainWindow):
 
-    def __init__(self, run_options_soo = {}, run_options_moo = {}, parameters_soo = Defaults('soo').dict, parameters_moo = Defaults('moo').dict, ) -> None:
+    def __init__(self, run_options_soo = {}, run_options_moo = {}, parameters_soo = Defaults(False).dict, parameters_moo = Defaults(True).dict, ) -> None:
         super().__init__()        
         
         loadUi(DESIGNER_MAIN, self)
@@ -24,20 +23,20 @@ class MyMainWindow(QMainWindow):
         self.action_SeeTutorial.triggered.connect(self.seeTutorial)
         self.action_About.triggered.connect(self.about)
 
-        self.action_SaveRunOptions.triggered.connect(self.saveRunOptions)
-        self.action_SaveAllResults.triggered.connect(self.saveAllResults)
-        self.action_LoadRunOptions.triggered.connect(self.loadRunOptions)
-        self.action_LoadResults.triggered.connect(self.loadResults)
+        self.action_SaveRunOptions.triggered.connect(lambda: self.activeTabs().saveRunOptions())
+        self.action_SaveAllRuns.triggered.connect(lambda: self.activeTabs().saveAllRuns())
+        self.action_LoadRunOptions.triggered.connect(lambda: self.activeTabs().loadRunOptions())
+        self.action_LoadRun.triggered.connect(lambda: self.activeTabs().loadRun())
 
-        self.action_EditParameters.triggered.connect(self.editParameters)
-        self.action_SaveParameters.triggered.connect(self.saveParameters)
-        self.action_LoadParameters.triggered.connect(self.loadParameters)
+        self.action_EditParameters.triggered.connect(lambda: showAndRaise(self.activeTabs().edit_window))
+        self.action_SaveParameters.triggered.connect(lambda: self.activeTabs().edit_window.saveParameters())
+        self.action_LoadParameters.triggered.connect(lambda: self.activeTabs().edit_window.loadParameters())
         
         # connect the buttons of each tab to the respective actions
         for tab in self.tabs.values():
             tab.soo_checkBox.clicked.connect(self.switchPage)
             tab.moo_checkBox.clicked.connect(self.switchPage)
-            tab.parameters_button.clicked.connect(self.editParameters)
+            tab.parameters_button.clicked.connect(lambda: lambda: showAndRaise(self.activeTabs().edit_window))
 
         # Set the current page to MOO if SOO has empty run options
         self.tabs[MOO_PAGE].moo_checkBox.setChecked(True)
@@ -59,7 +58,7 @@ class MyMainWindow(QMainWindow):
         
         return tabs
     
-    def activePage(self):
+    def activeTabs(self):
         """Return the active page"""
         return self.tabs[self.stackedWidget.currentIndex()]
     
@@ -81,88 +80,18 @@ class MyMainWindow(QMainWindow):
             self.tabs[MOO_PAGE].moo_checkBox.setChecked(True)
             self.tabs[MOO_PAGE].soo_checkBox.setChecked(False)
             self.stackedWidget.setCurrentIndex(SOO_PAGE)
-    
-    #####! TODO: Implement the functionality for the following actions
-    
-    def seeTutorial(self):
-        # TODO: Implement the functionality for the See Tutorial action
-        pass
-
-    def about(self):
-        # TODO: Implement the functionality for the About action
-        pass
-    
-    ###### MAIN WINDOW METHODS ######
-    
-    def saveRunOptions(self):
-        """Save the run options"""
-        active_tabs = self.activePage()
-
-        options_dict = active_tabs.runOptions_to_dict()
-        
-        # Open file dialog to select the save location
-        file_dialog = QFileDialog()
-        file_dialog.setAcceptMode(QFileDialog.AcceptSave)
-        file_dialog.setDefaultSuffix('.pickle')
-        file_dialog.setNameFilter('Pickle Files (*.pickle)')
-        file_dialog.setWindowTitle('Save Run Options')
-        
-        if file_dialog.exec_() == QFileDialog.Accepted:
-            file_path = file_dialog.selectedFiles()[0]
-            
-            # Save options_dict as a pickle file
-            with open(file_path, 'wb') as file:
-                pickle.dump(options_dict, file)
-    
-    def loadRunOptions(self):
-        """Load the run options"""
-        active_tabs = self.activePage()
-
-        # Open file dialog to select the file to load
-        file_dialog = QFileDialog()
-        file_dialog.setAcceptMode(QFileDialog.AcceptOpen)
-        file_dialog.setDefaultSuffix('.pickle')
-        file_dialog.setNameFilter('Pickle Files (*.pickle)')
-        file_dialog.setWindowTitle('Load Run Options')
-        
-        if file_dialog.exec_() == QFileDialog.Accepted:
-            file_path = file_dialog.selectedFiles()[0]
-            
-            # Load the pickle file
-            with open(file_path, 'rb') as file:
-                options_dict = pickle.load(file)
                 
-                # Set the run options
-                active_tabs.runOptions_to_tables(options_dict)
-
-    def saveAllResults(self):
-        active_tabs = self.activePage()
-        active_tabs.saveAllResults()
-        
-    #####! TODO: Implement the functionality for the following actions #####
-
-    def loadResults(self):
-        # TODO: Implement the functionality for the Load Results action
-        pass
-    
-    ####### EDIT WINDOW METHODS #######
-    
-    def editParameters(self):
-        active_tabs = self.activePage()
-        if active_tabs.edit_window.isVisible():
-            active_tabs.edit_window.activateWindow()
-        else:
-            active_tabs.edit_window.show()
-    
-    def saveParameters(self):
-        active_tabs = self.activePage()
-        active_tabs.edit_window.saveParameters()
-            
-    def loadParameters(self):
-        active_tabs = self.activePage()
-        active_tabs.edit_window.loadParameters()
-        self.editParameters()
-
     def closeEvent(self, event):
         self.close()
         exit(0)
+
+    #####! TODO: Implement the functionality for the following actions
+    
+    def seeTutorial(self):
+        #! TODO: Implement the functionality for the See Tutorial action
+        pass
+
+    def about(self):
+        #! TODO: Implement the functionality for the About action
+        pass    
+        

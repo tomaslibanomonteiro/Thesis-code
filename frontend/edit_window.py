@@ -7,9 +7,10 @@ import pickle
 
 from frontend.my_widgets import MyLineEdit, MyComboBox, ScientificDoubleSpinBox, ScientificSpinBox, MyCheckBox, MyMessageBox, MyWidgetsFrame, MyEmptyLineEdit
 from utils.debug import debug_print
+from utils.utils import myFileManager
 from utils.defines import (DESIGNER_EDIT_WINDOW, DESIGNER_EDIT_TAB, NO_DEFAULT, OPERATORS, ID_COL, OPERATORS_ARGS_DICT, 
                            RUN_OPTIONS_ARGS_DICT, PROB_KEY, ALGO_KEY, TERM_KEY, PI_KEY, REF_DIR_KEY, CROSS_KEY, CLASS_KEY,
-                           DECOMP_KEY, MUT_KEY, SAMP_KEY, SEL_KEY, VARIANT)  
+                           DECOMP_KEY, MUT_KEY, SAMP_KEY, SEL_KEY, VARIANT, MOO_KEY)  
 
 def ArgsAreSet(dic: dict) -> bool:
     # check if any of the values in the dict is == NO_DEFAULT
@@ -22,7 +23,9 @@ class EditWindow(QWidget):
         super().__init__()
 
         loadUi(DESIGNER_EDIT_WINDOW, self)
+        
         self.widgets_frame = MyWidgetsFrame()
+        self.moo = parameters.pop(MOO_KEY)
         self.setWindowTitle("Edit Parameters")
         
         # Add a spacer so that the height remains the same when all other tabs are closed
@@ -104,49 +107,28 @@ class EditWindow(QWidget):
         parameters = {}
         for _, tab in self.tabs.items():
             parameters[tab.key] = tab.tableToDict()
-            
+        
+        parameters[MOO_KEY] = self.moo
         return parameters
-    
+        
     def saveParameters(self):
         """Go through all the tabs and save the parameters as a dictionary, where the key is the tab name
         and the value is a dictionary with the parameters. dont forget to save the operators"""
         
         parameters = self.getParameters()
-        
-        # Open file dialog to select the save location
-        file_dialog = QFileDialog()
-        file_dialog.setAcceptMode(QFileDialog.AcceptSave)
-        file_dialog.setDefaultSuffix('.pickle')
-        file_dialog.setNameFilter('Pickle Files (*.pickle)')
-        file_dialog.setWindowTitle('Save Parameters')
-        
-        if file_dialog.exec_() == QFileDialog.Accepted:
-            file_path = file_dialog.selectedFiles()[0]
-            
-            # Save options_dict as a pickle file
-            with open(file_path, 'wb') as file:
-                pickle.dump(parameters, file)
+        moo = "MOO" if self.moo else "SOO"
+        myFileManager('Save Parameters', f'{moo}_parameters', parameters)
     
     def loadParameters(self):
         """Load the parameters"""
         
         # Open file dialog to select the file to load
-        file_dialog = QFileDialog()
-        file_dialog.setAcceptMode(QFileDialog.AcceptOpen)
-        file_dialog.setDefaultSuffix('.pickle')
-        file_dialog.setNameFilter('Pickle Files (*.pickle)')
-        file_dialog.setWindowTitle('Load Parameters')
-        
-        if file_dialog.exec_() == QFileDialog.Accepted:
-            file_path = file_dialog.selectedFiles()[0]
-            
-            # Load the pickle file
-            with open(file_path, 'rb') as file:
-                parameters = pickle.load(file)
-                
-                # Set the parameters
-                self.setTabs(parameters)
+        keys = list(OPERATORS_ARGS_DICT.keys()) + list(RUN_OPTIONS_ARGS_DICT.keys())
+        parameters = myFileManager('Load Parameters', keys_to_check=keys, moo=self.moo)
 
+        if parameters is not None:
+            self.setTabs(parameters)
+                                
 class EditTab(QFrame):
     def __init__(self, edit_window: EditWindow, key: str, tab_args: tuple, parameters: dict):
         super().__init__()
@@ -385,7 +367,7 @@ class EditTab(QFrame):
                 args_dict["pf"] = pf
         
         try:     
-            obj = self.get_function(class_name, **args_dict)
+            obj = self.get_function(class_name, **args_dict) #@IgnoreException
         except Exception as e:
             MyMessageBox(f"Error trying to get {class_name} from tab {self.key}:\n{e}"
                          "\nMake sure all arguments are correctly set for the respective class")
@@ -397,9 +379,9 @@ class EditTab(QFrame):
         if arg in args_dict and args_dict[arg].startswith("n_obj*"):
             factor_str = args_dict[arg].split("*")[1]
             try:
-                factor = int(factor_str)
-            except ValueError:
-                raise ValueError("Invalid value for n_dim factor: ", factor_str)
+                factor = int(factor_str) #@IgnoreException
+            except: 
+                MyMessageBox(f"Invalid value for n_dim factor: {args_dict[arg]}")
             args_dict[arg] = n_obj * factor if n_obj is not None else None
     
     def getArgsFromRow(self, table: QTableWidget, row: int, pf = None, n_obj=None, get_operator_obj=True) -> dict:
@@ -424,8 +406,8 @@ class EditTab(QFrame):
                 value = widget.text() if widget.text() != "None" else None
                 if widget.text() == NO_DEFAULT:
                     pass
-                    # raise Exception("No default -> need to set value for arg ", arg, " in row ", row, " of tab ", self.name)
-                # try to convert text to int or float
+                    # raise Exception("No default -> need to set value for arg ", arg, " in row ", row, " of tab ", self.name) #!
+                # try to convert text to int or float 
                 else:
                     try:
                         value = int(value) #@IgnoreException

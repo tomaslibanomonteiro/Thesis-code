@@ -4,7 +4,7 @@
 DESIGNER_MAIN = 'frontend/designer_templates/main_window/main_window.ui' 
 DESIGNER_FIXED_TABS = 'frontend/designer_templates/main_window/fixed_tabs.ui'
 DESIGNER_RUN_TAB = 'frontend/designer_templates/main_window/run_tab.ui'
-DESIGNER_RESULT_FRAME = 'frontend/designer_templates/main_window/result_frame.ui'
+DESIGNER_PROGRESS_FRAME = 'frontend/designer_templates/main_window/progress_frame.ui'
 
 # edit window
 DESIGNER_EDIT_WINDOW = 'frontend/designer_templates/edit_window/edit_window.ui'
@@ -31,11 +31,11 @@ DEFAULT_ROW_NUMBERS = [7, 7, 4, 1]
 # object id col number in the edit parameters tables
 ID_COL = 1 
 
-# result_layout number of widgets before adding result_frames 
-RESULT_LAYOUT_WIDGETS = 3
+# history_layout number of widgets before adding history_frames 
+HISTORY_LAYOUT_WIDGETS = 3
 
-# maximum number of result_frames accepted before asking the user to delete
-MAX_RESULT_FRAMES = 6
+# maximum number of history_frames accepted before asking the user to delete
+MAX_HISTORY_FRAMES = 6
 
 # default number of moo and soo pages in main window
 SOO_PAGE = 0
@@ -60,6 +60,9 @@ CLASS_KEY = 'Class'
 # for the dataframes
 N_EVAL_KEY = 'n_eval'
 N_GEN_KEY = 'n_gen'
+
+# for the parameters
+MOO_KEY = 'moo'
  
 # keys needed in a dictionary given to start the app ORDERED THE SAME AS THE APP!!
 RUN_OPTIONS_KEYS = [PROB_KEY, ALGO_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY]

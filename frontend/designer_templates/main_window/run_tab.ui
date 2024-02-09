@@ -116,9 +116,9 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="save_data">
+       <widget class="QPushButton" name="save_result">
         <property name="text">
-         <string>Save Data (csv)</string>
+         <string>Save Result</string>
         </property>
        </widget>
       </item>
@@ -397,7 +397,7 @@
               </property>
              </widget>
             </item>
-            <item>
+            <item alignment="Qt::AlignHCenter">
              <widget class="QTableWidget" name="checkBox_table">
               <property name="enabled">
                <bool>true</bool>

@@ -129,11 +129,11 @@ class MyFitnessLandscape(Plot):
         cutoff = 10
         if len(points[:, 0]) > cutoff:
             points = points[np.random.choice(len(points[1:, 0]), cutoff, replace=False), :]
-            word = 'random'
+            word = 'rand.'
         else:
             word = '(all)'
-        gen_label = label + f"\n({len(points[:, 0])} {word} points of last gen)"
-        best_label = label + f"\n(Best point)"
+        gen_label = label + f"\n({len(points[:, 0])} {word} sol of last gen)"
+        best_label = label + f" (Best)"
         
         points = np.concatenate((best_point[np.newaxis,:], points))
         self.sets_of_points.append(points)  
@@ -159,7 +159,7 @@ class Plotter(QWidget):
         self.algo_ids = algo_ids
         self.other_ids = other_ids
 
-        if len(algo_ids) == 0:
+        if len(algo_ids) == 0 and plot_mode != PLOT_FL_KEY:
             MyMessageBox("Select at least one Algorithm to plot")
             return
         elif len(other_ids) == 0 and plot_mode != PLOT_FL_KEY:
@@ -167,8 +167,8 @@ class Plotter(QWidget):
             return
         else:
             try:
-                self.plotRespectiveMode()
-            except Exception as e:
+                self.plotRespectiveMode() #@IgnoreException
+            except Exception as e: 
                 MyMessageBox(f"Could not plot in mode {plot_mode}. The following error occurred:\n{e}")
                 return
             

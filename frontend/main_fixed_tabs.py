@@ -1,19 +1,21 @@
-from PyQt5.QtWidgets import QFrame, QTableWidget, QTabWidget
+from PyQt5.QtWidgets import QFrame, QTableWidget, QTabWidget, QFileDialog, QMessageBox
 from PyQt5.uic import loadUi
 from backend.run import RunThread
-from utils.defines import DESIGNER_RESULT_FRAME, PROB_KEY, ALGO_KEY, N_SEEDS_KEY, PI_KEY
+from utils.defines import DESIGNER_PROGRESS_FRAME, PROB_KEY, ALGO_KEY, N_SEEDS_KEY, PI_KEY
 from PyQt5.QtCore import Qt
 from frontend.my_widgets import MyMessageBox
 from PyQt5.QtWidgets import QTabWidget, QTableWidget, QTabBar, QWidget, QSpinBox, QHBoxLayout
 from PyQt5.QtCore import Qt
 from PyQt5.uic import loadUi
+import pickle
 
 from backend.run import RunThread, RunArgs
 from frontend.my_widgets import MyComboBox, MyMessageBox
 from frontend.edit_window import EditWindow, ArgsAreSet
 from frontend.main_run_tab import RunTab
-from utils.defines import (RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_FIXED_TABS, RESULT_LAYOUT_WIDGETS, 
-                           MAX_RESULT_FRAMES, ALGO_KEY, PROB_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY)
+from utils.defines import (RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_FIXED_TABS, HISTORY_LAYOUT_WIDGETS, 
+                           MAX_HISTORY_FRAMES, ALGO_KEY, PROB_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY, MOO_KEY)
+from utils.utils import myFileManager, showAndRaise
 
 class MainTabsWidget(QTabWidget):
 
@@ -72,12 +74,14 @@ class MainTabsWidget(QTabWidget):
         self.rand_seeds_checkBox.clicked.connect(self.setSeedCheckBoxes)
         self.fixed_seeds_checkBox.clicked.connect(self.setSeedCheckBoxes)
         
-        ############################ RESULTS TAB #################################
+        ############################ HISTORY TAB #################################
         
         # open, save and erase buttons                            
-        self.save_results_button.clicked.connect(self.saveAllResults)
-        self.open_results_button.clicked.connect(self.openAllResults)
-        self.erase_results_button.clicked.connect(self.eraseAllResults)
+        self.save_all_runs.clicked.connect(self.saveAllRuns)
+        self.save_all_results.clicked.connect(self.saveAllResults)
+        self.open_all_tabs.clicked.connect(self.openAllTabs)
+        self.load_run.clicked.connect(self.loadRun)
+        self.erase_all_runs.clicked.connect(self.eraseAllRuns)
 
     def setEditWindow(self, parameters: dict):
         """Set the edit window with the parameters"""
@@ -158,7 +162,7 @@ class MainTabsWidget(QTabWidget):
         # set the combo boxes and the default run_options
         missing_options = self.setTable(self.prob_table, run_options[PROB_KEY], DEFAULT_ROW_NUMBERS[0])
         missing_options += self.setTable(self.algo_table, run_options[ALGO_KEY], DEFAULT_ROW_NUMBERS[1])
-        min_rows = DEFAULT_ROW_NUMBERS[2] if self.moo_checkBox.isChecked() else 1
+        min_rows = DEFAULT_ROW_NUMBERS[2] if self.moo_checkBox.isChecked() else 1 #! tá a mandar mal?
         missing_options += self.setTable(self.pi_table, run_options[PI_KEY], min_rows)
         missing_options += self.setTable(self.term_table, run_options[TERM_KEY], DEFAULT_ROW_NUMBERS[3])
 
@@ -176,6 +180,8 @@ class MainTabsWidget(QTabWidget):
         for key, table in self.tables_dict.items():
             run_options[key] = [table.cellWidget(row, 0).currentText() for row in range(table.rowCount()) if table.cellWidget(row, 0).currentText() != ""]
         run_options[N_SEEDS_KEY] = self.seedsSpinBox.value()
+        
+        run_options[MOO_KEY] = self.moo_checkBox.isChecked()
         
         return run_options
     
@@ -224,86 +230,129 @@ class MainTabsWidget(QTabWidget):
                 else:
                     return None
         
-        # get the termination object
-        term_id = self.getIDsFromTable(self.term_table)
-        term_object = tabs[TERM_KEY].getObjectFromID(term_id[0]) if term_id != [] else None
 
-        if prob_object and algo_object and not (None in pi_objects) and pi_objects != [] and term_object:
-            moo = self.moo_checkBox.isChecked()
-            n_seeds = self.seedsSpinBox.value()
-            parameters = self.edit_window.getParameters()
-            run_options = self.runOptions_to_dict()
-            return RunThread(run_args, term_id, term_object, n_seeds, moo, parameters, run_options, self.fixed_seeds)
+        if prob_object and algo_object and not (None in pi_objects) and pi_objects != []:
+            # get the termination object
+            term_ids = self.getIDsFromTable(self.term_table)
+            term_id = term_ids[0] if term_ids != [] else None
+            term_object = tabs[TERM_KEY].getObjectFromID(term_id) if term_id != None else None
+            
+            if term_object is not None:
+                # get the rest of the parameters
+                moo = self.moo_checkBox.isChecked()
+                n_seeds = self.seedsSpinBox.value()
+                parameters = self.edit_window.getParameters()
+                run_options = self.runOptions_to_dict()
+                return RunThread(run_args, term_id, term_object, n_seeds, moo, parameters, run_options, self.fixed_seeds)
         else:
             return None
+    
+    def setProgressFrame(self, run_thread: RunThread):
         
-    def runButton(self):
-        """First start the run window, then start the run. The two are separated 
-        so that in a test scenario the threads from this window can be trailed 
-        so it waits for them to finish before checking results."""
+        if self.history_layout.count() > MAX_HISTORY_FRAMES + HISTORY_LAYOUT_WIDGETS - 1:
+            MyMessageBox("Please clear one of the Runs before adding another.")
+            return None
         
-        if self.results_layout.count() > MAX_RESULT_FRAMES + RESULT_LAYOUT_WIDGETS - 1:
-            MyMessageBox("Please clear one of the results before running again.")
-            return
-        
-        run_thread = self.getRunThread()
-        if run_thread is None:
-            return
-
-        # create a result frame. get the number of the run from the self.listWidget
+        # create a progress frame. get the number of the run from the self.listWidget
         self.run_counter += 1
-        result_frame = ResultFrame(self, run_thread, f"Run {self.run_counter}")
+        progress_frame = ProgressFrame(self, run_thread, f"Run {self.run_counter}")
         
         # add widget after the last widget in the layout but before the stretch
-        self.results_layout.insertWidget(self.results_layout.count() - 1, result_frame)
-                
-        self.setCurrentIndex(1)     
-                   
-    ### Results tab methods ###
+        self.history_layout.insertWidget(self.history_layout.count() - 1, progress_frame)
     
-    def noResults(self):
-        """Return True if there are no results"""
-        if self.results_layout.count() == RESULT_LAYOUT_WIDGETS:
-            MyMessageBox("There are no results available.")
+        return progress_frame
+    
+    def runButton(self):
+        
+        run_thread = self.getRunThread()
+        if run_thread is not None:
+            progress_frame = self.setProgressFrame(run_thread)
+            if progress_frame is not None:
+                self.setCurrentIndex(1)
+                progress_frame.run_thread.start()    
+
+    def saveRunOptions(self):
+        """Save the run options"""
+        options_dict = self.runOptions_to_dict()
+        
+        moo = "MOO" if self.moo_checkBox.isChecked() else "SOO"
+        # Open file dialog to select the save location
+        myFileManager(f'Save Run Options', f"{moo}_run_options.pickle", options_dict)
+    
+    def loadRunOptions(self):
+        """Load the run options"""
+
+        # Open file dialog to select the file to load
+        options_dict = myFileManager('Load Run Options', keys_to_check=RUN_OPTIONS_KEYS, moo=self.moo_checkBox.isChecked())
+        
+        if options_dict is not None:
+            self.runOptions_to_tables(options_dict)
+    
+    ### History tab methods ###
+    
+    def noRuns(self):
+        if self.history_layout.count() == HISTORY_LAYOUT_WIDGETS:
+            MyMessageBox("There are no Runs available.")
             return True
         return False
     
+    def saveAllRuns(self):
+        if not self.noRuns():     
+            for i in range(HISTORY_LAYOUT_WIDGETS-1, self.history_layout.count()-1):
+                frame = self.history_layout.itemAt(i).widget()
+                if frame.save_run.isEnabled():
+                    frame.save_run.click()
+        showAndRaise(self)
+        
     def saveAllResults(self):
-        """Save all results"""
-        if self.noResults():
-            return
-        
-        for i in range(RESULT_LAYOUT_WIDGETS-1, self.results_layout.count()-1):
-            self.results_layout.itemAt(i).widget().saveResults()
+        if not self.noRuns():     
+            for i in range(HISTORY_LAYOUT_WIDGETS-1, self.history_layout.count()-1):
+                frame = self.history_layout.itemAt(i).widget()
+                if frame.save_result.isEnabled():
+                    frame.save_result.click()
+        showAndRaise(self)
+                       
+    def openAllTabs(self):
+        if not self.noRuns():     
+            for i in range(HISTORY_LAYOUT_WIDGETS-1, self.history_layout.count()-1):
+                frame = self.history_layout.itemAt(i).widget()
+                if frame.openTab_button.isEnabled():
+                    frame.openTab()
+        showAndRaise(self)
     
-    def openAllResults(self):
-        """Open all results"""
-        if self.noResults():
-            return
+    def eraseAllRuns(self):
+        if not self.noRuns():     
+            for i in range(self.history_layout.count()-HISTORY_LAYOUT_WIDGETS):
+                frame = self.history_layout.itemAt(HISTORY_LAYOUT_WIDGETS-1).widget()
+                if frame.cancel_button.text() == "Erase":
+                    frame.cancel_button.click()
+        showAndRaise(self)
         
-        for i in range(RESULT_LAYOUT_WIDGETS-1, self.results_layout.count()-1):
-            self.results_layout.itemAt(i).widget().openTab()
-    
-    def eraseAllResults(self):
-        """Erase all results"""
-        if self.noResults():
-            return
+    def loadRun(self):
+        moo = self.moo_checkBox.isChecked()
+        keys = ['parameters', 'run_options', 'n_seeds', 'term_id', 'run_args_list', 'data', 'run_counter', 'total_runs', 'canceled', 'best_gen', 'fixed_seeds']
+        data = myFileManager('Load Run', keys_to_check=keys, moo=moo)
+
+        if data is not None:
+            run_thread = RunThread(data['run_args_list'], data['term_id'], data['n_seeds'], moo, data['parameters'], data['run_options'], data['fixed_seeds'])
+            run_thread.data = data['data']
+            run_thread.best_gen = data['best_gen']
+            progress_frame = self.setProgressFrame(run_thread)
+            if progress_frame is not None:
+                progress_frame.afterRun()
         
-        for i in range(self.results_layout.count()-RESULT_LAYOUT_WIDGETS):
-            self.results_layout.itemAt(RESULT_LAYOUT_WIDGETS-1).widget().erase()
-            
-class ResultFrame(QFrame):
-    def __init__(self, tabWidget: QTabWidget, run_thread: RunThread, run_name: str):
+class ProgressFrame(QFrame):
+    def __init__(self, tabWidget: MainTabsWidget, run_thread: RunThread, run_name: str):
         super().__init__()
-        loadUi(DESIGNER_RESULT_FRAME, self)
+        loadUi(DESIGNER_PROGRESS_FRAME, self)
         
         self.run_name = run_name
         self.label.setText(run_name)
         self.tabWidget = tabWidget
                 
-        # cancel button
+        # cancel button        
         self.cancel_button.clicked.connect(self.cancelRun)
-
+    
         # make the run in a separate thread (has to be called in another class) 
         self.run_thread = run_thread                
         self.run_thread.progressSignal.connect(self.receiveUpdate)
@@ -319,11 +368,14 @@ class ResultFrame(QFrame):
         self.progressBar.setValue(100)
         self.progress_label.setText("")
         self.save_run.setEnabled(True)
-        self.save_run.clicked.connect(self.tab.saveRun)
-        self.save_data.setEnabled(True)
-        self.save_data.clicked.connect(self.tab.saveData)
+        self.save_result.setEnabled(True)
         self.openTab_button.setEnabled(True)
+        self.reproduce_run.setEnabled(True)
+        self.save_run.clicked.connect(self.tab.saveRun)
+        self.save_result.clicked.connect(self.tab.saveResult)
         self.openTab_button.clicked.connect(self.openTab) 
+        self.reproduce_run.clicked.connect(self.reproduceRun)
+        
         self.openTab()
 
         # change the erase button to cancel button
@@ -334,6 +386,17 @@ class ResultFrame(QFrame):
         """Close the tab at the given index"""
         self.tabWidget.removeTab(index)       
 
+    def receiveUpdate(self, label: str, value: int):
+        """Update the progress bar and label with the current run"""
+        if value == -1:
+            MyMessageBox(label)
+            self.erase()
+        else:
+            self.progressBar.setValue(value)
+            self.progress_label.setText(label)
+
+    # Button methods
+                
     def openTab(self):
         """Check if any of the tabs has the same name as the run, if not, call afterRun"""
         for i in range(self.tabWidget.count()):
@@ -343,18 +406,23 @@ class ResultFrame(QFrame):
         index = self.tabWidget.addTab(self.tab, self.run_name)
         self.tabWidget.setCurrentIndex(index)
     
-    def receiveUpdate(self, label: str, value: int):
-        """Update the progress bar and label with the current run"""
-        if value == -1:
-            MyMessageBox(label)
-            self.erase()
-        else:
-            self.progressBar.setValue(value)
-            self.progress_label.setText(label)
-                
+    def reproduceRun(self):
+        """Reproduce the run"""
+        # make a dialog warning that it will erase the current run options and parameters, 
+        # and ask if the user wants to proceed
+        reply = QMessageBox.question(self, 'Warning',
+            "This will erase the current run options and parameters, and replace them with" 
+            " the ones from the run. Do you want to proceed?",
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            self.tabWidget.setEditWindow(self.run_thread.parameters)
+            self.tabWidget.runOptions_to_tables(self.run_thread.run_options)
+            self.tabWidget.setCurrentIndex(0)
+
     def erase(self):
         """Erase the run"""
-        self.tabWidget.results_layout.removeWidget(self)
+        self.tabWidget.history_layout.removeWidget(self)
         # remove tab if it exists
         for i in range(self.tabWidget.count()):
             if self.tabWidget.tabText(i) == self.run_name:
@@ -366,7 +434,3 @@ class ResultFrame(QFrame):
         """Cancel the run"""
         self.run_thread.cancel()
         self.erase()
-    
-    def saveRun(self):
-        """Save the run""" #!
-        print("save run to be implemented")
