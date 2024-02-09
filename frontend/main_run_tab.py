@@ -1,16 +1,16 @@
-from PyQt5.QtWidgets import QFrame, QTableWidget, QTableWidgetItem, QCheckBox, QFileDialog
+from PyQt5.QtWidgets import QFrame, QTableWidget, QTableWidgetItem, QCheckBox
 from PyQt5.uic import loadUi
 from PyQt5.QtCore import Qt
-import numpy as np
-import pickle
 
-from utils.defines import (DESIGNER_RUN_TAB, PROB_KEY, ALGO_KEY, N_SEEDS_KEY, N_GEN_KEY, N_EVAL_KEY, VOTING_KEY, PI_KEY,
-                           CLASS_KEY, TERM_KEY, PLOT_PROGRESS_KEY, PLOT_PS_KEY, PLOT_PC_KEY, PLOT_FL_KEY)
-from utils.utils import myFileManager, setBold
-from utils.plotting import Plotter
+import numpy as np
+
+from backend.run import RunThread
 from backend.run import RunThread
 from frontend.my_widgets import MyMessageBox
-from backend.run import RunThread
+from utils.defines import (DESIGNER_RUN_TAB, PROB_KEY, ALGO_KEY, N_SEEDS_KEY, N_GEN_KEY, N_EVAL_KEY, VOTING_KEY, PI_KEY,
+                           CLASS_KEY, TERM_KEY, PLOT_PROGRESS_KEY, PLOT_PS_KEY, PLOT_PC_KEY, PLOT_FL_KEY)
+from utils.plotting import Plotter
+from utils.utils import myFileManager, setBold
 
 class RunTab(QFrame):
     def __init__(self, run_thread: RunThread, label: str):

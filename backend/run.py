@@ -1,10 +1,12 @@
 import numpy as np
 import pandas as pd
+
 from pymoo.core.algorithm import Algorithm
 from pymoo.core.callback import Callback
 from pymoo.core.result import Result
 from pymoo.optimize import minimize
 from pymoo.indicators.hv import Hypervolume
+
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import QThread
 
@@ -12,7 +14,6 @@ from utils.debug import debug_print
 from utils.defines import N_SEEDS_KEY, ALGO_KEY, PROB_KEY, N_EVAL_KEY, N_GEN_KEY
 
 class MyCallback(Callback):
-
     def __init__(self, pi_ids:list, pi_objects:list):
         super().__init__()
         
@@ -52,7 +53,7 @@ class RunArgs():
         
 class RunThread(QThread):
     progressSignal = pyqtSignal(str, int)
-
+    
     def __init__(self, run_args_list:list, term_id, term_object, n_seeds:int, moo:bool, parameters:dict, run_options:dict, fixed_seeds:bool):
         super().__init__()
         

@@ -1,24 +1,24 @@
 from pymoo.core.plot import Plot
 from pymoo.util.misc import all_combinations
+from pymoo.visualization.scatter import Scatter, Plot
+from pymoo.visualization.pcp import PCP
+
 from PyQt5.QtWidgets import QVBoxLayout, QWidget
-from PyQt5.QtCore import Qt
+
 import numpy as np
+
 import matplotlib
 matplotlib.use('Qt5Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
 
-from utils.defines import (DESIGNER_RUN_TAB, PROB_KEY, ALGO_KEY, N_SEEDS_KEY, N_GEN_KEY, N_EVAL_KEY, VOTING_KEY, PI_KEY,
-                           CLASS_KEY, TERM_KEY, PLOT_PROGRESS_KEY, PLOT_PS_KEY, PLOT_PC_KEY, PLOT_FL_KEY)
+from backend.run import RunThread
 from backend.run import RunThread
 from frontend.my_widgets import MyMessageBox
-from backend.run import RunThread
-from pymoo.visualization.scatter import Scatter, Plot
-from pymoo.visualization.pcp import PCP
+from utils.defines import PROB_KEY, ALGO_KEY, N_SEEDS_KEY, N_EVAL_KEY, PLOT_PROGRESS_KEY, PLOT_PS_KEY, PLOT_PC_KEY, PLOT_FL_KEY
 
                 
 class MyFitnessLandscape(Plot):
-
     def __init__(self,
                  problem,
                  n_samples_2D=500,
@@ -140,14 +140,12 @@ class MyFitnessLandscape(Plot):
         self.sets_labels.append((best_label, gen_label))
         
 class MplCanvas(FigureCanvasQTAgg):
-
     def __init__(self, width=5, height=4, dpi=100, fig=None, axes=None):
         fig = Figure(figsize=(width, height), dpi=dpi) if fig is None else fig
         self.axes = fig.add_subplot(111) if axes is None else axes
         super(MplCanvas, self).__init__(fig)
     
 class Plotter(QWidget):
-
     def __init__(self, plot_mode, prob_id:str, prob_object, run_thread:RunThread, algo_ids:list, other_ids:list, title='Plot'):
         super().__init__()
         
@@ -247,7 +245,7 @@ class Plotter(QWidget):
             self.other_ids.remove('Problem')
             
         self.plotSolutions(plot)        
-        self.sc.axes.set_title(f"Paralel Coordinates on Problem: '{self.prob_id}'", y=1.05)
+        self.sc.axes.set_title(f"Parallel Coordinates on Problem: '{self.prob_id}'", y=1.05)
 
     def plotParetoSets(self):
         """Plot the Pareto front of the checked algorithms for the given problem and checked seeds"""

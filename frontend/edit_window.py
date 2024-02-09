@@ -1,9 +1,8 @@
-from PyQt5.QtWidgets import QTableWidgetItem, QTableWidget, QFrame, QTabBar, QWidget, QPushButton, QFileDialog
+from PyQt5.QtWidgets import QTableWidgetItem, QTableWidget, QFrame, QTabBar, QWidget, QPushButton
 from PyQt5.uic import loadUi
 from PyQt5.QtCore import pyqtSignal
 
 from numpy import inf
-import pickle
 
 from frontend.my_widgets import MyLineEdit, MyComboBox, ScientificDoubleSpinBox, ScientificSpinBox, MyCheckBox, MyMessageBox, MyWidgetsFrame, MyEmptyLineEdit
 from utils.debug import debug_print
@@ -19,6 +18,7 @@ def ArgsAreSet(dic: dict) -> bool:
 class EditWindow(QWidget):
     itemUpdates = pyqtSignal(str,list) 
     operatorUpdates = pyqtSignal(str,list)
+
     def __init__(self, parameters: dict, moo: bool):
         super().__init__()
 
@@ -26,6 +26,12 @@ class EditWindow(QWidget):
         
         self.widgets_frame = MyWidgetsFrame()
         self.moo = moo
+        self.dictToTabs(parameters)
+        
+        self.setUI()
+    
+    def setUI(self):
+        
         self.setWindowTitle("Edit Parameters")
         
         # Add a spacer so that the height remains the same when all other tabs are closed
@@ -34,7 +40,6 @@ class EditWindow(QWidget):
         spacer.setFixedWidth(1)
         self.tabWidget.tabBar().setTabButton(0, QTabBar.RightSide, spacer)
 
-        self.dictToTabs(parameters)
     
         # set the buttons
         self.open_operators.clicked.connect(self.openOperators)
@@ -42,7 +47,11 @@ class EditWindow(QWidget):
         self.open_all_tabs.clicked.connect(self.openAllTabs)
         self.save_parameters.clicked.connect(self.saveParameters)
         self.load_parameters.clicked.connect(self.loadParameters)
-        self.helpButton.clicked.connect(self.help)
+        help_msg =   ("Click on \"Edit Run Options\" to edit their parameters. Click on \"Edit Operators\" to edit "
+                     "the operators parameters that are then used in the algorithms. Click on \"Save Parameters\" "
+                     "to save the parameters to a file.")
+
+        self.helpButton.clicked.connect(lambda: MyMessageBox(help_msg, "Help", warning_icon=False))
         self.tabWidget.tabCloseRequested.connect(self.closeTab)
         
         # set the open tab buttons
@@ -56,11 +65,7 @@ class EditWindow(QWidget):
         self.open_mutations.clicked.connect(lambda: self.openTab(MUT_KEY))
         self.open_samplings.clicked.connect(lambda: self.openTab(SAMP_KEY))
         self.open_selections.clicked.connect(lambda: self.openTab(SEL_KEY))
-        
-    def openTab(self, tab_key: str):
-        self.tabWidget.addTab(self.tabs[tab_key], self.tabs[tab_key].name)
-        self.tabWidget.setCurrentIndex(self.tabWidget.count()-1)
-        
+            
     def dictToTabs(self, parameters: dict):
         # close all tabs except the first one
         while self.tabWidget.count() > 1:
@@ -69,10 +74,27 @@ class EditWindow(QWidget):
         self.tabs = {tab_key: EditTab(self, tab_key, tab_args, parameters) for tab_key, tab_args in OPERATORS_ARGS_DICT.items()}            
         self.tabs.update({tab_key: EditTab(self, tab_key, tab_args, parameters) for tab_key, tab_args in RUN_OPTIONS_ARGS_DICT.items()})
 
+    def tabsToDict(self) -> dict:
+        """Go through all the tabs and get the parameters as a dictionary, where the key is the tab name
+        and the value is a dictionary with the parameters. dont forget to get the operators"""
+        
+        parameters = {}
+        for _, tab in self.tabs.items():
+            parameters[tab.key] = tab.tableToDict()
+        
+        parameters[MOO_KEY] = self.moo
+        return parameters
+        
     def closeTab(self, index):
         # close the tab with the index
         self.tabWidget.removeTab(index)
-        
+
+    def openTab(self, tab_key: str):
+        self.tabWidget.addTab(self.tabs[tab_key], self.tabs[tab_key].name)
+        self.tabWidget.setCurrentIndex(self.tabWidget.count()-1)
+    
+    ###### BUTTONS ######
+
     def openOperators(self):
         # close all tabs except the first one
         while self.tabWidget.count() > 1:
@@ -95,22 +117,6 @@ class EditWindow(QWidget):
         for tab_key in self.tabs.keys():
             self.tabWidget.addTab(self.tabs[tab_key], self.tabs[tab_key].name)    
             
-    def help(self):
-        MyMessageBox("Click on \"Edit Run Options\" to edit their parameters. Click on \"Edit Operators\" to edit "
-                     "the operators parameters that are then used in the algorithms. Click on \"Save Parameters\" "
-                     "to save the parameters to a file.", "Help", warning_icon=False)
-
-    def tabsToDict(self) -> dict:
-        """Go through all the tabs and get the parameters as a dictionary, where the key is the tab name
-        and the value is a dictionary with the parameters. dont forget to get the operators"""
-        
-        parameters = {}
-        for _, tab in self.tabs.items():
-            parameters[tab.key] = tab.tableToDict()
-        
-        parameters[MOO_KEY] = self.moo
-        return parameters
-        
     def saveParameters(self):
         """Go through all the tabs and save the parameters as a dictionary, where the key is the tab name
         and the value is a dictionary with the parameters. dont forget to save the operators"""
@@ -141,16 +147,22 @@ class EditTab(QFrame):
         self.table_dict = parameters[self.key]
         self.default_ids = list(self.table_dict.keys())        
         self.classes = [self.table_dict[key][CLASS_KEY] for key in self.default_ids]
-        self.label.setText(label)
-        self.helpButton.clicked.connect(self.variantsHelp)
                 
         if key == ALGO_KEY:
             self.setAlgorithmTab(parameters)
 
         self.dictToTable(self.table_dict)
-    
+
+        self.setUI(label)
+        
     ###### GENERAL METHODS ######
     
+    def setUI(self, label):
+        self.label.setText(label)
+        text = (f"Click on \"Add Variant\" to create a variant of the default class. Click on \"Remove\" to remove a variant."
+                "if you change the parameters of a default class, the variants will inherit the new parameters")
+        self.helpButton.clicked.connect(lambda: MyMessageBox(text, "Variants Help", warning_icon=False))
+        
     def setAlgorithmTab(self, parameters: dict):
 
         # define operator combobox items
@@ -163,11 +175,7 @@ class EditTab(QFrame):
         self.operators_button.setFixedHeight(30)
         
         self.label_layout.insertWidget(3, self.operators_button)        
-    
-    def variantsHelp(self):
-        MyMessageBox("To create variants of the default classes, choose a class from the comboBox."
-                     " The arguments will be inherited from the default class", "Variants Help", warning_icon=False)
-        
+            
     ###### EDIT TABLES ######
     
     def dictToTable(self, table_dict: dict):
@@ -321,7 +329,7 @@ class EditTab(QFrame):
                 
         table.setCellWidget(row, col+1, MyComboBox(items, value, table=self.table, tab=self, key=arg, copy_style="comboBox", widgets_frame=self.edit_window.widgets_frame))
                 
-    ###### EXTRACT FROM TABLE ######
+    ###### EXTRACT FROM TABLES ######
 
     def tableToDict(self) -> dict:
         # get the table items from the table, each row is a list of the arguments and values of the class

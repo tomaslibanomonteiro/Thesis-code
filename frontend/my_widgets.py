@@ -1,13 +1,12 @@
 import re
 from typing import Tuple
 
-from PyQt5 import QtCore
 from PyQt5.QtWidgets import (QTableWidget, QComboBox, QMessageBox, QCheckBox, QSpinBox, QDoubleSpinBox,  
                              QLineEdit, QMenu, QAction, QFrame)
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5 import QtCore
 from PyQt5.QtGui import QValidator
 from PyQt5.uic import loadUi
-from PyQt5.QtCore import Qt
 
 from numpy import inf
 from typing import Tuple
@@ -301,7 +300,6 @@ class MyCheckBox(QCheckBox):
             self.setText("False")
   
 class IntValidator(QValidator):
-
     @staticmethod
     def valid_integer_string(string: str) -> bool:
         """
@@ -395,7 +393,6 @@ class IntValidator(QValidator):
 
 
 class ScientificSpinBox(QSpinBox):
-
     def __init__(self, widgets_frame:MyWidgetsFrame=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

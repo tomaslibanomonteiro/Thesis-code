@@ -1,36 +1,47 @@
-from PyQt5.QtWidgets import QFrame, QTableWidget, QTabWidget, QFileDialog, QMessageBox
 from PyQt5.uic import loadUi
-from backend.run import RunThread
-from utils.defines import DESIGNER_PROGRESS_FRAME, PROB_KEY, ALGO_KEY, N_SEEDS_KEY, PI_KEY
 from PyQt5.QtCore import Qt
-from frontend.my_widgets import MyMessageBox
-from PyQt5.QtWidgets import QTabWidget, QTableWidget, QTabBar, QWidget, QSpinBox, QHBoxLayout
-from PyQt5.QtCore import Qt
-from PyQt5.uic import loadUi
-import pickle
+from PyQt5.QtWidgets import QTabWidget, QTableWidget, QTabBar, QWidget, QSpinBox, QHBoxLayout, QMessageBox, QFrame
 
+from backend.run import RunThread
 from backend.run import RunThread, RunArgs
+
 from frontend.my_widgets import MyComboBox, MyMessageBox
 from frontend.edit_window import EditWindow, ArgsAreSet
 from frontend.main_run_tab import RunTab
-from utils.defines import (RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_FIXED_TABS, HISTORY_LAYOUT_WIDGETS, RUN_OPTIONS_ARGS_DICT,
-                           MAX_HISTORY_FRAMES, ALGO_KEY, PROB_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY, MOO_KEY, OPERATORS_ARGS_DICT)
 from utils.utils import myFileManager, showAndRaise, getAvailableName
+from utils.defines import (DESIGNER_PROGRESS_FRAME,RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_FIXED_TABS, HISTORY_LAYOUT_WIDGETS,
+                           MAX_HISTORY_FRAMES, ALGO_KEY, PROB_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY, MOO_KEY, OPERATORS_ARGS_DICT, RUN_OPTIONS_ARGS_DICT)
 
 class MainTabsWidget(QTabWidget):
-
     def __init__(self, run_options: dict, parameters: dict) -> None:
         super().__init__()
 
         loadUi(DESIGNER_FIXED_TABS, self)
-        
-        ############################ GENERAL #################################
-        
+                
         self.run_counter = 0
-        self.tables_dict = { PROB_KEY: self.prob_table, ALGO_KEY: self.algo_table, 
-                            PI_KEY: self.pi_table, TERM_KEY: self.term_table}     
-        self.tabCloseRequested.connect(self.closeTab)
+        self.tables_dict = {PROB_KEY: self.prob_table, ALGO_KEY: self.algo_table, PI_KEY: self.pi_table, TERM_KEY: self.term_table}     
         
+        self.seedsSpinBox = self.setUI()
+        self.fixed_seeds = self.fixed_seeds_checkBox.isChecked()
+
+        # set edit window        \
+        self.edit_window = EditWindow(parameters, self.moo_checkBox.isChecked())
+        self.edit_window.itemUpdates.connect(self.updateComboBoxItems)
+        
+        # set run run_options
+        self.initialComboBoxItems(parameters)
+        
+        missing_keys = set(RUN_OPTIONS_KEYS) - set(run_options.keys())
+        for key in missing_keys:
+            run_options[key] = [] if key != N_SEEDS_KEY else 1
+        self.dictToTables(run_options)
+        
+    def setUI(self):
+        
+        self.tabCloseRequested.connect(self.closeTab)
+
+        ######## RUN TAB ########
+
         # Add a spacer so that the height remains the same when Run Tab is added with the close button
         spacer = QWidget()
         spacer.setFixedHeight(20)  
@@ -51,30 +62,11 @@ class MainTabsWidget(QTabWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         self.n_seeds_table.setCellWidget(0, 0, widget)    
         
-        self.seedsSpinBox = spin_box
-        
-        ############################ EDIT WINDOW ##############################
-        
-        self.edit_window = EditWindow(parameters, self.moo_checkBox.isChecked())
-        self.edit_window.itemUpdates.connect(self.updateComboBoxItems)
-        
-        ############################ RUN TAB #################################
-        
-        # set run run_options
-        missing_keys = set(RUN_OPTIONS_KEYS) - set(run_options.keys())
-        for key in missing_keys:
-            run_options[key] = [] if key != N_SEEDS_KEY else 1
-
-        self.initialComboBoxItems(parameters)
-        self.dictToTables(run_options)
-        
-        # set run button 
         self.run_button.clicked.connect(self.runButton)
-        self.fixed_seeds = self.fixed_seeds_checkBox.isChecked()
         self.rand_seeds_checkBox.clicked.connect(self.setSeedCheckBoxes)
         self.fixed_seeds_checkBox.clicked.connect(self.setSeedCheckBoxes)
-        
-        ############################ HISTORY TAB #################################
+
+        ######## HISTORY TAB ########
         
         # open, save and erase buttons                            
         self.save_all_runs.clicked.connect(self.saveAllRuns)
@@ -82,12 +74,17 @@ class MainTabsWidget(QTabWidget):
         self.open_all_tabs.clicked.connect(self.openAllTabs)
         self.load_run.clicked.connect(self.loadRun)
         self.erase_all_runs.clicked.connect(self.eraseAllRuns)
+
+
+        return spin_box
         
     def closeTab(self, index):
         # close the tab with the index
         self.removeTab(index)
 
-    ### Run tab methods ###
+    ### RUN TAB METHODS ###
+    
+    # edit tables
     
     def setSeedCheckBoxes(self):
         if self.fixed_seeds:
@@ -164,6 +161,8 @@ class MainTabsWidget(QTabWidget):
         if missing_options != "":
             MyMessageBox(f"The following run options are not available: {missing_options[:-2]}. \nTo choose them, please add"
                                    " the correspondent IDs to the respective table through the 'Edit Parameters' option of the menu bar.")
+    
+    # extract from tables
             
     def tablesToDict(self):
         """Get the run options from the table into a dictionary"""
@@ -240,25 +239,7 @@ class MainTabsWidget(QTabWidget):
         else:
             return None
     
-    def setProgressFrame(self, run_thread: RunThread, name:str=None):
-        
-        if self.history_layout.count() > MAX_HISTORY_FRAMES + HISTORY_LAYOUT_WIDGETS - 1:
-            MyMessageBox("Please clear one of the Runs before adding another.")
-            return None
-        
-        # create a progress frame. get the number of the run from the self.listWidget
-        self.run_counter += 1
-        
-        if name is None:
-            name = f"Run {self.run_counter}"
-        curr_names = [self.history_layout.itemAt(i).widget().run_name for i in range(HISTORY_LAYOUT_WIDGETS-1, self.history_layout.count()-1)]
-        name = getAvailableName(name, curr_names)
-        progress_frame = ProgressFrame(self, run_thread, name)
-        
-        # add widget after the last widget in the layout but before the stretch
-        self.history_layout.insertWidget(self.history_layout.count() - 1, progress_frame)
-    
-        return progress_frame
+    # Button methods
     
     def runButton(self):
         
@@ -286,13 +267,35 @@ class MainTabsWidget(QTabWidget):
         if options_dict is not None:
             self.dictToTables(options_dict)
     
-    ### History tab methods ###
+    ### HISTORY TAB METHODS ###
+
+    def setProgressFrame(self, run_thread: RunThread, name:str=None):
+        
+        if self.history_layout.count() > MAX_HISTORY_FRAMES + HISTORY_LAYOUT_WIDGETS - 1:
+            MyMessageBox("Please clear one of the Runs before adding another.")
+            return None
+        
+        # create a progress frame. get the number of the run from the self.listWidget
+        self.run_counter += 1
+        
+        if name is None:
+            name = f"Run {self.run_counter}"
+        curr_names = [self.history_layout.itemAt(i).widget().run_name for i in range(HISTORY_LAYOUT_WIDGETS-1, self.history_layout.count()-1)]
+        name = getAvailableName(name, curr_names)
+        progress_frame = ProgressFrame(self, run_thread, name)
+        
+        # add widget after the last widget in the layout but before the stretch
+        self.history_layout.insertWidget(self.history_layout.count() - 1, progress_frame)
+    
+        return progress_frame
     
     def noRuns(self):
         if self.history_layout.count() == HISTORY_LAYOUT_WIDGETS:
             MyMessageBox("There are no Runs available.")
             return True
         return False
+    
+    # button methods
     
     def saveAllRuns(self):
         if not self.noRuns():     
@@ -361,17 +364,16 @@ class ProgressFrame(QFrame):
         loadUi(DESIGNER_PROGRESS_FRAME, self)
         
         self.run_name = run_name
-        self.label.setText(run_name)
         self.tabWidget = tabWidget
-                
-        # cancel button        
-        self.cancel_button.clicked.connect(self.cancelRun)
-    
-        # make the run in a separate thread (has to be called in another class) 
         self.run_thread = run_thread                
+        
         self.run_thread.progressSignal.connect(self.receiveUpdate)
         self.run_thread.finished.connect(self.afterRun)
 
+        # UI        
+        self.label.setText(run_name)
+        self.cancel_button.clicked.connect(self.cancelRun)
+    
     def afterRun(self):
         """After the run is finished, add the tab to the run window and show it"""
         if self.run_thread.canceled:
