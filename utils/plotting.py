@@ -14,9 +14,8 @@ from matplotlib.figure import Figure
 
 from backend.run import RunThread
 from backend.run import RunThread
-from frontend.my_widgets import MyMessageBox
 from utils.defines import PROB_KEY, ALGO_KEY, N_SEEDS_KEY, N_EVAL_KEY, PLOT_PROGRESS_KEY, PLOT_PS_KEY, PLOT_PC_KEY, PLOT_FL_KEY
-
+from utils.utils import MyMessageBox
                 
 class MyFitnessLandscape(Plot):
     def __init__(self,
@@ -146,10 +145,50 @@ class MplCanvas(FigureCanvasQTAgg):
         super(MplCanvas, self).__init__(fig)
     
 class Plotter(QWidget):
-    def __init__(self, plot_mode, prob_id:str, prob_object, run_thread:RunThread, algo_ids:list, other_ids:list, title='Plot'):
+    """
+    Used to create different types of plots based on the provided plot_type.
+
+    plot_type can be:
+    ----------------
+    
+    - PLOT_PROGRESS_KEY: plot the progress of the checked algorithms for the given problem 
+    and checked performance indicators     
+    
+    Only for MOO problems:
+    - PLOT_PS_KEY: plot the Pareto front of the checked algorithms for the given problem and checked seeds
+    - PLOT_PC_KEY: plot the Parallel Coordinates of the checked algorithms for the given problem and checked seeds
+    
+    Only for SOO problems:
+    - PLOT_FL_KEY: plot the fitness landscape of the checked algorithms for the given problem and checked seeds
+
+
+    Attributes
+    ----------
+    
+    plot_type: The type of the plot to be created.
+    sc: The matplotlib canvas.
+    run_thread: The thread in which the run is happening.
+    prob_id: The ID of the problem.
+    prob_object: The object of the problem.
+    algo_ids: The list of algorithm IDs.
+    other_ids: The list of other IDs.
+    title: The title of the plot.
+
+    Methods
+    -------
+    
+    __init__(self, plot_type, prob_id, prob_object, run_thread, algo_ids, other_ids, title): Initializes the Plotter object with the provided parameters.
+    plotRespectivetype(self): Checks the plot_type and calls the respective plotting method.
+    plotProgress(self): Plots the progress of the checked algorithms for the given problem and checked performance indicators.
+    plotPCP(self): Plots the Parallel Coordinates of the checked algorithms for the given problem and checked seeds.
+    plotParetoSets(self): Plots the Pareto front of the checked algorithms for the given problem and checked seeds.
+    plotFitnessLandscape(self): Plots the fitness landscape of the checked algorithms for the given problem and checked seeds.
+    plotSolutions(self, plot): Plots the best solution for each run_id.
+    """
+    def __init__(self, plot_type, prob_id:str, prob_object, run_thread:RunThread, algo_ids:list, other_ids:list, title='Plot'):
         super().__init__()
         
-        self.plot_mode = plot_mode
+        self.plot_type = plot_type
         self.sc = None
         self.run_thread = run_thread
         self.prob_id = prob_id
@@ -157,21 +196,21 @@ class Plotter(QWidget):
         self.algo_ids = algo_ids
         self.other_ids = other_ids
 
-        if len(algo_ids) == 0 and plot_mode != PLOT_FL_KEY:
+        if len(algo_ids) == 0 and plot_type != PLOT_FL_KEY:
             MyMessageBox("Select at least one Algorithm to plot")
             return
-        elif len(other_ids) == 0 and plot_mode != PLOT_FL_KEY:
+        elif len(other_ids) == 0 and plot_type != PLOT_FL_KEY:
             MyMessageBox("Select at least one Seed/Problem to plot")
             return
         else:
             try:
-                self.plotRespectiveMode() #@IgnoreException
+                self.plotRespectivetype() #@IgnoreException
             except Exception as e: 
-                MyMessageBox(f"Could not plot in mode {plot_mode}. The following error occurred:\n{e}")
+                MyMessageBox(f"Could not plot in type {plot_type}. The following error occurred:\n{e}")
                 return
             
         if self.sc is None:
-            MyMessageBox(f"Could not plot in mode {plot_mode}. No source was created")
+            MyMessageBox(f"Could not plot in type {plot_type}. No source was created")
             return
         
         # Create toolbar, passing canvas as first parament, parent (self, the CustomDialog) as second.
@@ -185,17 +224,17 @@ class Plotter(QWidget):
         self.setWindowTitle(title)
         self.show()
 
-    def plotRespectiveMode(self):
-        if self.plot_mode == PLOT_PROGRESS_KEY:
+    def plotRespectivetype(self):
+        if self.plot_type == PLOT_PROGRESS_KEY:
             self.plotProgress()
-        elif self.plot_mode == PLOT_PS_KEY:
+        elif self.plot_type == PLOT_PS_KEY:
             self.plotParetoSets()
-        elif self.plot_mode == PLOT_PC_KEY:
+        elif self.plot_type == PLOT_PC_KEY:
             self.plotPCP()
-        elif self.plot_mode == PLOT_FL_KEY:
+        elif self.plot_type == PLOT_FL_KEY:
             self.plotFitnessLandscape()
         else:        
-            raise ValueError(f"Plot mode can only be {PLOT_PROGRESS_KEY}, {PLOT_PC_KEY}, {PLOT_PS_KEY} or {PLOT_FL_KEY}") 
+            raise ValueError(f"Plot type can only be {PLOT_PROGRESS_KEY}, {PLOT_PC_KEY}, {PLOT_PS_KEY} or {PLOT_FL_KEY}") 
 
     def plotProgress(self):
         """Plot the progress of the checked algorithms for the given problem and checked performance indicators"""

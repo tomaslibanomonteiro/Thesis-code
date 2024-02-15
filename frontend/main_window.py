@@ -7,7 +7,25 @@ from utils.defines import DESIGNER_MAIN, MOO_TAB, SOO_TAB
 from utils.utils import showAndRaise
 
 class MyMainWindow(QMainWindow):
-    def __init__(self, run_options_soo = {}, run_options_moo = {}, parameters_soo = Defaults(False).dict, parameters_moo = Defaults(True).dict, ) -> None:
+    """
+    Main Window of the application. Contains two pages, with their respective tabs:
+    - Multi Objective Optimization Page and Single Obejective Optimization Tab
+
+    Attributes
+    ----------------
+    - tabs: A dictionary that holds the tabs of the application. The keys are the page indices 
+    and the values are the tabs themselves.
+
+    Important Methods
+    -----------------
+    - createTabs: Creates a tab with the given page, run options, and parameters, and adds it to the layout of the page.
+    - activeTabs: Returns the currently active tab based on the index of the stacked widget.
+    - switchPage: Switches between the SOO and MOO pages, updates the menu bar and window title, and checks and unchecks the SOO and MOO checkboxes based on the current page.
+    - closeEvent: Closes the application when the close event is triggered.
+    - seeTutorial: displaying the tutorial.
+    - about: displaying about information.
+    """
+    def __init__(self, run_options_soo = {}, run_options_moo = {}, parameters_soo = Defaults(False).parameters, parameters_moo = Defaults(True).parameters, ) -> None:
         super().__init__()        
         
         loadUi(DESIGNER_MAIN, self)
@@ -41,7 +59,7 @@ class MyMainWindow(QMainWindow):
         for tab in self.tabs.values():
             tab.soo_checkBox.clicked.connect(self.switchPage)
             tab.moo_checkBox.clicked.connect(self.switchPage)
-            tab.parameters_button.clicked.connect(lambda: lambda: showAndRaise(self.activeTabs().edit_window))
+            tab.parameters_button.clicked.connect(lambda: showAndRaise(self.activeTabs().edit_window))
 
         # Set the current page to MOO if SOO has empty run options
         self.tabs[MOO_TAB].moo_checkBox.setChecked(True)
@@ -99,4 +117,4 @@ class MyMainWindow(QMainWindow):
     def about(self):
         #! TODO: Implement the functionality for the About action
         pass    
-        
+    

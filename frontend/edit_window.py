@@ -4,9 +4,9 @@ from PyQt5.QtCore import pyqtSignal
 
 from numpy import inf
 
-from frontend.my_widgets import MyLineEdit, MyComboBox, ScientificDoubleSpinBox, ScientificSpinBox, MyCheckBox, MyMessageBox, MyWidgetsFrame, MyEmptyLineEdit
+from frontend.my_widgets import MyLineEdit, MyComboBox, ScientificDoubleSpinBox, ScientificSpinBox, MyCheckBox, MyWidgetsFrame, MyEmptyLineEdit
 from utils.debug import debug_print
-from utils.utils import myFileManager
+from utils.utils import myFileManager, MyMessageBox
 from utils.defines import (DESIGNER_EDIT_WINDOW, DESIGNER_EDIT_TAB, NO_DEFAULT, OPERATORS, ID_COL, OPERATORS_ARGS_DICT, 
                            RUN_OPTIONS_ARGS_DICT, PROB_KEY, ALGO_KEY, TERM_KEY, PI_KEY, REF_DIR_KEY, CROSS_KEY, CLASS_KEY,
                            DECOMP_KEY, MUT_KEY, SAMP_KEY, SEL_KEY, VARIANT, MOO_KEY)  
@@ -16,6 +16,35 @@ def ArgsAreSet(dic: dict) -> bool:
     return not any([value == NO_DEFAULT for value in dic.values()]) 
 
 class EditWindow(QWidget):
+    """
+
+    Used to create a window to edit parameters of the objects that are called in the MainWindow. 
+    
+    Signals
+    -----------
+    It has two PyQt signals, itemUpdates and operatorUpdates, which are used to communicate 
+    changes of the MyEditText widgets that contain the IDs to the comboBoxes, so they are updated. 
+    
+    itemUpdates(str, list) - All comboBoxes from the main window are connected. If the string matches
+    the one from their table id, updates the current items to the ones in the list, matching with the 
+    new/removed IDs
+    
+    operatorUpdates(str, list) - All operator comboBoxes from the 'Edit Algorithms' Tab  are connected. If the string matches
+    the operator ID, updates the current items to the ones in the list, matching with the new/removed IDs
+    
+    Important Methods
+    -----------------
+    
+    tabsToDict() -> dict:
+        Converts the tabs in the window back into a dictionary of parameters.
+    saveParameters():
+        Saves the parameters from all the tabs into a dictionary and saves it to a file.
+
+    dictToTabs(parameters: dict):
+        Converts a dictionary of parameters into tabs in the window.
+    loadParameters():
+        Loads parameters from a file and converts them into tabs in the window.
+    """    
     itemUpdates = pyqtSignal(str,list) 
     operatorUpdates = pyqtSignal(str,list)
 
@@ -44,14 +73,8 @@ class EditWindow(QWidget):
         # set the buttons
         self.open_operators.clicked.connect(self.openOperators)
         self.open_run_options.clicked.connect(self.openRunOptions)
-        self.open_all_tabs.clicked.connect(self.openAllTabs)
         self.save_parameters.clicked.connect(self.saveParameters)
         self.load_parameters.clicked.connect(self.loadParameters)
-        help_msg =   ("Click on \"Edit Run Options\" to edit their parameters. Click on \"Edit Operators\" to edit "
-                     "the operators parameters that are then used in the algorithms. Click on \"Save Parameters\" "
-                     "to save the parameters to a file.")
-
-        self.helpButton.clicked.connect(lambda: MyMessageBox(help_msg, "Help", warning_icon=False))
         self.tabWidget.tabCloseRequested.connect(self.closeTab)
         
         # set the open tab buttons
@@ -113,10 +136,6 @@ class EditWindow(QWidget):
             self.tabWidget.addTab(self.tabs[tab_key], self.tabs[tab_key].name)
         self.tabWidget.setCurrentIndex(1)    
     
-    def openAllTabs(self):
-        for tab_key in self.tabs.keys():
-            self.tabWidget.addTab(self.tabs[tab_key], self.tabs[tab_key].name)    
-            
     def saveParameters(self):
         """Go through all the tabs and save the parameters as a dictionary, where the key is the tab name
         and the value is a dictionary with the parameters. dont forget to save the operators"""
@@ -136,6 +155,27 @@ class EditWindow(QWidget):
             self.dictToTabs(parameters)
                                 
 class EditTab(QFrame):
+    """
+    Create a tab that allows users to edit the parameters for the classes that will be instantiated.
+    
+    Contains a table where each row corresponds to a different object which parameters can be edited. 
+
+    The Table contains buttons to add and remove variants in the table.
+    When a variant is added, the class name is set to the same as the default class, and the arguments are set to the same as the default arguments.
+    When a variant is removed, the row is removed from the table.
+    
+    Both these actions emit a signal to update the items in the respective comboBoxes.
+    Fo example if a variant is added in the algorithms: 'nsga2 variant',the signal is emitted
+    to update the items in the comboBoxes from the Algorithm Table in Main window.
+    
+    
+    Attributes
+    ------------
+        edit_window: The main window where the tab is located.
+        key: A string to identify the tab.
+        tab_args: A tuple containing arguments for the tab.
+        parameters: A dictionary containing parameters for the tab.
+    """
     def __init__(self, edit_window: EditWindow, key: str, tab_args: tuple, parameters: dict):
         super().__init__()
         
@@ -148,21 +188,15 @@ class EditTab(QFrame):
         self.default_ids = list(self.table_dict.keys())        
         self.classes = [self.table_dict[key][CLASS_KEY] for key in self.default_ids]
                 
+        # UI
         if key == ALGO_KEY:
             self.setAlgorithmTab(parameters)
-
+        self.label.setText(label)
+        
         self.dictToTable(self.table_dict)
-
-        self.setUI(label)
         
     ###### GENERAL METHODS ######
     
-    def setUI(self, label):
-        self.label.setText(label)
-        text = (f"Click on \"Add Variant\" to create a variant of the default class. Click on \"Remove\" to remove a variant."
-                "if you change the parameters of a default class, the variants will inherit the new parameters")
-        self.helpButton.clicked.connect(lambda: MyMessageBox(text, "Variants Help", warning_icon=False))
-        
     def setAlgorithmTab(self, parameters: dict):
 
         # define operator combobox items

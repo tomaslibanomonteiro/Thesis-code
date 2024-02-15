@@ -52,6 +52,37 @@ class RunArgs():
         self.pi_objects = pi_objects                
         
 class RunThread(QThread):
+    """
+    A class that extends QThread to run the optimization process in a separate thread,
+    calling the minimize function from pymoo.
+
+    It emits a signal to update the progress bar and the status bar.
+    The run can be canceled by calling the cancel method.
+    
+    AFTER RUN:
+    -----------
+    self.data
+    -----------
+    
+    stores the data from all runs in a pandas DataFrame with structure:
+    number of seeds | algorithm name | problem name | number of evaluations | number of generations | performance indicators values  
+    
+    -----------
+    self.best_gen
+    -----------
+    
+    It stores the last generation of solutions and the best solution so far, depending on the problem type:
+    
+    If SOO, the format is:
+    (problem name, algorithm name, seed): 
+    -> [solution coordinates in decision space, solution value in objective value]
+    
+    so that the Fitness Landscape can be plotted later.
+    
+    If MOO, the format is:
+    (problem name, algorithm name, seed):
+    -> [objective values of the best pareto set]
+    """
     progressSignal = pyqtSignal(str, int)
     
     def __init__(self, run_args_list:list, term_id, term_object, n_seeds:int, moo:bool, parameters:dict, run_options:dict, fixed_seeds:bool):
@@ -68,10 +99,6 @@ class RunThread(QThread):
         
         self.total_runs = len(run_args_list)*n_seeds
         self.canceled = False
-        # dictionary of the best generation for each run to plot later
-        # if it is a MOO problem, contains only the objective values of the best pareto set
-        # if it is a SOO problem, contains the coordinates in decision space followed by the objective space value
-        # of the last generation  
         self.best_gen = {} 
         self.data = pd.DataFrame()
         self.run_counter = 0

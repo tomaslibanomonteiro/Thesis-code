@@ -66,14 +66,14 @@ MOO_TAB = 1
 
 # RUN TAB
 DEFAULT_ROW_NUMBERS = [7, 7, 4, 1] # default number of rows in the main window tables
-HISTORY_LAYOUT_WIDGETS = 3 # history_layout number of widgets before adding history_frames 
+HISTORY_LAYOUT_WIDGETS = 4 # history_layout number of widgets before adding history_frames 
 
 # HISTORY TAB
 MAX_HISTORY_FRAMES = 6 # maximum number of history_frames accepted before asking the user to delete
 
 ### EDIT WINDOW
 NO_DEFAULT = "No def" # to be put in ui table
-VARIANT = '_variant' # sufix for the variant of an object
+VARIANT = ' variant' # sufix for the variant of an object
 VALUE_TYPES = (int, float, str, bool, type(None), NO_DEFAULT) # to be put in ui table as respective widget 
 ID_COL = 1 # object id col number in the edit parameters tables
 

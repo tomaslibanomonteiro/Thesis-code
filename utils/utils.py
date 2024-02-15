@@ -1,7 +1,18 @@
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QFileDialog, QMessageBox
 import pickle
-from frontend.my_widgets import MyMessageBox
+
 from utils.defines import MOO_KEY
+
+class MyMessageBox(QMessageBox):
+    """A class to show a message box with the given text and title."""
+    def __init__(self, text, title="Warning", warning_icon=True):
+        super().__init__()
+
+        self.setIcon(QMessageBox.Warning) if warning_icon else None
+        self.setText(text)
+        self.setWindowTitle(title)
+        self.setStandardButtons(QMessageBox.Ok)
+        self.exec_()
 
 def myFileManager(window_title, file_to_save_name=False, data_to_save=False, default_suffix=".pickle", name_filter="Pickle Files (*.pickle)", keys_to_check=None, moo = None):
     """Open a file dialog to save or load a file. If file_to_save_name is given, save the file. If not, load the file and return the data.

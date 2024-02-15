@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Run Tests",
+            "name": "Tests",
             "type": "debugpy",
             "request": "launch",
             "cwd": "${workspaceFolder}",
@@ -21,7 +21,7 @@
             "subProcess": true
         },
         {
-            "name": "main.py",
+            "name": "App",
             "type": "debugpy",
             "request": "launch",
             "cwd": "${workspaceFolder}",

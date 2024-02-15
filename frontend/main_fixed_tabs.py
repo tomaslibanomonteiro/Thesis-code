@@ -5,14 +5,58 @@ from PyQt5.QtWidgets import QTabWidget, QTableWidget, QTabBar, QWidget, QSpinBox
 from backend.run import RunThread
 from backend.run import RunThread, RunArgs
 
-from frontend.my_widgets import MyComboBox, MyMessageBox
+from frontend.my_widgets import MyComboBox
 from frontend.edit_window import EditWindow, ArgsAreSet
 from frontend.main_run_tab import RunTab
-from utils.utils import myFileManager, showAndRaise, getAvailableName
+from utils.utils import myFileManager, showAndRaise, getAvailableName, MyMessageBox
 from utils.defines import (DESIGNER_PROGRESS_FRAME,RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_FIXED_TABS, HISTORY_LAYOUT_WIDGETS,
                            MAX_HISTORY_FRAMES, ALGO_KEY, PROB_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY, MOO_KEY, OPERATORS_ARGS_DICT, RUN_OPTIONS_ARGS_DICT)
 
 class MainTabsWidget(QTabWidget):
+    """
+    Central Widget in Main Window. Contains the Fixed Tabs: 
+    
+    Run Options Tab
+    ---------------- 
+    where the user can choose the problems to be solved by the algorithms given a certain termination,
+    and over a determined number of seeds. and Main widget that contains all the tabs for the application.
+    It provides methods for managing run options, getting IDs from tables, creating run threads,
+    handling button actions, managing history tab methods, and loading run options.
+
+    Important Methods:
+    - updateComboBoxItems(key: str, items: list): Updates the items of the comboboxes in the "Run" tab,
+    connected to the signal emited by the EditText widgets in the Edit Window that contain the respective IDs
+    - dictToTables(run_options: dict): Populates the tables with data from a run_options dictionary.
+    - tablesToDict: Converts the run options from the table into a dictionary.
+    - getIDsFromTable: Retrieves the IDs from the given table.
+    - getRunThread: Constructs a run thread based on the current settings.
+    - runButton: Starts the run thread if it is not None.
+    - saveRunOptions: Saves the current run options to a file.
+    - loadRunOptions: Loads run options from a file.
+    
+    Run History Tab
+    ---------------- 
+    After a Run is finished, a progress frame is added to the history tab. Here, the 
+    user can see the Run progress, and after it is finished, save the Run object to reproduce it in the future, 
+    or just the results of it. Furthermore, a previously saved Run can be loaded and open to see and plot 
+    the results within the app, in the dedicated Run Tab
+    
+    Important methods:
+    - setProgressFrame: Sets up a progress frame for a given run thread.
+    - saveAllRuns: Saves all available runs.
+    - saveAllResults: Saves all results from the runs.
+    - openAllTabs: Opens all tabs for the runs.
+    - eraseAllRuns: Erases all runs.
+    - loadRun: Loads a run from a file.
+    
+    Attributes
+    ----------------
+        run_counter: A counter for the number of runs.
+        tables_dict: A dictionary mapping keys to table widgets.
+        seedsSpinBox: A QSpinBox widget for setting the number of seeds.
+        fixed_seeds: A boolean indicating whether the seeds are fixed.
+        edit_window: An instance of the EditWindow class.
+    """
     def __init__(self, run_options: dict, parameters: dict) -> None:
         super().__init__()
 
@@ -65,7 +109,9 @@ class MainTabsWidget(QTabWidget):
         self.run_button.clicked.connect(self.runButton)
         self.rand_seeds_checkBox.clicked.connect(self.setSeedCheckBoxes)
         self.fixed_seeds_checkBox.clicked.connect(self.setSeedCheckBoxes)
-
+        self.save_run_options.clicked.connect(self.saveRunOptions)
+        self.load_run_options.clicked.connect(self.loadRunOptions)
+        
         ######## HISTORY TAB ########
         
         # open, save and erase buttons                            
@@ -74,7 +120,6 @@ class MainTabsWidget(QTabWidget):
         self.open_all_tabs.clicked.connect(self.openAllTabs)
         self.load_run.clicked.connect(self.loadRun)
         self.erase_all_runs.clicked.connect(self.eraseAllRuns)
-
 
         return spin_box
         
@@ -205,37 +250,37 @@ class MainTabsWidget(QTabWidget):
             pf = prob_object.pareto_front() if prob_object.pareto_front else None #!
             n_obj = prob_object.n_obj if prob_object.n_obj else None #!
             
+            if prob_object == None:
+                return None
             # get algo objects (ref_dirs depends on n_obj) 
             for algo_id in self.getIDsFromTable(self.algo_table):
                 algo_object = tabs[ALGO_KEY].getObjectFromID(algo_id, pf, n_obj)
                 
+                if algo_object == None:
+                    return None
                 # get pi objects (pi depends on prob pf)
                 pi_ids, pi_objects = [], []
                 for pi_id in self.getIDsFromTable(self.pi_table):
                     pi_ids.append(pi_id)
                     pi_object = tabs[PI_KEY].getObjectFromID(pi_id, pf, n_obj)
                     pi_objects.append(pi_object)
-        
-                # check if all objects are not None
-                if prob_object and algo_object and not (None in pi_objects):
+                    if pi_object == None:
+                        return None
+                    
                     run_args.append(RunArgs(prob_id, prob_object, algo_id, algo_object, pi_ids, pi_objects))
-                else:
-                    return None
-        
 
-        if prob_object and algo_object and not (None in pi_objects) and pi_objects != []:
-            # get the termination object
-            term_ids = self.getIDsFromTable(self.term_table)
-            term_id = term_ids[0] if term_ids != [] else None
-            term_object = tabs[TERM_KEY].getObjectFromID(term_id) if term_id != None else None
+        # get the termination object
+        term_ids = self.getIDsFromTable(self.term_table)
+        term_id = term_ids[0] if term_ids != [] else None
+        term_object = tabs[TERM_KEY].getObjectFromID(term_id) if term_id != None else None
             
-            if term_object is not None:
-                # get the rest of the parameters
-                moo = self.moo_checkBox.isChecked()
-                n_seeds = self.seedsSpinBox.value()
-                parameters = self.edit_window.tabsToDict()
-                run_options = self.tablesToDict()
-                return RunThread(run_args, term_id, term_object, n_seeds, moo, parameters, run_options, self.fixed_seeds)
+        if term_object is not None:
+            # get the rest of the parameters
+            moo = self.moo_checkBox.isChecked()
+            n_seeds = self.seedsSpinBox.value()
+            parameters = self.edit_window.tabsToDict()
+            run_options = self.tablesToDict()
+            return RunThread(run_args, term_id, term_object, n_seeds, moo, parameters, run_options, self.fixed_seeds)
         else:
             return None
     
@@ -359,6 +404,40 @@ class MainTabsWidget(QTabWidget):
                     progress_frame.afterRun()
                             
 class ProgressFrame(QFrame):
+    """
+    Frame created to see a certain Run progress and allowing certain actions after it is finished.
+    It is connected to the RunThread through a signal that updates the progress bar and label.
+
+    Attributes:
+    -----------
+    main_tabs : MainTabsWidget
+        The main tabs widget of the application.
+    run_thread : RunThread
+        The thread that is running the task.
+    run_name : str
+        The name of the run.
+    run_tab : RunTab
+        The tab that displays the results of the run.
+
+    Methods:
+    --------
+    __init__(main_tabs, run_thread, run_name):
+        Initializes the ProgressFrame with the main tabs widget, the run thread, and the run name.
+    afterRun():
+        Handles the actions to be performed after the run thread finishes.
+    closeTab(index):
+        Removes a tab from the tab widget at the given index.
+    receiveUpdate(value, text):
+        Updates the progress bar and label with the current run.
+    openTab():
+        Opens a tab with the results of the run.
+    reproduceRun():
+        Reproduces the run, setting the parameters and run options of the App to the ones of the Run.
+    erase():
+        Removes the ProgressFrame from the history layout and deletes it.
+    cancelRun():
+        Cancels the run thread and calls the erase method.
+    """    
     def __init__(self, tabWidget: MainTabsWidget, run_thread: RunThread, run_name: str):
         super().__init__()
         loadUi(DESIGNER_PROGRESS_FRAME, self)
@@ -449,3 +528,4 @@ class ProgressFrame(QFrame):
         """Cancel the run"""
         self.run_thread.cancel()
         self.erase()
+

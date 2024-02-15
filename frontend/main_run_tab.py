@@ -6,13 +6,34 @@ import numpy as np
 
 from backend.run import RunThread
 from backend.run import RunThread
-from frontend.my_widgets import MyMessageBox
 from utils.defines import (DESIGNER_RUN_TAB, PROB_KEY, ALGO_KEY, N_SEEDS_KEY, N_GEN_KEY, N_EVAL_KEY, VOTING_KEY, PI_KEY,
                            CLASS_KEY, TERM_KEY, PLOT_PROGRESS_KEY, PLOT_PS_KEY, PLOT_PC_KEY, PLOT_FL_KEY)
 from utils.plotting import Plotter
-from utils.utils import myFileManager, setBold
+from utils.utils import myFileManager, setBold, MyMessageBox
 
 class RunTab(QFrame):
+    """
+    Represents the tab in the GUI that is responsible for 
+    managing and displaying the results of a run 
+
+    Attributes
+    ----------
+        run_thread (RunThread): The thread from which the algorithm will or has run.
+        pi_ids (list): List of performance indicator ids.
+        term_data (DataFrame): The final generation data, averaged across seeds.
+        prob_ids (list): List of problem ids.
+        algo_ids (list): List of algorithm ids.
+        plot_widgets (list): List of plot widgets to prevent them from being garbage collected.
+        
+    Important Methods
+    -------
+        setCheckBoxes(event=None, set_algos=False): Sets the checkboxes for the given ids in the tables, when the plotting
+        mode changes, so the user chooses the seeds or the performance indicators to plot.
+        changeTable(): Updates the table based on the selected item id.
+        plot(): Calls the Plotter class to plot the results in the respective plot mode.
+        saveRun(): Saves the run thread object.
+        saveResult(): Saves the result of the run in a csv.
+    """
     def __init__(self, run_thread: RunThread, label: str):
         super().__init__()
         loadUi(DESIGNER_RUN_TAB, self)
