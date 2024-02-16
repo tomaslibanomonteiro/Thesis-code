@@ -7,7 +7,7 @@ moo_options = {
     ALGO_KEY: ['nsga2', 'nsga3'],
     PI_KEY: ['gd', 'gd+', 'igd+', 'igd'],
     TERM_KEY: ['n_eval'],
-    N_SEEDS_KEY: 1
+    N_SEEDS_KEY: 3
 }
 
 soo_options = {
@@ -15,15 +15,15 @@ soo_options = {
     ALGO_KEY: ['ga', 'pso'],
     PI_KEY: ['best'],
     TERM_KEY: ['n_eval'],
-    N_SEEDS_KEY: 1
+    N_SEEDS_KEY: 3
 }
 
 def main():
     
     app = QApplication([])
     main_window = MyMainWindow(soo_options, moo_options)
-    # main_window.tabs[0].runButton()
-    # main_window.tabs[1].runButton()
+    #! main_window.tabs[0].runButton()
+    #! main_window.tabs[1].runButton()
     
     main_window.show()    
     app.exec_()

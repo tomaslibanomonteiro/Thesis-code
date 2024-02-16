@@ -22,14 +22,14 @@ class Test():
         self.moo = self.options.pop(MOO_KEY) 
         
         if parameters is None:
-            self.parameters = Defaults(self.moo).dict
+            self.parameters = Defaults(self.moo).parameters
         else:
             self.parameters = parameters
         self.parameters[TERM_KEY]['n_eval']['n_max_evals'] = n_evals
         
         # get main window, and run object 
-        run_options_soo, parameters_soo = (self.options, self.parameters) if not self.moo else ({}, Defaults(False).dict)
-        run_options_moo, parameters_moo = (self.options, self.parameters) if self.moo else ({}, Defaults(True).dict)
+        run_options_soo, parameters_soo = (self.options, self.parameters) if not self.moo else ({}, Defaults(False).parameters)
+        run_options_moo, parameters_moo = (self.options, self.parameters) if self.moo else ({}, Defaults(True).parameters)
         
         self.main_window = MyMainWindow(run_options_soo, run_options_moo, parameters_soo, parameters_moo)
         self.run_thread = self.main_window.activeTabs().getRunThread()
@@ -39,9 +39,6 @@ class Test():
         self.run_thread.start()
         
     def afterRun(self):
-        import debugpy
-        debugpy.debug_this_thread() #!
-        
         data = self.run_thread.data
         data.to_csv(RESULTS_FOLDER + '/' + self.test_name, index=False)
         self.is_finished = True

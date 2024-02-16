@@ -5,8 +5,7 @@ from PyQt5.QtCore import pyqtSignal
 from numpy import inf
 
 from frontend.my_widgets import MyLineEdit, MyComboBox, ScientificDoubleSpinBox, ScientificSpinBox, MyCheckBox, MyWidgetsFrame, MyEmptyLineEdit
-from utils.debug import debug_print
-from utils.utils import myFileManager, MyMessageBox
+from utils.utils import debug_print, myFileManager, MyMessageBox
 from utils.defines import (DESIGNER_EDIT_WINDOW, DESIGNER_EDIT_TAB, NO_DEFAULT, OPERATORS, ID_COL, OPERATORS_ARGS_DICT, 
                            RUN_OPTIONS_ARGS_DICT, PROB_KEY, ALGO_KEY, TERM_KEY, PI_KEY, REF_DIR_KEY, CROSS_KEY, CLASS_KEY,
                            DECOMP_KEY, MUT_KEY, SAMP_KEY, SEL_KEY, VARIANT, MOO_KEY)  

@@ -47,10 +47,10 @@ class Defaults():
         else:
             self.parameters[ALGO_KEY]['ga']['selection'] = 'tournament_by_cv_and_fitness'
             
-        self.parameters[TERM_KEY]['n_eval']['n_max_evals'] = 2000
-        self.parameters[TERM_KEY]['n_gen']['n_max_gen'] = 40
+        self.parameters[TERM_KEY]['n_eval']['n_max_evals'] = 4000
+        self.parameters[TERM_KEY]['n_gen']['n_max_gen'] = 10
         self.parameters[TERM_KEY]['fmin']['fmin'] = 1
-        self.parameters[TERM_KEY]['time']['max_time'] = 10
+        self.parameters[TERM_KEY]['time']['max_time'] = 100
         
         self.parameters[REF_DIR_KEY]['(das-dennis|uniform)']['n_dim'] = 'n_obj*1'
         self.parameters[REF_DIR_KEY]['(das-dennis|uniform)']['n_points'] = 'n_obj*2'

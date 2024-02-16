@@ -1,11 +1,12 @@
 """
-In this script, you can program your own Algorithm/Problem/Operator. The code must be written according to 
-the pymoo framework. For more information, see https://pymoo.org/algorithms/index.html
+In this script, an example of how you can program your own Class and integrate it in the App. 
 
-To integrate the created class in the App, import it in the backend/run.py file and add it to the respective
-list of algorithms/problems/operators. 
+The code must be written according to the pymoo framework. For more information, see https://pymoo.org/algorithms/index.html
 
-Keep in mind that the get.py script only retrieves default values that are strings, booleans, integers or floats,.
+To integrate the created class in the App, added it in the respective get_class_options function of the backend/get.py file. 
+
+Keep in mind that the App only allows the changing of values in arguments with type string, boolean, integer or float.
+
 In case of an Algorithm, if one of the arguments is an operator, 
 ("mutation", "crossover", "selection", "decomposition", "sampling", "ref_dirs")
 the App will retrieve the default class of that operator, provided that it is one of the operators in the get_operator_options. However, specific initializations are not possible, so if you want to use a specific initialization, you must create a new class;

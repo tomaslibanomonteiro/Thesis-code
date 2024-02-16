@@ -68,7 +68,7 @@ def get_algorithm_options(objectives = 'all'):
     from pymoo.algorithms.soo.nonconvex.nelder import NelderMead
     from pymoo.algorithms.soo.nonconvex.pattern import PatternSearch
     from pymoo.algorithms.soo.nonconvex.pso import PSO
-    from user_code import MyAlgorithm
+    from integrate_user_classes import MyAlgorithm
 
     ALGORITHMS_SINGLE = [
         ("ga", GA),
@@ -645,15 +645,16 @@ def get_problem(name, *args, **kwargs):
 # Weights
 # =========================================================================================================
 
-from pymoo.util.ref_dirs.energy import RieszEnergyReferenceDirectionFactory
-from pymoo.util.ref_dirs.energy_layer import \
-    LayerwiseRieszEnergyReferenceDirectionFactory
-from pymoo.util.ref_dirs.reduction import \
-    ReductionBasedReferenceDirectionFactory
-from pymoo.util.reference_direction import MultiLayerReferenceDirectionFactory
 
 def get_reference_direction_options(objectives = 'all'):
         
+    from pymoo.util.ref_dirs.energy import RieszEnergyReferenceDirectionFactory
+    from pymoo.util.ref_dirs.energy_layer import \
+        LayerwiseRieszEnergyReferenceDirectionFactory
+    from pymoo.util.ref_dirs.reduction import \
+        ReductionBasedReferenceDirectionFactory
+    from pymoo.util.reference_direction import MultiLayerReferenceDirectionFactory
+
     from pymoo.util.reference_direction import UniformReferenceDirectionFactory
 
     REFERENCE_DIRECTIONS = [

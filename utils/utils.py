@@ -3,6 +3,11 @@ import pickle
 
 from utils.defines import MOO_KEY
 
+DEBUG_PRINT = False
+
+def debug_print(*args):
+    if DEBUG_PRINT:
+        print(*args)
 class MyMessageBox(QMessageBox):
     """A class to show a message box with the given text and title."""
     def __init__(self, text, title="Warning", warning_icon=True):

@@ -10,7 +10,7 @@ from pymoo.indicators.hv import Hypervolume
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import QThread
 
-from utils.debug import debug_print
+from utils.utils import debug_print
 from utils.defines import N_SEEDS_KEY, ALGO_KEY, PROB_KEY, N_EVAL_KEY, N_GEN_KEY
 
 class MyCallback(Callback):
@@ -108,8 +108,10 @@ class RunThread(QThread):
 
     def run(self):
         #!
-        import debugpy
-        debugpy.debug_this_thread()
+        import sys
+        if sys.gettrace() is not None:
+            import debugpy
+            debugpy.debug_this_thread()
         seeds = np.arange(self.n_seeds) if self.fixed_seeds else np.random.choice(10000, size=self.n_seeds, replace=False)
         for run_args in self.run_args_list:
             for seed in seeds:
