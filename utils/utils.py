@@ -5,6 +5,22 @@ from utils.defines import MOO_KEY
 
 DEBUG_PRINT = False
 
+#!
+# import sys
+# import os
+# from PyQt5.uic import loadUi
+
+# def fixPath_loadUI(ui_file_name, widget):
+#     if getattr(sys, 'frozen', False):
+#         # we are running in a bundle
+#         bundle_dir = sys._MEIPASS
+#     else:
+#         # we are running in a normal Python environment
+#         bundle_dir = os.path.dirname(os.path.abspath(__file__))
+#     ui_file_path = os.path.join(bundle_dir, ui_file_name)
+    
+#     loadUi(ui_file_path, widget)
+
 def debug_print(*args):
     if DEBUG_PRINT:
         print(*args)

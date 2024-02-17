@@ -6,15 +6,14 @@ It provides an interface capable of running multiple Algorithms on multiple Prob
 
 ## Installation
 
-1. Fork this repository to your own GitHub account.
-2. Clone the forked repository to your local machine.
+1. Clone the repository to your local machine through the command, or just download the zip file and extract it to a directory of your choice.
 
 ```bash
-git clone https://github.com/<your-username>/<repository-name>.git #!
+git clone https://github.com/tomaslibanomonteiro/Thesis-code #!
 ```
 
-3. Navigate to the project directory.
-4. Install the required dependencies.
+2. Navigate to the project directory.
+3. Install the required dependencies (creation of a virtual environment is recommended).
 
 ```bash
 pip install -r requirements.txt
@@ -40,4 +39,4 @@ An example of how to add user coded Algorithms, Problems, or other Classes into 
 MIT
 
 ## Contributions
-The project was only done to reaserch purposes. Any further development is encourage under the License's Terms and Conditions.
+The project was only done for academic and educational purposes. Any further development is encourage under the License's Terms and Conditions.
