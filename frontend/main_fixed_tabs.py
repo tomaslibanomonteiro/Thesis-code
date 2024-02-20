@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QTabWidget, QTableWidget, QTabBar, QWidget, QSpinBox
 from backend.run import RunThread
 from backend.run import RunThread, RunArgs
 
-from frontend.my_widgets import MyComboBox
+from frontend.small_widgets import MyComboBox
 from frontend.edit_window import EditWindow, ArgsAreSet
 from frontend.main_run_tab import RunTab
 from utils.utils import myFileManager, showAndRaise, getAvailableName, MyMessageBox
