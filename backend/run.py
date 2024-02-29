@@ -75,7 +75,7 @@ class RunThread(QThread):
     
     If SOO, the format is:
     (problem name, algorithm name, seed): 
-    -> [solution coordinates in decision space, solution value in objective value]
+    -> [solution coordinates in decision space, solution value in objective space]
     
     so that the Fitness Landscape can be plotted later.
     

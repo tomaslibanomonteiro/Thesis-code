@@ -7,7 +7,7 @@
 DESIGNER_MAIN = 'frontend/designer_templates/main_window/main_window.ui' 
 DESIGNER_FIXED_TABS = 'frontend/designer_templates/main_window/fixed_tabs.ui'
 DESIGNER_RUN_TAB = 'frontend/designer_templates/main_window/run_tab.ui'
-DESIGNER_PROGRESS_FRAME = 'frontend/designer_templates/main_window/progress_frame.ui'
+DESIGNER_HISTORY_FRAME = 'frontend/designer_templates/main_window/history_frame.ui'
 
 # folders edit window
 DESIGNER_EDIT_WINDOW = 'frontend/designer_templates/edit_window/edit_window.ui'

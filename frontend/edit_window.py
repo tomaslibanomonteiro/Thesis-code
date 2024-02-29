@@ -16,33 +16,32 @@ def ArgsAreSet(dic: dict) -> bool:
 
 class EditWindow(QWidget):
     """
+        Used to create a window to edit parameters of the objects that are called in the MainWindow. 
+        
+        Signals
+        -----------
+        It has two PyQt signals, itemUpdates and operatorUpdates, which are used to communicate 
+        changes of the MyEditText widgets that contain the IDs to the comboBoxes, so they are updated. 
+        
+        itemUpdates(str, list) - All comboBoxes from the main window are connected. If the string matches
+        the one from their table id, updates the current items to the ones in the list, matching with the 
+        new/removed IDs
+        
+        operatorUpdates(str, list) - All operator comboBoxes from the 'Edit Algorithms' Tab  are connected. If the string matches
+        the operator ID, updates the current items to the ones in the list, matching with the new/removed IDs
+        
+        Important Methods
+        -----------------
+        
+        tabsToDict() -> dict:
+            Converts the tabs in the window back into a dictionary of parameters.
+        saveParameters():
+            Saves the parameters from all the tabs into a dictionary and saves it to a file.
 
-    Used to create a window to edit parameters of the objects that are called in the MainWindow. 
-    
-    Signals
-    -----------
-    It has two PyQt signals, itemUpdates and operatorUpdates, which are used to communicate 
-    changes of the MyEditText widgets that contain the IDs to the comboBoxes, so they are updated. 
-    
-    itemUpdates(str, list) - All comboBoxes from the main window are connected. If the string matches
-    the one from their table id, updates the current items to the ones in the list, matching with the 
-    new/removed IDs
-    
-    operatorUpdates(str, list) - All operator comboBoxes from the 'Edit Algorithms' Tab  are connected. If the string matches
-    the operator ID, updates the current items to the ones in the list, matching with the new/removed IDs
-    
-    Important Methods
-    -----------------
-    
-    tabsToDict() -> dict:
-        Converts the tabs in the window back into a dictionary of parameters.
-    saveParameters():
-        Saves the parameters from all the tabs into a dictionary and saves it to a file.
-
-    dictToTabs(parameters: dict):
-        Converts a dictionary of parameters into tabs in the window.
-    loadParameters():
-        Loads parameters from a file and converts them into tabs in the window.
+        dictToTabs(parameters: dict):
+            Converts a dictionary of parameters into tabs in the window.
+        loadParameters():
+            Loads parameters from a file and converts them into tabs in the window.
     """    
     itemUpdates = pyqtSignal(str,list) 
     operatorUpdates = pyqtSignal(str,list)
@@ -155,25 +154,25 @@ class EditWindow(QWidget):
                                 
 class EditTab(QFrame):
     """
-    Create a tab that allows users to edit the parameters for the classes that will be instantiated.
-    
-    Contains a table where each row corresponds to a different object which parameters can be edited. 
+        Create a tab that allows users to edit the parameters for the classes that will be instantiated.
+        
+        Contains a table where each row corresponds to a different object which parameters can be edited. 
 
-    The Table contains buttons to add and remove variants in the table.
-    When a variant is added, the class name is set to the same as the default class, and the arguments are set to the same as the default arguments.
-    When a variant is removed, the row is removed from the table.
-    
-    Both these actions emit a signal to update the items in the respective comboBoxes.
-    Fo example if a variant is added in the algorithms: 'nsga2 variant',the signal is emitted
-    to update the items in the comboBoxes from the Algorithm Table in Main window.
-    
-    
-    Attributes
-    ------------
-        edit_window: The main window where the tab is located.
-        key: A string to identify the tab.
-        tab_args: A tuple containing arguments for the tab.
-        parameters: A dictionary containing parameters for the tab.
+        The Table contains buttons to add and remove variants in the table.
+        When a variant is added, the class name is set to the same as the default class, and the arguments are set to the same as the default arguments.
+        When a variant is removed, the row is removed from the table.
+        
+        Both these actions emit a signal to update the items in the respective comboBoxes.
+        Fo example if a variant is added in the algorithms: 'nsga2 variant',the signal is emitted
+        to update the items in the comboBoxes from the Algorithm Table in Main window.
+        
+        
+        Attributes
+        ------------
+            edit_window: The main window where the tab is located.
+            key: A string to identify the tab.
+            tab_args: A tuple containing arguments for the tab.
+            parameters: A dictionary containing parameters for the tab.
     """
     def __init__(self, edit_window: EditWindow, key: str, tab_args: tuple, parameters: dict):
         super().__init__()
@@ -187,28 +186,12 @@ class EditTab(QFrame):
         self.default_ids = list(self.table_dict.keys())        
         self.classes = [self.table_dict[key][CLASS_KEY] for key in self.default_ids]
                 
-        # UI
         if key == ALGO_KEY:
-            self.setAlgorithmTab(parameters)
+            self.operator_comboBox_items = {key: list(parameters[key].keys()) for key in OPERATORS} 
+        
         self.label.setText(label)
-        
         self.dictToTable(self.table_dict)
-        
-    ###### GENERAL METHODS ######
-    
-    def setAlgorithmTab(self, parameters: dict):
-
-        # define operator combobox items
-        self.operator_comboBox_items = {key: list(parameters[key].keys()) for key in OPERATORS} 
-
-        # add the operators button to the algorithm tab
-        self.operators_button = QPushButton("Edit Operators")
-        self.operators_button.clicked.connect(self.edit_window.openOperators)
-        self.operators_button.setFixedWidth(100)
-        self.operators_button.setFixedHeight(30)
-        
-        self.label_layout.insertWidget(3, self.operators_button)        
-            
+                    
     ###### EDIT TABLES ######
     
     def dictToTable(self, table_dict: dict):
