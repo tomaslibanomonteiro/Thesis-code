@@ -54,7 +54,7 @@ CLASS_KEY = 'Class' # key from the class Default dictionary to get the class nam
 N_EVAL_KEY = 'n_eval' # for the dataframes
 N_GEN_KEY = 'n_gen' # for the dataframes
 MOO_KEY = 'moo' # key to know if a loaded object is loaded into the right MOO/SOO
-
+WRITABLE_ARG_KEY = '(writable arg)'
 # CONVERTING ARGS WITH STRING VALUES 
 CONVERT_KEY = '(convert)' # key to know if a given string value of an arg is to be converted before initialing the class
 CONVERTIBLES = ['n_var', 'n_obj', 'get_problem_pf']

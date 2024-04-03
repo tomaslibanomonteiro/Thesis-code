@@ -9,7 +9,8 @@ from frontend.small_widgets import MyLineEdit, MyComboBox, ScientificDoubleSpinB
 from utils.utils import debug_print, myFileManager, MyMessageBox
 from utils.defines import (DESIGNER_EDIT_WINDOW, DESIGNER_EDIT_TAB, NO_DEFAULT, OPERATORS, ID_COL, OPERATORS_ARGS_DICT, 
                            RUN_OPTIONS_ARGS_DICT, PROB_KEY, ALGO_KEY, TERM_KEY, PI_KEY, REF_DIR_KEY, CROSS_KEY, CLASS_KEY,
-                           DECOMP_KEY, MUT_KEY, SAMP_KEY, SEL_KEY, VARIANT, MOO_KEY, CONVERT_KEY, CONVERTIBLES)
+                           DECOMP_KEY, MUT_KEY, SAMP_KEY, SEL_KEY, VARIANT, MOO_KEY, CONVERT_KEY, CONVERTIBLES, 
+                           WRITABLE_ARG_KEY)
 
 
 def ArgsAreSet(dic: dict) -> bool:
@@ -318,7 +319,11 @@ class EditTab(QFrame):
         
         widgets_frame = self.edit_window.widgets_frame
         # Set the widget in the arg column (always text)
-        widget = MyLineEdit(arg, "arg", widgets_frame, True)
+        if arg.endswith(WRITABLE_ARG_KEY):
+            arg = arg[:-len(WRITABLE_ARG_KEY)]
+            widget = MyLineEdit(arg, "arg", widgets_frame, False)
+        else:
+            widget = MyLineEdit(arg, "arg", widgets_frame, True)
         table.setCellWidget(row, col, widget)    
         
         #  BOOL
@@ -412,7 +417,7 @@ class EditTab(QFrame):
             # break in the end of the row
             if table.cellWidget(row, col) in [None, ""] or isinstance(table.cellWidget(row, col), MyEmptyLineEdit):
                 break
-            
+    
             # get the arg and the widget
             arg = table.cellWidget(row, col).text()
             widget = table.cellWidget(row, col+1)
@@ -431,8 +436,11 @@ class EditTab(QFrame):
                 value = widget.isChecked()
             elif isinstance(widget, MyLineEdit):
                 value = widget.text() 
+                # IGNORE EMPTY STRING 
+                if value == '':
+                    continue
                 # NONE
-                if value == 'None':
+                elif value == 'None':
                     value = None
                 # NO DEFAULT
                 elif value == NO_DEFAULT:

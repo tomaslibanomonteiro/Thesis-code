@@ -1,7 +1,8 @@
 import inspect
 
 from utils.defines import (NO_DEFAULT, OPERATORS, VALUE_TYPES, KEY_ARGS_DICT, MUT_KEY, CROSS_KEY, CLASS_KEY, MOO_KEY,
-                           SEL_KEY, SAMP_KEY, DECOMP_KEY, REF_DIR_KEY, PROB_KEY, ALGO_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY, CONVERT_KEY)
+                           SEL_KEY, SAMP_KEY, DECOMP_KEY, REF_DIR_KEY, PROB_KEY, ALGO_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY, 
+                           CONVERT_KEY, WRITABLE_ARG_KEY)
 
 class Defaults():
     """
@@ -31,8 +32,14 @@ class Defaults():
         for key, get_options_function in key_get_pairs:
             self.parameters[key] = self.get_table_dict(get_options_function(self.get_str))
             self.get_dict[key] = get_options_function
-                            
-        # changed defaults
+                  
+        # add a customable arg
+        for key in self.parameters.keys():
+            if key != MOO_KEY:    
+                for obj in self.parameters[key].keys():
+                    self.parameters[key][obj]["(Custom Arg)" + WRITABLE_ARG_KEY] = ""
+                    
+        # manualy changed defaults
         if self.parameters[MOO_KEY]:
             self.parameters[PI_KEY]['gd']['pf'] = 'get_problem_pf' + CONVERT_KEY
             self.parameters[PI_KEY]['igd']['pf'] = 'get_problem_pf' + CONVERT_KEY
