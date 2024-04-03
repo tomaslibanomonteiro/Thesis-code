@@ -70,7 +70,7 @@ class MyWidgetsFrame(QFrame):
                     new_str = f"\nfont: {font.pointSize()}pt \"{font.family()}\";\n"
                     new_stylesheet = curr_stylesheet[:insert_index] + new_str + curr_stylesheet[insert_index:]
                     widget.setStyleSheet(new_stylesheet)              
-    
+
     def copyStyleAndSizePolicy(self, widget, copy_key):
         if copy_key == "default_id":
             copy_widget = self.default_id
@@ -80,8 +80,8 @@ class MyWidgetsFrame(QFrame):
             copy_widget = self.arg
         elif copy_key == "value":
             copy_widget = self.value
-        elif copy_key == "convertible":
-            copy_widget = self.convertible    
+        elif copy_key == "convert":
+            copy_widget = self.convert    
         elif copy_key == "no_def":
             copy_widget = self.no_def
         elif copy_key == "none":
@@ -98,6 +98,8 @@ class MyWidgetsFrame(QFrame):
             copy_widget = self.doubleSpinBox
         elif copy_key == "checkBox":
             copy_widget = self.checkBox
+        elif copy_key == None:
+            return
         else:
             raise ValueError(f"Unknown copy style of MyWidgetsFrame: {copy_key}")
         
@@ -132,53 +134,68 @@ class MyLineEdit(QLineEdit):
         self.recorded_text = text
         self.widgets_frame = widgets_frame
         self.copy_style = copy_style
+        self.convert = copy_style == "convert"
         self.setText(text)
         self.setReadOnly(read_only)
-        self.convertible = copy_style == "convertible"
-        self.widgets_frame.copyStyleAndSizePolicy(self, copy_style) if copy_style is not None else None
-        self.setMenu()
+        self.setStyle()
+        
+        if (copy_style in ["convert", "value", "none", "no_def"]):
+            self.convert = not self.convert
+            self.setMenu()
     
     def setMenu(self):
-        pass
-        # # create a custom context menu
-        # self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        # self.customContextMenuRequested.connect(self.showContextMenu)
-        # self.context_menu = QMenu(self)
         
-        # if self.convertible:
-        #     # add an option to convert widget to a string
-        #     self.clear_action = QAction("Set value to convertible string", self)
-        #     self.clear_action.triggered.connect(self.clearSelection)
-        #     self.context_menu.addAction(self.clear_action)
-
-        # # add an option to add another combobox to the table
-        # self.add_rows = QAction("Add Row", self)
-        # self.add_rows.triggered.connect(self.addRowToTable)
-        # self.context_menu.addAction(self.add_rows)
-
-
-        # t = self.tab.table
-
+        # create a custom context menu
+        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.showContextMenu)
+        self.context_menu = QMenu(self)
+        
+        if not self.convert:
+            string = "Change to plain string"
+            self.copy_style = "convert"
+            self.convert = True
+        else:
+            string = "Change to convert string"        
+            self.copy_style = "value"
+            self.convert = False
+        
+        self.menu_action = QAction(string, self)
+        self.menu_action.triggered.connect(self.setMenu)
+        self.context_menu.addAction(self.menu_action)
+        self.setStyle()
+    
+    def showContextMenu(self, pos):
+        self.context_menu.exec_(self.mapToGlobal(pos))
         
     def focusOutEvent(self, event):
         
         self.setText(self.text().strip())
         # if the text is different from the recorded text, set style sheet and emit signal
         if self.recorded_text != self.text(): 
-            if self.text() == "None": 
-                self.widgets_frame.copyStyleAndSizePolicy(self, "none")
-            elif self.text() == NO_DEFAULT:
-                self.widgets_frame.copyStyleAndSizePolicy(self, "no_def")
-            else: 
-                self.widgets_frame.copyStyleAndSizePolicy(self, "value")
+            self.setStyle()
             self.emitSignal()
         
         super().focusOutEvent(event)
-            
+    
     def emitSignal(self):
         if self.tab is not None and not self.isReadOnly():
             items = self.makeUnique()
             self.itemsSignal.emit(self.tab.key, items)
+    
+    def setStyle(self):
+        
+        if self.copy_style in ["convert", "value"]:    
+            if self.text() == "None":  
+                copy_style = "none"
+            elif self.text() == NO_DEFAULT:
+                copy_style = "no_def"
+            elif self.convert:
+                copy_style = "convert"
+            else:
+                copy_style = "value" 
+        else:
+            copy_style = self.copy_style
+        self.widgets_frame.copyStyleAndSizePolicy(self, copy_style) if self.widgets_frame is not None else None    
         
     def makeUnique(self):        
         # check if the text is different from the rest of the table

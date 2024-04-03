@@ -9,7 +9,8 @@ from frontend.small_widgets import MyLineEdit, MyComboBox, ScientificDoubleSpinB
 from utils.utils import debug_print, myFileManager, MyMessageBox
 from utils.defines import (DESIGNER_EDIT_WINDOW, DESIGNER_EDIT_TAB, NO_DEFAULT, OPERATORS, ID_COL, OPERATORS_ARGS_DICT, 
                            RUN_OPTIONS_ARGS_DICT, PROB_KEY, ALGO_KEY, TERM_KEY, PI_KEY, REF_DIR_KEY, CROSS_KEY, CLASS_KEY,
-                           DECOMP_KEY, MUT_KEY, SAMP_KEY, SEL_KEY, VARIANT, MOO_KEY)  
+                           DECOMP_KEY, MUT_KEY, SAMP_KEY, SEL_KEY, VARIANT, MOO_KEY, CONVERT_KEY, CONVERTIBLES)
+
 
 def ArgsAreSet(dic: dict) -> bool:
     # check if any of the values in the dict is == NO_DEFAULT
@@ -313,19 +314,21 @@ class EditTab(QFrame):
         id_widget.itemsSignal.emit(id_widget.tab.key, items)
         self.table.removeRow(row)
         
-    def setTablePair(self, table: QTableWidget, row: int, col: int, arg: str, value, editable: bool = True) -> None:
+    def setTablePair(self, table: QTableWidget, row: int, col: int, arg: str, value) -> None:
         
         widgets_frame = self.edit_window.widgets_frame
         # Set the widget in the arg column (always text)
         widget = MyLineEdit(arg, "arg", widgets_frame, True)
         table.setCellWidget(row, col, widget)    
         
-        # Set the widget in the value column
+        #  BOOL
         if isinstance(value, bool):
             widget = MyCheckBox(value, widgets_frame)
+        # INT
         elif isinstance(value, int):
             widget = ScientificSpinBox(widgets_frame)
             widget.setValue(value)
+        # FLOAT
         elif isinstance(value, float):
             widget = ScientificDoubleSpinBox(widgets_frame)
             if value == inf:
@@ -334,28 +337,29 @@ class EditTab(QFrame):
                 widget.setValue(widget.minimum())
             else:
                 widget.setValue(value)
+        # COMBO BOX
         elif self.key == ALGO_KEY and arg in OPERATORS:
-            self.setOperatorComboBox(table, row, col, arg, value)
-            return
+            items = self.edit_window.tabs[arg].initial_table_dict.keys()
+            widget = MyComboBox(items, value, table=self.table, tab=self, key=arg, copy_style="comboBox", widgets_frame=widgets_frame)
+        # NONE
         elif value is None:
             widget = MyLineEdit(str(value), "none", widgets_frame)
-        # only option left is convert to string            
-        elif not isinstance(value, str):
-            widget = MyLineEdit(str(value), "value", widgets_frame)
-        # if the value is NO_DEFAULT, set the background to green
-        elif value == NO_DEFAULT:
-            widget = MyLineEdit(NO_DEFAULT, "no_def", widgets_frame)
+        elif isinstance(value, str):
+            # NO DEFAULT
+            if value == NO_DEFAULT:
+                widget = MyLineEdit(NO_DEFAULT, "no_def", widgets_frame)
+            # STRING TO BE CONVERTED
+            elif value.endswith(CONVERT_KEY):
+                value = value[:-len(CONVERT_KEY)]
+                widget = MyLineEdit(value, "convert", widgets_frame)
+            # PLAIN STRING
+            else:
+                widget = MyLineEdit(value, "value", widgets_frame)
         else:
-            widget = MyLineEdit(value, "value", widgets_frame, not editable)
+            raise Exception("Unknown value type ", type(value), " for arg ", arg, " in row ", row, " of tab ", self.name)
         
         table.setCellWidget(row, col+1, widget)            
-        
-    def setOperatorComboBox(self, table: QTableWidget, row, col, arg, value):
-
-        items = self.edit_window.tabs[arg].initial_table_dict.keys()
-                
-        table.setCellWidget(row, col+1, MyComboBox(items, value, table=self.table, tab=self, key=arg, copy_style="comboBox", widgets_frame=self.edit_window.widgets_frame))
-                
+                        
     ###### EXTRACT FROM TABLES ######
 
     def tableToDict(self) -> dict:
@@ -367,40 +371,31 @@ class EditTab(QFrame):
                 continue
             
             row_id = self.table.cellWidget(row, ID_COL).text()
-            row_dict = self.getArgsFromRow(self.table, row, get_operator_obj=False)
+            row_dict = self.getArgsFromRow(self.table, row, convert=False)
             table_dict[row_id] = row_dict
             class_name = widget.text() if isinstance(widget, MyLineEdit) else widget.currentText()
             table_dict[row_id][CLASS_KEY] = class_name
             
         return table_dict
 
-    def getObjectFromID(self, object_id, pf=None, n_obj=None, n_var=None):
+    def getObjectFromID(self, object_id, **kwargs):
         # get the object from a table
         for row in range(self.table.rowCount()):
             if self.table.cellWidget(row, ID_COL) is None:
                 continue
             if self.table.cellWidget(row, ID_COL).text() == object_id:
-                return self.getObjectFromRow(self.table, row, pf, n_obj, n_var)
+                return self.getObjectFromRow(self.table, row, **kwargs)
                 
         raise Exception("Object ID '", object_id, "' not found in table from tab ", self.name)
             
-    def getObjectFromRow(self, table: QTableWidget, row, pf=None, n_obj=None, n_var=None):
+    def getObjectFromRow(self, table: QTableWidget, row, **kwargs):
         # get the object from the table
         if isinstance(table.cellWidget(row, ID_COL+1), MyLineEdit):
             class_name = table.cellWidget(row, ID_COL+1).text()
         else:
             class_name = table.cellWidget(row, ID_COL+1).currentText()
-        args_dict = self.getArgsFromRow(table, row, pf, n_obj, n_var)
-        
-        # evaluate string expressions if needed, n_obj and n_var are needed for some classes
-        if self.key == REF_DIR_KEY or self.key == TERM_KEY:
-            for arg in ["n_dim", "n_points", "partitions", "n_max_evals", "n_max_gen"]:
-                self.evaluateStringExpression(args_dict, arg, n_obj, n_var)    
-        # get the pf from the problem pf
-        elif self.key == PI_KEY:
-            if "pf" in args_dict and args_dict["pf"] == 'get from problem':
-                args_dict["pf"] = pf
-        
+        args_dict = self.getArgsFromRow(table, row, **kwargs)
+                
         try:     
             obj = self.get_function(class_name, **args_dict) #@IgnoreException
         except Exception as e:
@@ -409,62 +404,70 @@ class EditTab(QFrame):
             obj = None
                          
         return obj
-                
-    def evaluateStringExpression(self, args_dict, arg, n_obj, n_var):
-        if arg in args_dict and isinstance(args_dict[arg], str):
-            try:
-                args_dict[arg] = args_dict[arg].replace('n_obj', str(n_obj)) if 'n_obj' in args_dict[arg].lower() else args_dict[arg]
-                args_dict[arg] = args_dict[arg].replace('n_var', str(n_var)) if 'n_var' in args_dict[arg].lower() else args_dict[arg]
-                result = simple_eval(args_dict[arg])
-            except: 
-                MyMessageBox(f"Invalid expression \'{args_dict[arg]}\'in argument \'{arg}\', please use a valid mathematical expression, using \'n_obj\' as a variable if needed.")
-                result = None
-            args_dict[arg] = result if result is not None else None
-    
-    def getArgsFromRow(self, table: QTableWidget, row: int, pf = None, n_obj=None, n_var=None, get_operator_obj=True) -> dict:
+                    
+    def getArgsFromRow(self, table: QTableWidget, row: int, convert=True, **kwargs) -> dict:
         # get the args from the table
         args_dict = {}
         for col in range(ID_COL+2, table.columnCount(), 2):
-            
+            # break in the end of the row
             if table.cellWidget(row, col) in [None, ""] or isinstance(table.cellWidget(row, col), MyEmptyLineEdit):
                 break
+            
+            # get the arg and the widget
             arg = table.cellWidget(row, col).text()
             widget = table.cellWidget(row, col+1)
             
-            if arg in OPERATORS and self.key == ALGO_KEY and get_operator_obj:
-                value = self.getOperator(arg, widget.currentText(), pf, n_obj, n_var)
-            elif isinstance(widget, (ScientificSpinBox, ScientificDoubleSpinBox)):
-                value = widget.value()       
-            elif isinstance(widget, MyCheckBox):
-                value = widget.isChecked()
+            # OPERATOR
+            if arg in OPERATORS and self.key == ALGO_KEY and convert:
+                value = self.getOperator(arg, widget.currentText(), **kwargs)
+            # COMBO BOX STRING
             elif isinstance(widget, MyComboBox):
                 value = widget.currentText()
+            # INT OR FLOAT
+            elif isinstance(widget, (ScientificSpinBox, ScientificDoubleSpinBox)):
+                value = widget.value()       
+            # BOOL
+            elif isinstance(widget, MyCheckBox):
+                value = widget.isChecked()
             elif isinstance(widget, MyLineEdit):
-                value = widget.text() if widget.text() != "None" else None
-                if widget.text() == NO_DEFAULT:
-                    pass
-                    # raise Exception("No default -> need to set value for arg ", arg, " in row ", row, " of tab ", self.name) #!
-                # try to convert text to int or float 
-                else:
-                    try:
-                        value = int(value) #@IgnoreException
-                        debug_print("Arg ", arg, ", with value ", value, " converted to int, from tab ", self.name)
-                    except:
-                        try:
-                            value = float(value) #@IgnoreException
-                            debug_print("Arg ", arg, ", with value ", value, " converted to int, from tab ", self.name)
-                        except:
-                            pass
+                value = widget.text() 
+                # NONE
+                if value == 'None':
+                    value = None
+                # NO DEFAULT
+                elif value == NO_DEFAULT:
+                    value = NO_DEFAULT
+                # IDENTIFY CONVERTIBLE STRING IF EXPORTING
+                elif not convert:
+                    value = widget.text() + CONVERT_KEY if widget.convert else widget.text()
+                # CONVERT STRING
+                elif widget.convert: 
+                    value = self.convertString(arg, value, **kwargs)
             else:
                 raise Exception("Unknown widget type ", type(widget), " for arg ", arg, " in row ", row, " of tab ", self.name)
             
             args_dict[arg] = value
         return args_dict    
     
-    def getOperator(self, op_name: str, op_id: str, pf = None, n_obj=None, n_var=None):
+    def convertString(self, arg, string: str, **kwargs):
+    
+        for key, value in kwargs.items():
+            if string == key:
+                return value
+            elif key in string:
+                string = string.replace(key, str(value))
+        try:
+            result = simple_eval(string) #@IgnoreException
+        except: 
+            MyMessageBox(f"Invalid expression \'{string}\'in argument \'{arg}\', please use a valid mathematical expression with the convertibles if needed: {CONVERTIBLES}")
+            result = None
+            
+        return result
+    
+    def getOperator(self, op_name: str, op_id: str, **kwargs):
         
         if op_name not in OPERATORS:
             raise Exception("Operator " + op_name + " not found, with id " + op_id)
         else:
-            return self.edit_window.tabs[op_name].getObjectFromID(op_id, pf, n_obj, n_var)
+            return self.edit_window.tabs[op_name].getObjectFromID(op_id, **kwargs)
     

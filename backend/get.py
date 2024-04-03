@@ -674,8 +674,10 @@ def get_reference_direction_options(objectives = 'all'):
             elif n_dim in [11,12,13,14,15]:
                 layer_1 = UniformReferenceDirectionFactory(n_dim, n_partitions=1, scaling=0.5).do()
                 layer_2 = UniformReferenceDirectionFactory(n_dim, n_partitions=2, scaling=1).do()
-            else:
-                raise Exception("Not implemented for more than 15 objectives.")
+            elif not isinstance(n_dim, int):
+                raise Exception("n_dim must be an integer.")
+            elif n_dim > 15 or n_dim < 2:
+                raise Exception("Not implemented for n_dim > 15 or n_dim < 2.")
             
             self.add_layer(layer_1)
             if layer_2 is not None:

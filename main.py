@@ -4,7 +4,7 @@ from utils.defines import N_SEEDS_KEY, TERM_KEY, PI_KEY, ALGO_KEY, PROB_KEY
 
 
 INIT_FROM_FILE = True
-RUN = False
+RUN = True
 
 def main():
     

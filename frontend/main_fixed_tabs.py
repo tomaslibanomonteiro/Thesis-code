@@ -274,7 +274,7 @@ class MainTabsWidget(QTabWidget):
                     
                 for pi_id in self.getIDsFromTable(self.pi_table):
                     pi_ids.append(pi_id)
-                    pi_object = tabs[PI_KEY].getObjectFromID(pi_id, pf=pf)
+                    pi_object = tabs[PI_KEY].getObjectFromID(pi_id, get_problem_pf=pf)
                     pi_objects.append(pi_object)
                     if pi_object == None:
                         return None

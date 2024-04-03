@@ -1,7 +1,7 @@
 import inspect
 
 from utils.defines import (NO_DEFAULT, OPERATORS, VALUE_TYPES, KEY_ARGS_DICT, MUT_KEY, CROSS_KEY, CLASS_KEY, MOO_KEY,
-                           SEL_KEY, SAMP_KEY, DECOMP_KEY, REF_DIR_KEY, PROB_KEY, ALGO_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY)
+                           SEL_KEY, SAMP_KEY, DECOMP_KEY, REF_DIR_KEY, PROB_KEY, ALGO_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY, CONVERT_KEY)
 
 class Defaults():
     """
@@ -34,27 +34,27 @@ class Defaults():
                             
         # changed defaults
         if self.parameters[MOO_KEY]:
-            self.parameters[PI_KEY]['gd']['pf'] = 'get from problem'
-            self.parameters[PI_KEY]['igd']['pf'] = 'get from problem'
-            self.parameters[PI_KEY]['igd+']['pf'] = 'get from problem'
-            self.parameters[PI_KEY]['gd+']['pf'] = 'get from problem'
-            self.parameters[PI_KEY]['hv']['pf'] = 'get from problem'
+            self.parameters[PI_KEY]['gd']['pf'] = 'get_problem_pf' + CONVERT_KEY
+            self.parameters[PI_KEY]['igd']['pf'] = 'get_problem_pf' + CONVERT_KEY
+            self.parameters[PI_KEY]['igd+']['pf'] = 'get_problem_pf' + CONVERT_KEY
+            self.parameters[PI_KEY]['gd+']['pf'] = 'get_problem_pf' + CONVERT_KEY
+            self.parameters[PI_KEY]['hv']['pf'] = 'get_problem_pf' + CONVERT_KEY
             self.parameters[ALGO_KEY]['nsga2']['selection'] = 'binary_tournament'
             self.parameters[ALGO_KEY]['nsga3']['selection'] = 'tournament_by_cv_then_random'
             self.parameters[ALGO_KEY]['unsga3']['selection'] = 'tournament_by_rank_and_ref_line_dist'
             self.parameters[ALGO_KEY]['ctaea']['selection'] = 'restricted_mating_ctaea'
             self.parameters[ALGO_KEY]['rnsga3']['selection'] = 'tournament_by_cv_then_random'
             self.parameters[ALGO_KEY]['moead']['decomposition'] = 'pbi'
-            self.parameters[REF_DIR_KEY]['(das-dennis|uniform)']['n_dim'] = 'n_obj*1'
-            self.parameters[REF_DIR_KEY]['(energy|riesz)']['n_dim'] = 'n_obj*1'
-            self.parameters[REF_DIR_KEY]['(layer-energy|layer-riesz)']['n_dim'] = 'n_obj*1'
-            self.parameters[REF_DIR_KEY]['red']['n_dim'] = 'n_obj*1'
-            self.parameters[REF_DIR_KEY]['my_layers']['n_dim'] = 'n_obj*1'
+            self.parameters[REF_DIR_KEY]['(das-dennis|uniform)']['n_dim'] = 'n_obj*1' + CONVERT_KEY
+            self.parameters[REF_DIR_KEY]['(energy|riesz)']['n_dim'] = 'n_obj*1' + CONVERT_KEY
+            self.parameters[REF_DIR_KEY]['(layer-energy|layer-riesz)']['n_dim'] = 'n_obj*1' + CONVERT_KEY
+            self.parameters[REF_DIR_KEY]['red']['n_dim'] = 'n_obj*1' + CONVERT_KEY
+            self.parameters[REF_DIR_KEY]['my_layers']['n_dim'] = 'n_obj*1' + CONVERT_KEY
         else:
             self.parameters[ALGO_KEY]['ga']['selection'] = 'tournament_by_cv_and_fitness'
             
-        self.parameters[TERM_KEY]['n_eval']['n_max_evals'] = 'n_var*1000'
-        self.parameters[TERM_KEY]['n_gen']['n_max_gen'] = 'n_var*10'
+        self.parameters[TERM_KEY]['n_eval']['n_max_evals'] = 'n_var*1000' + CONVERT_KEY
+        self.parameters[TERM_KEY]['n_gen']['n_max_gen'] = 'n_var*1' + CONVERT_KEY
         self.parameters[TERM_KEY]['fmin']['fmin'] = 1
         self.parameters[TERM_KEY]['time']['max_time'] = 100
         
