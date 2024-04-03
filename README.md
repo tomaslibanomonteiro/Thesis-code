@@ -9,14 +9,14 @@ It provides an interface capable of running multiple Algorithms on multiple Prob
 1. Clone the repository to your local machine through the command, or just download the zip file and extract it to a directory of your choice.
 
 ```bash
-git clone https://github.com/tomaslibanomonteiro/Thesis-code #!
+$ git clone https://github.com/tomaslibanomonteiro/Thesis-code #!
 ```
 
 2. Navigate to the project directory.
 3. Install the required dependencies (creation of a virtual environment is recommended).
 
 ```bash
-pip install -r requirements.txt
+$ pip install -r requirements.txt
 ```
 
 ## Usage

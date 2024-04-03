@@ -73,7 +73,7 @@ class MyMainWindow(QMainWindow):
         my_layout.setContentsMargins(0, 0, 0, 0)
         page.setLayout(my_layout)
         
-        tabs = MainTabsWidget(run_options, parameters)
+        tabs = MainTabsWidget(run_options, parameters, page==self.MOOpage)
         my_layout.addWidget(tabs)
         my_layout.setStretch(0, 1)
         

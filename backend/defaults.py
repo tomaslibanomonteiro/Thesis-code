@@ -44,22 +44,20 @@ class Defaults():
             self.parameters[ALGO_KEY]['unsga3']['selection'] = 'tournament_by_rank_and_ref_line_dist'
             self.parameters[ALGO_KEY]['ctaea']['selection'] = 'restricted_mating_ctaea'
             self.parameters[ALGO_KEY]['rnsga3']['selection'] = 'tournament_by_cv_then_random'
+            self.parameters[ALGO_KEY]['moead']['decomposition'] = 'pbi'
+            self.parameters[REF_DIR_KEY]['(das-dennis|uniform)']['n_dim'] = 'n_obj*1'
+            self.parameters[REF_DIR_KEY]['(energy|riesz)']['n_dim'] = 'n_obj*1'
+            self.parameters[REF_DIR_KEY]['(layer-energy|layer-riesz)']['n_dim'] = 'n_obj*1'
+            self.parameters[REF_DIR_KEY]['red']['n_dim'] = 'n_obj*1'
+            self.parameters[REF_DIR_KEY]['my_layers']['n_dim'] = 'n_obj*1'
         else:
             self.parameters[ALGO_KEY]['ga']['selection'] = 'tournament_by_cv_and_fitness'
             
-        self.parameters[TERM_KEY]['n_eval']['n_max_evals'] = 4000
-        self.parameters[TERM_KEY]['n_gen']['n_max_gen'] = 10
+        self.parameters[TERM_KEY]['n_eval']['n_max_evals'] = 'n_var*1000'
+        self.parameters[TERM_KEY]['n_gen']['n_max_gen'] = 'n_var*10'
         self.parameters[TERM_KEY]['fmin']['fmin'] = 1
         self.parameters[TERM_KEY]['time']['max_time'] = 100
         
-        self.parameters[REF_DIR_KEY]['(das-dennis|uniform)']['n_dim'] = 'n_obj*1'
-        self.parameters[REF_DIR_KEY]['(das-dennis|uniform)']['n_points'] = 'n_obj*2'
-        self.parameters[REF_DIR_KEY]['(energy|riesz)']['n_dim'] = 'n_obj*1'
-        self.parameters[REF_DIR_KEY]['(energy|riesz)']['n_points'] = 'n_obj*2'
-        self.parameters[REF_DIR_KEY]['(layer-energy|layer-riesz)']['n_dim'] = 'n_obj*2'
-        self.parameters[REF_DIR_KEY]['(layer-energy|layer-riesz)']['partitions'] = 'n_obj*2'
-        self.parameters[REF_DIR_KEY]['red']['n_dim'] = 'n_obj*1'
-        self.parameters[REF_DIR_KEY]['red']['n_points'] = 'n_obj*2'
             
     def return_dict(self):
         return self.parameters

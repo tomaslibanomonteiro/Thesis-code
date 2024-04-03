@@ -1,3 +1,5 @@
+import inspect
+
 from PyQt5.uic import loadUi
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QTabWidget, QTableWidget, QTabBar, QWidget, QSpinBox, QHBoxLayout, QMessageBox, QFrame
@@ -57,11 +59,12 @@ class MainTabsWidget(QTabWidget):
             fixed_seeds: A boolean indicating whether the seeds are fixed.
             edit_window: An instance of the EditWindow class.
     """
-    def __init__(self, run_options: dict, parameters: dict) -> None:
+    def __init__(self, run_options: dict, parameters: dict, moo: bool) -> None:
         super().__init__()
 
         loadUi(DESIGNER_FIXED_TABS, self)
-                
+        
+        self.moo = moo
         self.run_counter = 0
         self.tables_dict = {PROB_KEY: self.prob_table, ALGO_KEY: self.algo_table, PI_KEY: self.pi_table, TERM_KEY: self.term_table}     
         
@@ -69,7 +72,7 @@ class MainTabsWidget(QTabWidget):
         self.fixed_seeds = self.fixed_seeds_checkBox.isChecked()
 
         # set edit window        
-        self.edit_window = EditWindow(parameters, self.moo_checkBox.isChecked())
+        self.edit_window = EditWindow(parameters, self.moo)
         self.edit_window.itemUpdates.connect(self.updateComboBoxItems)
         
         # set run run_options
@@ -197,7 +200,7 @@ class MainTabsWidget(QTabWidget):
         # set the combo boxes and the default run_options
         missing_options = self.setTable(self.prob_table, run_options[PROB_KEY], DEFAULT_ROW_NUMBERS[0])
         missing_options += self.setTable(self.algo_table, run_options[ALGO_KEY], DEFAULT_ROW_NUMBERS[1])
-        min_rows = DEFAULT_ROW_NUMBERS[2] if self.moo_checkBox.isChecked() else 1 #! tá a mandar mal?
+        min_rows = DEFAULT_ROW_NUMBERS[2] if self.moo else 1 #! tá a mandar mal?
         missing_options += self.setTable(self.pi_table, run_options[PI_KEY], min_rows)
         missing_options += self.setTable(self.term_table, run_options[TERM_KEY], DEFAULT_ROW_NUMBERS[3])
 
@@ -218,7 +221,7 @@ class MainTabsWidget(QTabWidget):
             run_options[key] = [table.cellWidget(row, 0).currentText() for row in range(table.rowCount()) if table.cellWidget(row, 0).currentText() != ""]
         run_options[N_SEEDS_KEY] = self.seedsSpinBox.value()
         
-        run_options[MOO_KEY] = self.moo_checkBox.isChecked()
+        run_options[MOO_KEY] = self.moo
         
         return run_options
     
@@ -242,45 +245,55 @@ class MainTabsWidget(QTabWidget):
         tabs = self.edit_window.tabs
             
         # get run args, a list with the arguments for each individual run
-        run_args, algo_object, prob_object, pi_objects = [], None, None, []
+        run_args, algo_object, prob_object, pi_objects, term_object = [], None, None, [], None
 
-        # get problem object
+        # get problem objects
         for prob_id in self.getIDsFromTable(self.prob_table):
             prob_object = tabs[PROB_KEY].getObjectFromID(prob_id)
-            pf = prob_object.pareto_front() if prob_object.pareto_front else None #!
-            n_obj = prob_object.n_obj if prob_object.n_obj else None #!
+            n_obj = prob_object.n_obj if prob_object.n_obj else None
+            n_var = prob_object.n_var if prob_object.n_var else None
             
             if prob_object == None:
                 return None
+
             # get algo objects (ref_dirs depends on n_obj) 
-            for algo_id in self.getIDsFromTable(self.algo_table):
-                algo_object = tabs[ALGO_KEY].getObjectFromID(algo_id, pf, n_obj)
+            for algo_id in self.getIDsFromTable(self.algo_table):                
+                algo_object = tabs[ALGO_KEY].getObjectFromID(algo_id, n_obj=n_obj, n_var=n_var)
                 
                 if algo_object == None:
-                    return None
+                    return None                
+
                 # get pi objects (pi depends on prob pf)
                 pi_ids, pi_objects = [], []
+                
+                # try to get the pareto front from the problem through algorithm ref_dirs if it exists 
+                try:
+                    pf = prob_object.pareto_front(ref_dirs=algo_object.ref_dirs) #@IgnoreException
+                except:
+                    pf = prob_object.pareto_front() if prob_object.pareto_front else None
+                    
                 for pi_id in self.getIDsFromTable(self.pi_table):
                     pi_ids.append(pi_id)
-                    pi_object = tabs[PI_KEY].getObjectFromID(pi_id, pf, n_obj)
+                    pi_object = tabs[PI_KEY].getObjectFromID(pi_id, pf=pf)
                     pi_objects.append(pi_object)
                     if pi_object == None:
                         return None
                     
                     run_args.append(RunArgs(prob_id, prob_object, algo_id, algo_object, pi_ids, pi_objects))
 
-        # get the termination object
-        term_ids = self.getIDsFromTable(self.term_table)
-        term_id = term_ids[0] if term_ids != [] else None
-        term_object = tabs[TERM_KEY].getObjectFromID(term_id) if term_id != None else None
-            
+        if run_args != []:
+            # get the termination object
+            term_ids = self.getIDsFromTable(self.term_table)
+            term_id = term_ids[0] if term_ids != [] else None
+            term_object = tabs[TERM_KEY].getObjectFromID(term_id, n_obj=1, n_var=1) if term_id != None else None 
+            #! need multiple terminations to accomodate different number of evaluations
+                
         if term_object is not None:
             # get the rest of the parameters
-            moo = self.moo_checkBox.isChecked()
             n_seeds = self.seedsSpinBox.value()
             parameters = self.edit_window.tabsToDict()
             run_options = self.tablesToDict()
-            return RunThread(run_args, term_id, term_object, n_seeds, moo, parameters, run_options, self.fixed_seeds)
+            return RunThread(run_args, term_id, term_object, n_seeds, self.moo, parameters, run_options, self.fixed_seeds)
         else:
             return None
     
@@ -299,7 +312,7 @@ class MainTabsWidget(QTabWidget):
         """Save the run options"""
         options_dict = self.tablesToDict()
         
-        moo = "MOO" if self.moo_checkBox.isChecked() else "SOO"
+        moo = "moo" if self.moo else "soo"
         # Open file dialog to select the save location
         myFileManager(f'Save Run Options', f"{moo}_run_options.pickle", options_dict)
     
@@ -307,7 +320,7 @@ class MainTabsWidget(QTabWidget):
         """Load the run options"""
 
         # Open file dialog to select the file to load
-        options_dict, _ = myFileManager('Load Run Options', keys_to_check=RUN_OPTIONS_KEYS, moo=self.moo_checkBox.isChecked())
+        options_dict, _ = myFileManager('Load Run Options', keys_to_check=RUN_OPTIONS_KEYS, moo=self.moo)
         
         if options_dict is not None:
             self.dictToTables(options_dict)
@@ -375,9 +388,8 @@ class MainTabsWidget(QTabWidget):
         showAndRaise(self)
         
     def loadRun(self):
-        moo = self.moo_checkBox.isChecked()
         keys = ['parameters', 'run_options', 'data', 'best_gen', 'run_counter']
-        loaded_data, filename = myFileManager('Load Run', keys_to_check=keys, moo=moo)
+        loaded_data, filename = myFileManager('Load Run', keys_to_check=keys, moo=self.moo)
 
         if loaded_data is not None:
             if not (isinstance(loaded_data['run_options'], dict) and isinstance(loaded_data['parameters'], dict)):

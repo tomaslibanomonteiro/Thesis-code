@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QTableWidgetItem, QTableWidget, QFrame, QTabBar, QWi
 from PyQt5.uic import loadUi
 from PyQt5.QtCore import pyqtSignal
 
+from simpleeval import simple_eval
 from numpy import inf
 
 from frontend.small_widgets import MyLineEdit, MyComboBox, ScientificDoubleSpinBox, ScientificSpinBox, MyCheckBox, MyWidgetsFrame, MyEmptyLineEdit
@@ -139,7 +140,7 @@ class EditWindow(QWidget):
         and the value is a dictionary with the parameters. dont forget to save the operators"""
         
         parameters = self.tabsToDict()
-        moo = "MOO" if self.moo else "SOO"
+        moo = "moo" if self.moo else "soo"
         myFileManager('Save Parameters', f'{moo}_parameters', parameters)
     
     def loadParameters(self):
@@ -182,20 +183,25 @@ class EditTab(QFrame):
         self.edit_window = edit_window
         self.key = key
         self.name, label, self.get_function, _ = tab_args
-        self.table_dict = parameters[self.key]
-        self.default_ids = list(self.table_dict.keys())        
-        self.classes = [self.table_dict[key][CLASS_KEY] for key in self.default_ids]
-                
-        if key == ALGO_KEY:
-            self.operator_comboBox_items = {key: list(parameters[key].keys()) for key in OPERATORS} 
-        
+        self.initial_table_dict = parameters[self.key]
+    
         self.label.setText(label)
-        self.dictToTable(self.table_dict)
+        self.dictToTable(self.initial_table_dict)
                     
     ###### EDIT TABLES ######
     
     def dictToTable(self, table_dict: dict):
         
+        # store all different keys in table_dict
+        self.classes = [table_dict[key][CLASS_KEY] for key in table_dict.keys() if table_dict[key][CLASS_KEY] == key]
+        self.default_ids = []
+        for row_id, row_dict in table_dict.items():
+            if row_dict[CLASS_KEY] not in self.classes:
+                MyMessageBox(f"Error: Class {row_dict[CLASS_KEY]} in tab {self.key} does not have a default class. Please choose a valid parameters dictionary. ")
+                return
+            else:
+                self.default_ids.append(row_id)
+                
         # +1 to add the button column (at least 4 columns)
         n_cols = max([len(row_dict) for row_dict in table_dict.values()] + [3]) * 2 + 1  
         self.table.setColumnCount(n_cols)
@@ -214,7 +220,7 @@ class EditTab(QFrame):
                 row += 1
             else:
                 variants[row_id] = row_dict
-                
+        
         for row_id, row_dict in variants.items():
             self.addVariant(row_dict.pop(CLASS_KEY), row_id, row_dict)
             
@@ -266,14 +272,19 @@ class EditTab(QFrame):
             id_widget.itemsSignal.connect(self.edit_window.itemUpdates.emit)
         else:
             id_widget.itemsSignal.connect(self.edit_window.operatorUpdates.emit)
-                    
+            
         # add a MyComboBox in the new row and set it to the class name
         combo_box = MyComboBox(self.classes, table=self.table, col=ID_COL+1, row=row, copy_style="variant_class", widgets_frame=widgets_frame)
         self.table.setCellWidget(row, ID_COL+1, combo_box)
         self.table.cellWidget(row, ID_COL+1).setCurrentIndex(self.classes.index(class_name))
+        
 
         # functionalities if the call was not made from the "Add Variant" button
-        if args_dict is not None: # set the default args in the new row
+        if args_dict is not None: 
+            # set the id again because it is overwritten by the combo box
+            self.table.cellWidget(row, ID_COL).setText(id)
+
+            # set the default args in the new row
             for col in range(ID_COL+2, self.table.columnCount()):
                 self.table.cellWidget(row, col).deleteLater() if self.table.cellWidget(row, col) is not None else None
             
@@ -341,7 +352,7 @@ class EditTab(QFrame):
         
     def setOperatorComboBox(self, table: QTableWidget, row, col, arg, value):
 
-        items = self.operator_comboBox_items[arg]
+        items = self.edit_window.tabs[arg].initial_table_dict.keys()
                 
         table.setCellWidget(row, col+1, MyComboBox(items, value, table=self.table, tab=self, key=arg, copy_style="comboBox", widgets_frame=self.edit_window.widgets_frame))
                 
@@ -363,28 +374,28 @@ class EditTab(QFrame):
             
         return table_dict
 
-    def getObjectFromID(self, object_id, pf=None, n_obj=None):
+    def getObjectFromID(self, object_id, pf=None, n_obj=None, n_var=None):
         # get the object from a table
         for row in range(self.table.rowCount()):
             if self.table.cellWidget(row, ID_COL) is None:
                 continue
             if self.table.cellWidget(row, ID_COL).text() == object_id:
-                return self.getObjectFromRow(self.table, row, pf, n_obj)
+                return self.getObjectFromRow(self.table, row, pf, n_obj, n_var)
                 
         raise Exception("Object ID '", object_id, "' not found in table from tab ", self.name)
             
-    def getObjectFromRow(self, table: QTableWidget, row, pf=None, n_obj=None):
+    def getObjectFromRow(self, table: QTableWidget, row, pf=None, n_obj=None, n_var=None):
         # get the object from the table
         if isinstance(table.cellWidget(row, ID_COL+1), MyLineEdit):
             class_name = table.cellWidget(row, ID_COL+1).text()
         else:
             class_name = table.cellWidget(row, ID_COL+1).currentText()
-        args_dict = self.getArgsFromRow(table, row, pf, n_obj)
+        args_dict = self.getArgsFromRow(table, row, pf, n_obj, n_var)
         
-        # get the n_dim from the problem n_obj    
-        if self.key == REF_DIR_KEY:
-            for arg in ["n_dim", "n_points", "partitions"]:
-                self.check_ref_dirs_dependency(args_dict, arg, n_obj)    
+        # evaluate string expressions if needed, n_obj and n_var are needed for some classes
+        if self.key == REF_DIR_KEY or self.key == TERM_KEY:
+            for arg in ["n_dim", "n_points", "partitions", "n_max_evals", "n_max_gen"]:
+                self.evaluateStringExpression(args_dict, arg, n_obj, n_var)    
         # get the pf from the problem pf
         elif self.key == PI_KEY:
             if "pf" in args_dict and args_dict["pf"] == 'get from problem':
@@ -399,16 +410,18 @@ class EditTab(QFrame):
                          
         return obj
                 
-    def check_ref_dirs_dependency(self, args_dict, arg, n_obj):
-        if arg in args_dict and args_dict[arg].startswith("n_obj*"):
-            factor_str = args_dict[arg].split("*")[1]
+    def evaluateStringExpression(self, args_dict, arg, n_obj, n_var):
+        if arg in args_dict and isinstance(args_dict[arg], str):
             try:
-                factor = int(factor_str) #@IgnoreException
+                args_dict[arg] = args_dict[arg].replace('n_obj', str(n_obj)) if 'n_obj' in args_dict[arg].lower() else args_dict[arg]
+                args_dict[arg] = args_dict[arg].replace('n_var', str(n_var)) if 'n_var' in args_dict[arg].lower() else args_dict[arg]
+                result = simple_eval(args_dict[arg])
             except: 
-                MyMessageBox(f"Invalid value for n_dim factor: {args_dict[arg]}")
-            args_dict[arg] = n_obj * factor if n_obj is not None else None
+                MyMessageBox(f"Invalid expression \'{args_dict[arg]}\'in argument \'{arg}\', please use a valid mathematical expression, using \'n_obj\' as a variable if needed.")
+                result = None
+            args_dict[arg] = result if result is not None else None
     
-    def getArgsFromRow(self, table: QTableWidget, row: int, pf = None, n_obj=None, get_operator_obj=True) -> dict:
+    def getArgsFromRow(self, table: QTableWidget, row: int, pf = None, n_obj=None, n_var=None, get_operator_obj=True) -> dict:
         # get the args from the table
         args_dict = {}
         for col in range(ID_COL+2, table.columnCount(), 2):
@@ -419,7 +432,7 @@ class EditTab(QFrame):
             widget = table.cellWidget(row, col+1)
             
             if arg in OPERATORS and self.key == ALGO_KEY and get_operator_obj:
-                value = self.getOperator(arg, widget.currentText(), pf, n_obj)
+                value = self.getOperator(arg, widget.currentText(), pf, n_obj, n_var)
             elif isinstance(widget, (ScientificSpinBox, ScientificDoubleSpinBox)):
                 value = widget.value()       
             elif isinstance(widget, MyCheckBox):
@@ -448,10 +461,10 @@ class EditTab(QFrame):
             args_dict[arg] = value
         return args_dict    
     
-    def getOperator(self, op_name: str, op_id: str, pf = None, n_obj=None):
+    def getOperator(self, op_name: str, op_id: str, pf = None, n_obj=None, n_var=None):
         
         if op_name not in OPERATORS:
             raise Exception("Operator " + op_name + " not found, with id " + op_id)
         else:
-            return self.edit_window.tabs[op_name].getObjectFromID(op_id, pf, n_obj)
+            return self.edit_window.tabs[op_name].getObjectFromID(op_id, pf, n_obj, n_var)
     

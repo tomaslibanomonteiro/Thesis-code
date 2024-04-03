@@ -10,7 +10,7 @@ from PyQt5.uic import loadUi
 from numpy import inf
 from typing import Tuple
 
-from utils.defines import ID_COL, VARIANT, DESIGNER_WIDGETS_FRAME
+from utils.defines import ID_COL, VARIANT, DESIGNER_WIDGETS_FRAME, NO_DEFAULT
 from utils.utils import getAvailableName, MyMessageBox
 
 """
@@ -80,6 +80,8 @@ class MyWidgetsFrame(QFrame):
             copy_widget = self.arg
         elif copy_key == "value":
             copy_widget = self.value
+        elif copy_key == "convertible":
+            copy_widget = self.convertible    
         elif copy_key == "no_def":
             copy_widget = self.no_def
         elif copy_key == "none":
@@ -132,7 +134,31 @@ class MyLineEdit(QLineEdit):
         self.copy_style = copy_style
         self.setText(text)
         self.setReadOnly(read_only)
+        self.convertible = copy_style == "convertible"
         self.widgets_frame.copyStyleAndSizePolicy(self, copy_style) if copy_style is not None else None
+        self.setMenu()
+    
+    def setMenu(self):
+        pass
+        # # create a custom context menu
+        # self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        # self.customContextMenuRequested.connect(self.showContextMenu)
+        # self.context_menu = QMenu(self)
+        
+        # if self.convertible:
+        #     # add an option to convert widget to a string
+        #     self.clear_action = QAction("Set value to convertible string", self)
+        #     self.clear_action.triggered.connect(self.clearSelection)
+        #     self.context_menu.addAction(self.clear_action)
+
+        # # add an option to add another combobox to the table
+        # self.add_rows = QAction("Add Row", self)
+        # self.add_rows.triggered.connect(self.addRowToTable)
+        # self.context_menu.addAction(self.add_rows)
+
+
+        # t = self.tab.table
+
         
     def focusOutEvent(self, event):
         
@@ -141,12 +167,14 @@ class MyLineEdit(QLineEdit):
         if self.recorded_text != self.text(): 
             if self.text() == "None": 
                 self.widgets_frame.copyStyleAndSizePolicy(self, "none")
+            elif self.text() == NO_DEFAULT:
+                self.widgets_frame.copyStyleAndSizePolicy(self, "no_def")
             else: 
                 self.widgets_frame.copyStyleAndSizePolicy(self, "value")
             self.emitSignal()
-            
-        super().focusOutEvent(event)
         
+        super().focusOutEvent(event)
+            
     def emitSignal(self):
         if self.tab is not None and not self.isReadOnly():
             items = self.makeUnique()
@@ -168,7 +196,7 @@ class MyLineEdit(QLineEdit):
     def copy(self):
         copy = MyLineEdit(self.text(), self.copy_style, self.widgets_frame, self.isReadOnly(), self.tab)
         return copy
-
+    
 class MyEmptyLineEdit(QLineEdit):
     """
     LineEdit that is read only and has no border or background.
@@ -265,8 +293,8 @@ class MyComboBox(QComboBox):
     def setUI(self, items, initial_item, enabled, row, add_rows, tab, key, copy_style):
 
         tab.edit_window.operatorUpdates.connect(self.receiveSignal) if key is not None else None
-        self.setInsertPolicy(QComboBox.InsertAlphabetically)        
         self.widgets_frame.copyStyleAndSizePolicy(self, copy_style) if copy_style is not None else None  
+        self.setInsertPolicy(QComboBox.InsertAlphabetically)        
         self.addItems(items)
         self.setCurrentIndex(self.findText(initial_item))
         self.setEnabled(enabled)

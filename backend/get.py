@@ -657,15 +657,40 @@ def get_reference_direction_options(objectives = 'all'):
 
     from pymoo.util.reference_direction import UniformReferenceDirectionFactory
 
+    class MyLayers(MultiLayerReferenceDirectionFactory):
+        def __init__(self, n_dim: int):
+            super().__init__()
+            
+            layer_2 = None
+            if n_dim == 2:
+                layer_1 = UniformReferenceDirectionFactory(n_dim, n_partitions=99).do()
+            elif n_dim == 3:
+                layer_1 = UniformReferenceDirectionFactory(n_dim, n_partitions=12).do()
+            elif n_dim in [4,5]:
+                layer_1 = UniformReferenceDirectionFactory(n_dim, n_partitions=6).do()
+            elif n_dim in [6,7,8,9,10]:
+                layer_1 = UniformReferenceDirectionFactory(n_dim, n_partitions=2, scaling=0.5).do()
+                layer_2 = UniformReferenceDirectionFactory(n_dim, n_partitions=3, scaling=1).do()
+            elif n_dim in [11,12,13,14,15]:
+                layer_1 = UniformReferenceDirectionFactory(n_dim, n_partitions=1, scaling=0.5).do()
+                layer_2 = UniformReferenceDirectionFactory(n_dim, n_partitions=2, scaling=1).do()
+            else:
+                raise Exception("Not implemented for more than 15 objectives.")
+            
+            self.add_layer(layer_1)
+            if layer_2 is not None:
+                self.add_layer(layer_2)
+            
     REFERENCE_DIRECTIONS = [
         ("(das-dennis|uniform)", UniformReferenceDirectionFactory),
-        ("multi-layer", MultiLayerReferenceDirectionFactory),
+        ("my_layers", MyLayers),
+        # ("multi-layer", MultiLayerReferenceDirectionFactory), #! vale a pena estar cá?
         ("(energy|riesz)", RieszEnergyReferenceDirectionFactory),
         ("(layer-energy|layer-riesz)", LayerwiseRieszEnergyReferenceDirectionFactory),
         ("red", ReductionBasedReferenceDirectionFactory)
     ]
 
-    return REFERENCE_DIRECTIONS
+    return returnOptions(objectives, [], REFERENCE_DIRECTIONS)
 
 
 def get_reference_directions(name, *args, d={}, **kwargs):
