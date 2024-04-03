@@ -1,6 +1,6 @@
+from backend.defaults import Defaults
 import pickle
 
-from backend.defaults import Defaults
 
 # Load the first dictionary from the first pickle file
 with open('moo_parameters.pickle', 'rb') as file1:

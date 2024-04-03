@@ -243,11 +243,17 @@ class MainTabsWidget(QTabWidget):
     def getRunThread(self):
         
         tabs = self.edit_window.tabs
-            
+        
+        term_id = self.getIDsFromTable(self.term_table)
+        if term_id == []:
+            return None
+        else:
+            term_id = term_id[0]
+                    
         # get run args, a list with the arguments for each individual run
-        run_args, algo_object, prob_object, pi_objects, term_object = [], None, None, [], None
+        run_args, algo_object, prob_object, term_object, pi_objects = [], None, None, None, [] 
 
-        # get problem objects
+        # PROBLEMS
         for prob_id in self.getIDsFromTable(self.prob_table):
             prob_object = tabs[PROB_KEY].getObjectFromID(prob_id)
             n_obj = prob_object.n_obj if prob_object.n_obj else None
@@ -256,22 +262,24 @@ class MainTabsWidget(QTabWidget):
             if prob_object == None:
                 return None
 
-            # get algo objects (ref_dirs depends on n_obj) 
+            # ALGOS 
             for algo_id in self.getIDsFromTable(self.algo_table):                
                 algo_object = tabs[ALGO_KEY].getObjectFromID(algo_id, n_obj=n_obj, n_var=n_var)
                 
                 if algo_object == None:
                     return None                
 
-                # get pi objects (pi depends on prob pf)
-                pi_ids, pi_objects = [], []
-                
                 # try to get the pareto front from the problem through algorithm ref_dirs if it exists 
                 try:
                     pf = prob_object.pareto_front(ref_dirs=algo_object.ref_dirs) #@IgnoreException
                 except:
                     pf = prob_object.pareto_front() if prob_object.pareto_front else None
-                    
+                
+                # TERMINATIONS
+                term_object = tabs[TERM_KEY].getObjectFromID(term_id, n_obj=n_obj, n_var=n_var)
+                
+                # PERFORMANCE INDICATORS
+                pi_ids, pi_objects = [], []
                 for pi_id in self.getIDsFromTable(self.pi_table):
                     pi_ids.append(pi_id)
                     pi_object = tabs[PI_KEY].getObjectFromID(pi_id, get_problem_pf=pf)
@@ -279,21 +287,14 @@ class MainTabsWidget(QTabWidget):
                     if pi_object == None:
                         return None
                     
-                    run_args.append(RunArgs(prob_id, prob_object, algo_id, algo_object, pi_ids, pi_objects))
-
-        if run_args != []:
-            # get the termination object
-            term_ids = self.getIDsFromTable(self.term_table)
-            term_id = term_ids[0] if term_ids != [] else None
-            term_object = tabs[TERM_KEY].getObjectFromID(term_id, n_obj=1, n_var=1) if term_id != None else None 
-            #! need multiple terminations to accomodate different number of evaluations
+                    run_args.append(RunArgs(prob_id, prob_object, algo_id, algo_object, pi_ids, pi_objects, term_object))
                 
-        if term_object is not None:
+        if run_args != []:
             # get the rest of the parameters
             n_seeds = self.seedsSpinBox.value()
             parameters = self.edit_window.tabsToDict()
             run_options = self.tablesToDict()
-            return RunThread(run_args, term_id, term_object, n_seeds, self.moo, parameters, run_options, self.fixed_seeds)
+            return RunThread(run_args, term_id, n_seeds, self.moo, parameters, run_options, self.fixed_seeds)
         else:
             return None
     

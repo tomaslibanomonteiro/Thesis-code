@@ -43,13 +43,14 @@ class MyCallback(Callback):
 
 
 class RunArgs():
-    def __init__(self, prob_id: str, prob_object, algo_id: str, algo_object, pi_ids: list, pi_objects: list): 
+    def __init__(self, prob_id, prob_object, algo_id, algo_object, pi_ids, pi_objects, term_object):
         self.prob_id = prob_id
         self.prob_object = prob_object 
         self.algo_id = algo_id
         self.algo_object = algo_object
         self.pi_ids = pi_ids
-        self.pi_objects = pi_objects                
+        self.pi_objects = pi_objects
+        self.term_object = term_object                
         
 class RunThread(QThread):
     """
@@ -85,14 +86,13 @@ class RunThread(QThread):
     """
     progressSignal = pyqtSignal(str, int)
     
-    def __init__(self, run_args_list:list, term_id, term_object, n_seeds:int, moo:bool, parameters:dict, run_options:dict, fixed_seeds:bool):
+    def __init__(self, run_args_list:list, term_id, n_seeds:int, moo:bool, parameters:dict, run_options:dict, fixed_seeds:bool):
         super().__init__()
         
         self.parameters = parameters
         self.run_options = run_options
         self.n_seeds = n_seeds
         self.term_id = term_id
-        self.term_object = term_object
         self.run_args_list = run_args_list
         self.moo = moo
         self.fixed_seeds = fixed_seeds
@@ -112,20 +112,20 @@ class RunThread(QThread):
         if sys.gettrace() is not None:
             import debugpy
             debugpy.debug_this_thread()
-        seeds = np.arange(self.n_seeds) if self.fixed_seeds else np.random.choice(10000, size=self.n_seeds, replace=False)
+        seeds = np.arange(self.n_seeds) if self.fixed_seeds else np.random.choice(100000, size=self.n_seeds, replace=False)
         for run_args in self.run_args_list:
             for seed in seeds:
                 if self.canceled:
                     return
                 self.progressUpdate(run_args.algo_id, run_args.prob_id, seed)
-                res = self.singleRun(run_args, seed, self.term_object)
+                res = self.singleRun(run_args, seed)
                 self.updateData(run_args, res, seed, res.algorithm.callback) if res is not None else None
                 
-    def singleRun(self, run_args: RunArgs, seed: int, termination) -> Result:
+    def singleRun(self, run_args: RunArgs, seed: int) -> Result:
         try:
             res = minimize(algorithm=run_args.algo_object, #@IgnoreException
                         problem=run_args.prob_object,
-                        termination=termination,
+                        termination=run_args.term_object,
                         seed=seed,
                         verbose=False,
                         save_history=False,
