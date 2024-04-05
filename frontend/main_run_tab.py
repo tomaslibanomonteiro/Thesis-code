@@ -116,17 +116,19 @@ class RunTab(QFrame):
             prob_id, algo_id = row[(PROB_KEY, '', '')], row[(ALGO_KEY, '', '')]
             value = row[(pi_id, lvl2, VALUE_KEY)]
             seeds[i] = term_data[(term_data[PROB_KEY] == prob_id) & (term_data[ALGO_KEY] == algo_id) & (term_data[pi_id] == value)][SEEDS_KEY].values[0]
-        return seeds
+        return seeds #! barracada no caso de seeds pares
         
     def setUI(self, label):
         
         # connections
         self.save_result.clicked.connect(self.saveResult)
+        self.save_table.clicked.connect(self.saveTable)
         self.save_run.clicked.connect(self.saveRun)
         self.plot_button.clicked.connect(self.plot)
         
         self.table.horizontalHeader().sectionDoubleClicked.connect(lambda col: self.headerClick(col, "horizontal"))
         self.table.verticalHeader().sectionDoubleClicked.connect(lambda row: self.headerClick(row, "vertical"))
+        self.table.itemDoubleClicked.connect(self.tableItemClick)
         items = [PLOT_PROGRESS_KEY, PLOT_PS_KEY, PLOT_PC_KEY] if self.run_thread.moo else [PLOT_FL_KEY, PLOT_PROGRESS_KEY]
         self.plot_comboBox.addItems(items)
         self.plot_comboBox.currentIndexChanged.connect(self.setCheckBoxes)
@@ -165,12 +167,11 @@ class RunTab(QFrame):
     def setCheckBoxes(self, event=None, set_algos=False):
         """set the checkboxes for the given ids in the tables"""
 
-
         if self.plot_comboBox.currentText() != PLOT_PROGRESS_KEY:
             ids = [seed for seed in self.run_thread.data[SEEDS_KEY].unique()]
             header = "Seed"
             if self.plot_comboBox.currentText() in [PLOT_PS_KEY, PLOT_PC_KEY]:
-                ids = ["Problem"] + ids
+                ids = [PROB_KEY] + ids
                 header = "Prob/Seed" 
             self.checkBox_table.setHorizontalHeaderItem(1, QTableWidgetItem(header))
         else:
@@ -303,7 +304,44 @@ class RunTab(QFrame):
         clazz = args.pop(CLASS_KEY)
         string = f"Parameters for {key} of class {clazz} with id \'{id}\': \n {args}"
         MyMessageBox(string, 'Parameters', warning_icon=False)
-            
+
+    def tableItemClick(self, item):
+        """Handle a click on a table item"""
+        
+        if self.showing_values.currentText() == "Averaged across seeds":
+            string = 'When showing Best, Median and Worst values, double click will show the seed of the respective run'
+            MyMessageBox(string, 'Parameters', warning_icon=False)
+            return
+        
+        row = item.row()
+        col = item.column()
+        
+        # get the headers texts
+        row_header = self.table.verticalHeaderItem(row).text()
+        col_header = self.table.horizontalHeaderItem(col).text()
+        
+        if col_header == VOTING_KEY:
+            return
+        
+        if row_header.endswith(BEST_KEY) or row_header.endswith(MEDIAN_KEY) or row_header.endswith(WORST_KEY):
+            row_header = row_header[:-len(BEST_KEY)] if row_header.endswith(BEST_KEY) else row_header
+            row_header = row_header[:-len(MEDIAN_KEY)] if row_header.endswith(MEDIAN_KEY) else row_header
+            row_header = row_header[:-len(WORST_KEY)] if row_header.endswith(WORST_KEY) else row_header
+            lvl2 = BEST_KEY if row_header.endswith(BEST_KEY) else MEDIAN_KEY if row_header.endswith(MEDIAN_KEY) else WORST_KEY
+        
+        algo_id = row_header
+        if self.values_comboBox.currentText() == "Performance Indicator":
+            prob_id = col_header
+            pi_id = self.selected_id.currentText()
+        elif self.values_comboBox.currentText() == "Problem":
+            prob_id = self.selected_id.currentText()
+            pi_id = col_header
+        
+        # get the seed
+        seed = self.stats_seeds_df[(self.stats_seeds_df[PROB_KEY] == prob_id) & (self.stats_seeds_df[ALGO_KEY] == algo_id)][pi_id,lvl2,SEEDS_KEY].values[0]
+        
+        MyMessageBox(f"Run of problem {prob_id} with algorithm {algo_id} and performance indicator {pi_id} {lvl2} value was obtained with seed {seed}", 'Seed', warning_icon=False)
+
     def seeTermination(self, event):
         """See the termination criteria"""
         id = self.run_thread.term_id
@@ -352,3 +390,8 @@ class RunTab(QFrame):
         """Save the result of the run"""
         name = self.label.text().replace("Run", "Result") + ".csv"
         myFileManager('Save Run Data', name, self.run_thread.data, ".csv", "CSV Files (*.csv)")
+
+    def saveTable(self):
+        """Save the table as a csv"""
+        name = self.label.text().replace("Run", "Table") + ".csv"
+        myFileManager('Save Table Data', name, self.table_df, ".csv", "CSV Files (*.csv)", save_csv_index=True)

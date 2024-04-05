@@ -35,7 +35,7 @@ class MyMessageBox(QMessageBox):
         self.setStandardButtons(QMessageBox.Ok)
         self.exec_()
 
-def myFileManager(window_title, file_to_save_name=False, data_to_save=False, default_suffix=".pickle", name_filter="Pickle Files (*.pickle)", keys_to_check=None, moo = None):
+def myFileManager(window_title, file_to_save_name=False, data_to_save=False, default_suffix=".pickle", name_filter="Pickle Files (*.pickle)", keys_to_check=None, moo = None, save_csv_index=False):
     """Open a file dialog to save or load a file. If file_to_save_name is given, save the file. If not, load the file and return the data.
     If keys_to_check is given, check if the loaded dictionary has the correct keys. If moo is given, check if the loaded moo is the same as the given moo."""
     
@@ -66,7 +66,7 @@ def myFileManager(window_title, file_to_save_name=False, data_to_save=False, def
                     if default_suffix == ".pickle":
                         pickle.dump(data_to_save, file) #@IgnoreException
                     elif default_suffix == ".csv":
-                        data_to_save.to_csv(file_path, index=False)
+                        data_to_save.to_csv(file_path, index=save_csv_index)
         # else, load the file and return the data
         else:
             file_dialog.setAcceptMode(QFileDialog.AcceptOpen)

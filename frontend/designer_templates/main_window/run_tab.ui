@@ -620,7 +620,7 @@
            <enum>Qt::LeftToRight</enum>
           </property>
           <property name="text">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Double Click &lt;/span&gt;on a header to see the &lt;span style=&quot; font-weight:600;&quot;&gt;Parameters &lt;/span&gt;of the object&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Double Click &lt;/span&gt;on a header or cell to see details&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>

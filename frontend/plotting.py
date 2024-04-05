@@ -270,19 +270,19 @@ class Plotter(QWidget):
     def plotPCP(self):
         """Plot the Parallel Coordinates of the checked algorithms for the given problem and checked seeds"""
         
-        if 'Problem' not in self.other_ids and len(self.algo_ids) == 0:
+        if PROB_KEY not in self.other_ids and len(self.algo_ids) == 0:
             raise Exception("No algorithms or problem were selected to be plotted") #@IgnoreException
         
         plot = PCP(legend=True)
         
-        # see if other ids contain 'Problem', if so, get it out of the list
-        if 'Problem' in self.other_ids:
+        # see if other ids contain PROB_KEY, if so, get it out of the list
+        if PROB_KEY in self.other_ids:
             pareto_front = self.prob_object.pareto_front()
             if pareto_front is None:
                 raise Exception(f"Problem '{self.prob_id}' does not have a Pareto Front available") #@IgnoreException
             else:
                 plot.add(pareto_front, label = self.prob_id)
-            self.other_ids.remove('Problem')
+            self.other_ids.remove(PROB_KEY)
             
         self.plotSolutions(plot)        
         self.sc.axes.set_title(f"Parallel Coordinates on Problem: '{self.prob_id}'", y=1.05)
@@ -295,13 +295,13 @@ class Plotter(QWidget):
         
         plot = Scatter(title=f"Scatter Plot on Problem: '{self.prob_id}'", legend=True)
     
-        # see if other ids contain 'Problem', if so, get it out of the list
-        if 'Problem' in self.other_ids:
+        # see if other ids contain PROB_KEY, if so, get it out of the list
+        if PROB_KEY in self.other_ids:
             if self.prob_object.pareto_front() is None:
                 MyMessageBox(f"Problem '{self.prob_id}' does not have a Pareto Front available")
             else:
                 plot.add(self.prob_object.pareto_front(), label = self.prob_id)
-            self.other_ids.remove('Problem')
+            self.other_ids.remove(PROB_KEY)
             
         self.plotSolutions(plot)
         
