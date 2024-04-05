@@ -1,7 +1,7 @@
 import inspect
 
 from utils.defines import (NO_DEFAULT, OPERATORS, VALUE_TYPES, KEY_ARGS_DICT, MUT_KEY, CROSS_KEY, CLASS_KEY, MOO_KEY,
-                           SEL_KEY, SAMP_KEY, DECOMP_KEY, REF_DIR_KEY, PROB_KEY, ALGO_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY, 
+                           SEL_KEY, SAMP_KEY, DECOMP_KEY, REF_DIR_KEY, PROB_KEY, ALGO_KEY, PI_KEY, TERM_KEY, SEEDS_KEY, 
                            CONVERT_KEY, WRITABLE_ARG_KEY)
 
 class Defaults():
@@ -53,6 +53,7 @@ class Defaults():
             self.parameters[ALGO_KEY]['rnsga3']['selection'] = 'tournament_by_cv_then_random'
             self.parameters[ALGO_KEY]['moead']['decomposition'] = 'pbi'
             self.parameters[REF_DIR_KEY]['(das-dennis|uniform)']['n_dim'] = 'n_obj*1' + CONVERT_KEY
+            self.parameters[REF_DIR_KEY]['(das-dennis|uniform)']['n_partitions'] = 12 #!
             self.parameters[REF_DIR_KEY]['(energy|riesz)']['n_dim'] = 'n_obj*1' + CONVERT_KEY
             self.parameters[REF_DIR_KEY]['(layer-energy|layer-riesz)']['n_dim'] = 'n_obj*1' + CONVERT_KEY
             self.parameters[REF_DIR_KEY]['red']['n_dim'] = 'n_obj*1' + CONVERT_KEY
@@ -60,8 +61,8 @@ class Defaults():
         else:
             self.parameters[ALGO_KEY]['ga']['selection'] = 'tournament_by_cv_and_fitness'
             
-        self.parameters[TERM_KEY]['n_eval']['n_max_evals'] = 'n_var*1000' + CONVERT_KEY
-        self.parameters[TERM_KEY]['n_gen']['n_max_gen'] = 'n_var*1' + CONVERT_KEY
+        self.parameters[TERM_KEY]['n_eval']['n_max_evals'] = 200
+        self.parameters[TERM_KEY]['n_gen']['n_max_gen'] = '3' + CONVERT_KEY
         self.parameters[TERM_KEY]['fmin']['fmin'] = 1
         self.parameters[TERM_KEY]['time']['max_time'] = 100
         

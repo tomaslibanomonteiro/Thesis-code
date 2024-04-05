@@ -1,6 +1,6 @@
 from backend.defaults import Defaults
 from frontend.main_window import MyMainWindow
-from utils.defines import RESULTS_FOLDER, RUN_OPTIONS_KEYS, PROB_KEY, ALGO_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY, MOO_KEY
+from utils.defines import RESULTS_FOLDER, RUN_OPTIONS_KEYS, PROB_KEY, ALGO_KEY, PI_KEY, TERM_KEY, SEEDS_KEY, MOO_KEY
 
 TEST_NAME_KEY = 'test_name'
 class Test():
@@ -9,8 +9,8 @@ class Test():
         self.test_name = options.pop(TEST_NAME_KEY) + '.csv'
         self.is_finished = False
         
-        if N_SEEDS_KEY not in options.keys():
-            options[N_SEEDS_KEY] = n_seeds
+        if SEEDS_KEY not in options.keys():
+            options[SEEDS_KEY] = n_seeds
         if TERM_KEY not in options.keys():
             options[TERM_KEY] = ['n_eval']
         if 'n_evals' in options.keys():

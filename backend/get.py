@@ -22,7 +22,7 @@ def get_from_list(l, name, args, kwargs):
 
         if len(l[i]) == 2:
             name, clazz = l[i]
-            return clazz(*args, **kwargs)
+            return clazz(*args, **kwargs) #@IgnoreException
 
         elif len(l[i]) == 3:
             name, clazz, default_kwargs = l[i]

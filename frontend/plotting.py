@@ -14,7 +14,7 @@ from matplotlib.figure import Figure
 
 from backend.run import RunThread
 from backend.run import RunThread
-from utils.defines import PROB_KEY, ALGO_KEY, N_SEEDS_KEY, N_EVAL_KEY, PLOT_PROGRESS_KEY, PLOT_PS_KEY, PLOT_PC_KEY, PLOT_FL_KEY
+from utils.defines import PROB_KEY, ALGO_KEY, SEEDS_KEY, N_EVAL_KEY, PLOT_PROGRESS_KEY, PLOT_PS_KEY, PLOT_PC_KEY, PLOT_FL_KEY
 from utils.utils import MyMessageBox
                 
 class MyFitnessLandscape(Plot):
@@ -97,7 +97,7 @@ class MyFitnessLandscape(Plot):
             
             self.plot_points()
         else:
-            raise Exception("Only landscapes of problems with one or two variables and one objective can be visualized.")
+            raise Exception("Only landscapes of problems with one or two variables and one objective can be visualized.") #@IgnoreException
 
     def plot_points(self):
         
@@ -196,19 +196,12 @@ class Plotter(QWidget):
         self.algo_ids = algo_ids
         self.other_ids = other_ids
 
-        if len(algo_ids) == 0 and plot_type != PLOT_FL_KEY:
-            MyMessageBox("Select at least one Algorithm to plot")
+        try:
+            self.plotRespectivetype() #@IgnoreException
+        except Exception as e: 
+            MyMessageBox(f"Could not plot in type {plot_type}. The following error occurred:\n{e}")
             return
-        elif len(other_ids) == 0 and plot_type != PLOT_FL_KEY:
-            MyMessageBox("Select at least one Seed/Problem to plot")
-            return
-        else:
-            try:
-                self.plotRespectivetype() #@IgnoreException
-            except Exception as e: 
-                MyMessageBox(f"Could not plot in type {plot_type}. The following error occurred:\n{e}")
-                return
-            
+        
         if self.sc is None:
             MyMessageBox(f"Could not plot in type {plot_type}. No source was created")
             return
@@ -234,12 +227,17 @@ class Plotter(QWidget):
         elif self.plot_type == PLOT_FL_KEY:
             self.plotFitnessLandscape()
         else:        
-            raise ValueError(f"Plot type can only be {PLOT_PROGRESS_KEY}, {PLOT_PC_KEY}, {PLOT_PS_KEY} or {PLOT_FL_KEY}") 
+            raise ValueError(f"Plot type can only be {PLOT_PROGRESS_KEY}, {PLOT_PC_KEY}, {PLOT_PS_KEY} or {PLOT_FL_KEY}") #@IgnoreException
 
     def plotProgress(self):
         """Plot the progress of the checked algorithms for the given problem and checked performance indicators"""
         # get the data for the given problem
         
+        if len(self.algo_ids) == 0:
+            raise Exception("No algorithms were selected") #@IgnoreException
+        elif len(self.other_ids) == 0:
+            raise Exception("No seeds were selected") #@IgnoreException
+            
         self.sc = MplCanvas()
         
         data = self.run_thread.data.copy()
@@ -271,14 +269,17 @@ class Plotter(QWidget):
 
     def plotPCP(self):
         """Plot the Parallel Coordinates of the checked algorithms for the given problem and checked seeds"""
-            
+        
+        if 'Problem' not in self.other_ids and len(self.algo_ids) == 0:
+            raise Exception("No algorithms or problem were selected to be plotted") #@IgnoreException
+        
         plot = PCP(legend=True)
         
         # see if other ids contain 'Problem', if so, get it out of the list
         if 'Problem' in self.other_ids:
             pareto_front = self.prob_object.pareto_front()
             if pareto_front is None:
-                MyMessageBox(f"Problem '{self.prob_id}' does not have a Pareto Front available")
+                raise Exception(f"Problem '{self.prob_id}' does not have a Pareto Front available") #@IgnoreException
             else:
                 plot.add(pareto_front, label = self.prob_id)
             self.other_ids.remove('Problem')
@@ -288,7 +289,10 @@ class Plotter(QWidget):
 
     def plotParetoSets(self):
         """Plot the Pareto front of the checked algorithms for the given problem and checked seeds"""
-            
+        
+        if self.prob_object.n_obj not in [2,3]:
+            raise Exception("Pareto Sets can only be plotted for problems with 2 or 3 objectives") #@IgnoreException
+        
         plot = Scatter(title=f"Scatter Plot on Problem: '{self.prob_id}'", legend=True)
     
         # see if other ids contain 'Problem', if so, get it out of the list
@@ -304,6 +308,7 @@ class Plotter(QWidget):
     def plotFitnessLandscape(self):
         """Plot the fitness landscape of the checked algorithms for the given problem and checked seeds"""
         
+        # raises its own exceptions
         plot = MyFitnessLandscape(self.prob_object, title=f"Fitness Landscape on Problem: '{self.prob_id}'")
         self.plotSolutions(plot)
         if plot.sets_of_points == []:
@@ -313,8 +318,8 @@ class Plotter(QWidget):
         
         self.other_ids = [int(id) for id in self.other_ids]
         data = self.run_thread.data.copy()
-        filtered_data = data[(data[PROB_KEY] == self.prob_id) & data[ALGO_KEY].isin(self.algo_ids) & data[N_SEEDS_KEY].isin(self.other_ids)]
-        filtered_data = filtered_data[[PROB_KEY, ALGO_KEY, N_SEEDS_KEY]].drop_duplicates()
+        filtered_data = data[(data[PROB_KEY] == self.prob_id) & data[ALGO_KEY].isin(self.algo_ids) & data[SEEDS_KEY].isin(self.other_ids)]
+        filtered_data = filtered_data[[PROB_KEY, ALGO_KEY, SEEDS_KEY]].drop_duplicates()
         
         for prob_id, algo_id, n_seeds in filtered_data.values:
             # get the best solution for each run_id

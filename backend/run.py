@@ -11,7 +11,7 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import QThread
 
 from utils.utils import debug_print
-from utils.defines import N_SEEDS_KEY, ALGO_KEY, PROB_KEY, N_EVAL_KEY, N_GEN_KEY
+from utils.defines import SEEDS_KEY, ALGO_KEY, PROB_KEY, N_EVAL_KEY, N_GEN_KEY
 
 class MyCallback(Callback):
     def __init__(self, pi_ids:list, pi_objects:list):
@@ -153,7 +153,7 @@ class RunThread(QThread):
                 
         run_length = len(callback.data[N_EVAL_KEY])
 
-        single_run_data = {N_SEEDS_KEY: [seed] * run_length,
+        single_run_data = {SEEDS_KEY: [seed] * run_length,
                            PROB_KEY: [run_args.prob_id] * run_length,
                            ALGO_KEY: [run_args.algo_id] * run_length}
         

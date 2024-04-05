@@ -1,13 +1,16 @@
 from PyQt5.QtWidgets import QFrame, QTableWidget, QTableWidgetItem, QCheckBox
 from PyQt5.uic import loadUi
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor                    
 
 import numpy as np
+import pandas as pd
 
 from backend.run import RunThread
 from backend.run import RunThread
-from utils.defines import (DESIGNER_RUN_TAB, PROB_KEY, ALGO_KEY, N_SEEDS_KEY, N_GEN_KEY, N_EVAL_KEY, VOTING_KEY, PI_KEY,
-                           CLASS_KEY, TERM_KEY, PLOT_PROGRESS_KEY, PLOT_PS_KEY, PLOT_PC_KEY, PLOT_FL_KEY)
+from utils.defines import (DESIGNER_RUN_TAB, PROB_KEY, ALGO_KEY, SEEDS_KEY, N_GEN_KEY, N_EVAL_KEY, VOTING_KEY, PI_KEY,
+                           CLASS_KEY, TERM_KEY, PLOT_PROGRESS_KEY, PLOT_PS_KEY, PLOT_PC_KEY, PLOT_FL_KEY, MEDIAN_KEY,
+                           BEST_KEY, WORST_KEY, AVG_KEY, VALUE_KEY)
 from frontend.plotting import Plotter
 from utils.utils import myFileManager, setBold, MyMessageBox
 
@@ -41,24 +44,79 @@ class RunTab(QFrame):
         # get the class variables
         self.run_thread = run_thread        
         self.pi_ids = run_thread.run_args_list[0].pi_ids
+
+        # get the final generation for each seed
+        self.term_df = self.run_thread.data.groupby([PROB_KEY, ALGO_KEY, SEEDS_KEY]).last().reset_index()
         
-        # get the average, across seeds, of the pi on the final generation
-        term_data = run_thread.data.groupby([PROB_KEY, ALGO_KEY, N_SEEDS_KEY]).last()
-        self.term_data = term_data.groupby([PROB_KEY, ALGO_KEY]).mean().reset_index()
-        
-        # go through the pi columns, and if they do not exist, create them and fill them with NaN
-        for pi_id in self.pi_ids:
-            if pi_id not in self.term_data.columns:
-                self.term_data[pi_id] = np.nan
-                
+        # get the statistics (min, max, median, average) of the data
+        self.stats, self.stats_seeds_df, self.avg_df, self.colapsed_stats_df = self.getStatisticsDFs() 
+           
         # get column by name
-        self.prob_ids = list(self.term_data[PROB_KEY].unique())
-        self.algo_ids = list(self.term_data[ALGO_KEY].unique())
+        self.prob_ids = list(self.term_df[PROB_KEY].unique())
+        self.algo_ids = list(self.term_df[ALGO_KEY].unique())
         
         # store the plot dialogs so they are not garbage collected
         self.plot_widgets = []
         
         self.setUI(label)
+    
+    def getStatisticsDFs(self):
+        
+        # drop unnecessary columns
+        df = self.term_df.drop(columns=[N_GEN_KEY, N_EVAL_KEY, SEEDS_KEY])
+        # get the average, median, min and max of the data    
+        df = df.groupby([PROB_KEY, ALGO_KEY]).agg([min, max, np.median, np.average]).reset_index()
+        cols = tuple([(PROB_KEY, ''), (ALGO_KEY, '')] + [(pi_id,lvl2) for pi_id in self.pi_ids for lvl2 in [BEST_KEY, WORST_KEY, MEDIAN_KEY, AVG_KEY]])
+        df.columns = pd.MultiIndex.from_tuples(cols)
+        
+        # set a three level column index for the data (pf, min/max/median/average, value/seed)
+        cols = pd.MultiIndex.from_tuples(((PROB_KEY, '', ''), (ALGO_KEY, '', '')))
+        stats_seeds_df = pd.DataFrame(columns=cols)
+        stats_seeds_df[(PROB_KEY, '', '')] = df[(PROB_KEY, '')]
+        stats_seeds_df[(ALGO_KEY, '', '')] = df[(ALGO_KEY, '')]
+        
+        # find the seeds for each performance indicator
+        for pi_id in self.pi_ids:
+            for lvl2 in [BEST_KEY, WORST_KEY, MEDIAN_KEY, AVG_KEY]:
+                stats_seeds_df[(pi_id, lvl2, VALUE_KEY)] = df[(pi_id, lvl2)]
+                if lvl2 == AVG_KEY:
+                    # nan column of size of the data
+                    seeds = np.nan * np.zeros(len(stats_seeds_df))
+                else:
+                    seeds = self.find_seeds(pi_id, lvl2, stats_seeds_df, self.term_df)
+                stats_seeds_df[(pi_id, lvl2, SEEDS_KEY)] = seeds
+        
+        stats_df = df.copy()
+        
+        avg_df = df.copy()
+        # get only the average column
+        columns_to_drop_list = [[(pi_id, BEST_KEY), (pi_id, WORST_KEY), (pi_id, MEDIAN_KEY)] for pi_id in self.pi_ids]
+        [avg_df.drop(columns=columns_to_drop, inplace=True) for columns_to_drop in columns_to_drop_list]
+        new_cols = [col[0] for col in avg_df.columns]
+        avg_df.columns = new_cols   
+
+        # get the min, median, max columns of each pi to be displayed in different rows
+        columns_to_drop_list = [[(pi_id, AVG_KEY)] for pi_id in self.pi_ids]
+        [df.drop(columns=columns_to_drop, inplace=True) for columns_to_drop in columns_to_drop_list]
+        lst = []
+        for i in range(len(df)):
+            prob_id, algo_id = df.iloc[i][PROB_KEY].values[0], df.iloc[i][ALGO_KEY].values[0]
+            for lvl2 in [BEST_KEY, MEDIAN_KEY, WORST_KEY]:
+                values = [ df.iloc[i][(pi_id, lvl2)] for pi_id in self.pi_ids ]
+                lst.append([prob_id, algo_id + lvl2] + values)
+                
+        colapsed_stats_df = pd.DataFrame(lst, columns=[PROB_KEY, ALGO_KEY] + self.pi_ids)
+
+        return stats_df, stats_seeds_df, avg_df, colapsed_stats_df
+    
+    def find_seeds(self, pi_id, lvl2, data, term_data):
+        seeds = np.zeros(len(data)).astype(int)
+        seeds = seeds.astype(int)
+        for i, row in data.iterrows():
+            prob_id, algo_id = row[(PROB_KEY, '', '')], row[(ALGO_KEY, '', '')]
+            value = row[(pi_id, lvl2, VALUE_KEY)]
+            seeds[i] = term_data[(term_data[PROB_KEY] == prob_id) & (term_data[ALGO_KEY] == algo_id) & (term_data[pi_id] == value)][SEEDS_KEY].values[0]
+        return seeds
         
     def setUI(self, label):
         
@@ -67,10 +125,8 @@ class RunTab(QFrame):
         self.save_run.clicked.connect(self.saveRun)
         self.plot_button.clicked.connect(self.plot)
         
-        self.values_comboBox.currentIndexChanged.connect(self.changedChosenValue)
         self.table.horizontalHeader().sectionDoubleClicked.connect(lambda col: self.headerClick(col, "horizontal"))
         self.table.verticalHeader().sectionDoubleClicked.connect(lambda row: self.headerClick(row, "vertical"))
-        self.selected_id.currentIndexChanged.connect(self.changeTable)
         items = [PLOT_PROGRESS_KEY, PLOT_PS_KEY, PLOT_PC_KEY] if self.run_thread.moo else [PLOT_FL_KEY, PLOT_PROGRESS_KEY]
         self.plot_comboBox.addItems(items)
         self.plot_comboBox.currentIndexChanged.connect(self.setCheckBoxes)
@@ -79,20 +135,29 @@ class RunTab(QFrame):
         self.plot_comboBox.lineEdit().setReadOnly(True)
         self.values_comboBox.lineEdit().setAlignment(Qt.AlignCenter)
         self.values_comboBox.lineEdit().setReadOnly(True)
+        self.values_comboBox.currentIndexChanged.connect(self.changedChosenValue)
         self.selected_id.lineEdit().setAlignment(Qt.AlignCenter)
         self.selected_id.lineEdit().setReadOnly(True)
+        self.selected_id.currentIndexChanged.connect(self.changeTable)
+        self.showing_values.lineEdit().setAlignment(Qt.AlignCenter)
+        self.showing_values.lineEdit().setReadOnly(True)
+        self.showing_values.currentIndexChanged.connect(self.changeTable)
+
         self.plot_prob.lineEdit().setAlignment(Qt.AlignCenter)
         self.plot_prob.lineEdit().setReadOnly(True)
 
         # set the labels                         
         self.label.setText(label)
         seed_str = "seed" if self.run_thread.n_seeds == 1 else "seeds"
-        self.n_seeds_label.setText(f"Averaged on: <b>{self.run_thread.n_seeds} {seed_str}</b>")
+        self.n_seeds_label.setText(f"Run on: <b>{self.run_thread.n_seeds} {seed_str}</b>")
         self.n_seeds_label.setAlignment(Qt.AlignCenter)
         self.term_label.setText(f"Termination criteria: <b>{self.run_thread.term_id}</b> <br>(Double click to see parameters)</font>")
         self.term_label.setAlignment(Qt.AlignCenter)
         self.term_label.mouseDoubleClickEvent = self.seeTermination
 
+        # make table non-editable
+        self.table.setEditTriggers(QTableWidget.NoEditTriggers) 
+        
         # set the table
         self.changedChosenValue()
         self.setCheckBoxes(set_algos=True)
@@ -102,7 +167,7 @@ class RunTab(QFrame):
 
 
         if self.plot_comboBox.currentText() != PLOT_PROGRESS_KEY:
-            ids = [seed for seed in self.run_thread.data[N_SEEDS_KEY].unique()]
+            ids = [seed for seed in self.run_thread.data[SEEDS_KEY].unique()]
             header = "Seed"
             if self.plot_comboBox.currentText() in [PLOT_PS_KEY, PLOT_PC_KEY]:
                 ids = ["Problem"] + ids
@@ -149,49 +214,73 @@ class RunTab(QFrame):
             self.changeTable()
     
     def changeTable(self):
-        # get the selected item id and the corresponding dataframe
+        
+        if self.showing_values.currentText() == "Averaged across seeds":
+            df = self.avg_df.copy()
+            avg = True
+        else:
+            df = self.colapsed_stats_df.copy()
+            rows = [i*3 for i in range(len(self.algo_ids))]
+            avg = False
+            
         selected_id = self.selected_id.currentText()
         if self.values_comboBox.currentText() == "Performance Indicator":
-            df = self.term_data.pivot(index=ALGO_KEY, columns=PROB_KEY, values=selected_id)
+            df = df.pivot(index=ALGO_KEY, columns=PROB_KEY, values=selected_id)
         elif self.values_comboBox.currentText() == "Problem":
-            df = self.term_data[self.term_data[PROB_KEY] == selected_id].copy()
-            df.drop(columns=[N_GEN_KEY, N_EVAL_KEY, PROB_KEY], inplace=True)
+            df = df[df[PROB_KEY] == selected_id]
+            df.drop(columns=[PROB_KEY], inplace=True)
             df = df.set_index(df.columns[0])
         else:
             raise ValueError("Voting by can only be Performance Indicator or Problem")
-    
-        # add the voting column. if the row has only NaN, the voting is 0
-        df[VOTING_KEY] = df.idxmin(axis=0).value_counts()
-        df[VOTING_KEY] = df[VOTING_KEY].fillna(0).astype(int)
-
+                
         # update the table widget
-        self.table.setEditTriggers(QTableWidget.NoEditTriggers) # make table non-editable
-        self.table.setColumnCount(len(df.columns))
-        self.table.setRowCount(len(df.index))
+        df[VOTING_KEY] = [0 for _ in range(len(df))]
+        
+        n_cols = len(df.columns)
+        n_rows = len(df.index)
+        self.table.setColumnCount(n_cols)
+        self.table.setRowCount(n_rows)
         
         # set the horizontal headers
-        for j in range(len(df.columns)):
+        for j in range(n_cols):
             header_item = QTableWidgetItem(df.columns[j])
             self.table.setHorizontalHeaderItem(j, header_item)
-
+                
+        grey, light_grey = QColor(242, 242, 242), QColor(250, 250, 250)
+        color = grey
+        
         # set the rest of the table    
-        for i in range(len(df.index)):
-            self.table.setVerticalHeaderItem(i, QTableWidgetItem(df.index[i]))
-            # get the float into str representation, last column is voting (int)
-            for j in range(len(df.columns)):
-                # set voting column                
-                if j == len(df.columns)-1:
-                    item = QTableWidgetItem(str(df.iloc[i, -1]))
-                    if df.iloc[i, -1] == df.iloc[:, -1].max():
-                        setBold(item)
-                # set value columns
-                else:
-                    nice_string = "{:.3e}".format(df.iloc[i, j]) 
-                    item = QTableWidgetItem(nice_string)
-                    # set text to bold if it is the smallest value in the column
-                    if df.iloc[i, j] == df.iloc[:, j].min():
-                        setBold(item)
+        for i in range(n_rows):
+            if (i % 3 == 0 and not avg) or avg:
+                color = light_grey if color == grey else grey
+            item = QTableWidgetItem(df.index[i])
+            item.setBackground(color)
+            self.table.setVerticalHeaderItem(i, item)
+                
+            # get the float into str representation and count the votes
+            for j in range(n_cols-1):
+                nice_string = "{:.3e}".format(df.iloc[i, j]) 
+                item = QTableWidgetItem(nice_string)
+                # set text to bold if it is the smallest value in the column
+                rows_to_check = [row + i % 3 for row in rows] if not avg else [ii for ii in range(len(self.algo_ids))]
+                if df.iloc[i, j] == df.iloc[rows_to_check, j].min():
+                    setBold(item)
+                    df[VOTING_KEY][i] += 1
+                item.setBackground(color)
                 self.table.setItem(i, j, item)
+                
+        for i in range(n_rows):
+            if (i % 3 == 0 and not avg) or avg:
+                color = light_grey if color == grey else grey
+            nice_string = str(int(df.iloc[i, -1]))
+            item = QTableWidgetItem(nice_string)
+            self.table.setItem(i, n_cols-1, item)
+            rows_to_check = [row + i % 3 for row in rows] if not avg else [ii for ii in range(len(self.algo_ids))]
+            if df.iloc[i, -1] == df.iloc[rows_to_check, -1].max():
+                setBold(item)
+            item.setBackground(color)
+            
+        self.table_df = df.copy()
 
     def headerClick(self, x:int, orientation:str):
         """Handle a click on a header item"""
@@ -206,6 +295,10 @@ class RunTab(QFrame):
             return
         
         id = item.text()
+        if self.showing_values.currentText() != "Averaged across seeds" and key == ALGO_KEY: #! sera ainda preciso?
+            for end_key in [BEST_KEY, MEDIAN_KEY, WORST_KEY]:
+                id = id[:-len(end_key)] if id.endswith(end_key) else id
+                
         args = self.run_thread.parameters[key][id].copy()
         clazz = args.pop(CLASS_KEY)
         string = f"Parameters for {key} of class {clazz} with id \'{id}\': \n {args}"

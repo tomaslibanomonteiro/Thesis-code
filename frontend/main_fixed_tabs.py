@@ -12,7 +12,7 @@ from frontend.edit_window import EditWindow, ArgsAreSet
 from frontend.main_run_tab import RunTab
 from utils.utils import myFileManager, showAndRaise, getAvailableName, MyMessageBox
 from utils.defines import (DESIGNER_HISTORY_FRAME,RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_FIXED_TABS, HISTORY_LAYOUT_WIDGETS,
-                           MAX_HISTORY_FRAMES, ALGO_KEY, PROB_KEY, PI_KEY, TERM_KEY, N_SEEDS_KEY, MOO_KEY, OPERATORS_ARGS_DICT, RUN_OPTIONS_ARGS_DICT)
+                           MAX_HISTORY_FRAMES, ALGO_KEY, PROB_KEY, PI_KEY, TERM_KEY, SEEDS_KEY, MOO_KEY, OPERATORS_ARGS_DICT, RUN_OPTIONS_ARGS_DICT)
 
 class MainTabsWidget(QTabWidget):
     """
@@ -80,7 +80,7 @@ class MainTabsWidget(QTabWidget):
         
         missing_keys = set(RUN_OPTIONS_KEYS) - set(run_options.keys())
         for key in missing_keys:
-            run_options[key] = [] if key != N_SEEDS_KEY else 1
+            run_options[key] = [] if key != SEEDS_KEY else 1
         self.dictToTables(run_options)
         
     def setUI(self):
@@ -154,7 +154,7 @@ class MainTabsWidget(QTabWidget):
         """Set one comboBox for each table with the initial items from the parameters"""
         
         keys = RUN_OPTIONS_KEYS.copy() 
-        keys.remove(N_SEEDS_KEY)
+        keys.remove(SEEDS_KEY)
         
         for key in keys: 
             table = self.tables_dict[key]
@@ -195,7 +195,7 @@ class MainTabsWidget(QTabWidget):
         missing_keys = set(RUN_OPTIONS_KEYS) - set(run_options.keys())
             
         for key in missing_keys:
-            run_options[key] = [] if key != N_SEEDS_KEY else 1
+            run_options[key] = [] if key != SEEDS_KEY else 1
             
         # set the combo boxes and the default run_options
         missing_options = self.setTable(self.prob_table, run_options[PROB_KEY], DEFAULT_ROW_NUMBERS[0])
@@ -204,7 +204,7 @@ class MainTabsWidget(QTabWidget):
         missing_options += self.setTable(self.pi_table, run_options[PI_KEY], min_rows)
         missing_options += self.setTable(self.term_table, run_options[TERM_KEY], DEFAULT_ROW_NUMBERS[3])
 
-        self.seedsSpinBox.setValue(run_options[N_SEEDS_KEY]) 
+        self.seedsSpinBox.setValue(run_options[SEEDS_KEY]) 
            
         if missing_options != "":
             MyMessageBox(f"The following run options are not available: {missing_options[:-2]}. \nTo choose them, please add"
@@ -216,10 +216,10 @@ class MainTabsWidget(QTabWidget):
         """Get the run options from the table into a dictionary"""
         run_options = {}
         keys = RUN_OPTIONS_KEYS.copy()
-        keys.remove(N_SEEDS_KEY)
+        keys.remove(SEEDS_KEY)
         for key, table in self.tables_dict.items():
             run_options[key] = [table.cellWidget(row, 0).currentText() for row in range(table.rowCount()) if table.cellWidget(row, 0).currentText() != ""]
-        run_options[N_SEEDS_KEY] = self.seedsSpinBox.value()
+        run_options[SEEDS_KEY] = self.seedsSpinBox.value()
         
         run_options[MOO_KEY] = self.moo
         
@@ -245,28 +245,30 @@ class MainTabsWidget(QTabWidget):
         tabs = self.edit_window.tabs
         
         term_id = self.getIDsFromTable(self.term_table)
-        if term_id == []:
+        prob_ids = self.getIDsFromTable(self.prob_table)
+        algo_ids = self.getIDsFromTable(self.algo_table)
+        pi_ids = self.getIDsFromTable(self.pi_table)
+        run_args = []
+        
+        if term_id == [] or prob_ids == [] or algo_ids == [] or pi_ids == []:
             return None
         else:
             term_id = term_id[0]
                     
-        # get run args, a list with the arguments for each individual run
-        run_args, algo_object, prob_object, term_object, pi_objects = [], None, None, None, [] 
-
         # PROBLEMS
-        for prob_id in self.getIDsFromTable(self.prob_table):
+        for prob_id in prob_ids:
             prob_object = tabs[PROB_KEY].getObjectFromID(prob_id)
             n_obj = prob_object.n_obj if prob_object.n_obj else None
             n_var = prob_object.n_var if prob_object.n_var else None
             
-            if prob_object == None:
+            if isinstance(prob_object, Exception):
                 return None
 
             # ALGOS 
-            for algo_id in self.getIDsFromTable(self.algo_table):                
+            for algo_id in algo_ids:            
                 algo_object = tabs[ALGO_KEY].getObjectFromID(algo_id, n_obj=n_obj, n_var=n_var)
                 
-                if algo_object == None:
+                if isinstance(algo_object, Exception):
                     return None                
 
                 # try to get the pareto front from the problem through algorithm ref_dirs if it exists 
@@ -279,15 +281,15 @@ class MainTabsWidget(QTabWidget):
                 term_object = tabs[TERM_KEY].getObjectFromID(term_id, n_obj=n_obj, n_var=n_var)
                 
                 # PERFORMANCE INDICATORS
-                pi_ids, pi_objects = [], []
-                for pi_id in self.getIDsFromTable(self.pi_table):
-                    pi_ids.append(pi_id)
+                pi_objects = []
+                for pi_id in pi_ids:
                     pi_object = tabs[PI_KEY].getObjectFromID(pi_id, get_problem_pf=pf)
                     pi_objects.append(pi_object)
-                    if pi_object == None:
+                
+                    if isinstance(pi_object, Exception):
                         return None
                     
-                    run_args.append(RunArgs(prob_id, prob_object, algo_id, algo_object, pi_ids, pi_objects, term_object))
+                run_args.append(RunArgs(prob_id, prob_object, algo_id, algo_object, pi_ids, pi_objects, term_object))
                 
         if run_args != []:
             # get the rest of the parameters

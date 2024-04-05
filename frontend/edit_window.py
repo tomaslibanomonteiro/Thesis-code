@@ -390,8 +390,8 @@ class EditTab(QFrame):
                 continue
             if self.table.cellWidget(row, ID_COL).text() == object_id:
                 return self.getObjectFromRow(self.table, row, **kwargs)
-                
-        raise Exception("Object ID '", object_id, "' not found in table from tab ", self.name)
+              
+        raise Exception("Object ID '", object_id, "' not found in table from tab ", self.name) 
             
     def getObjectFromRow(self, table: QTableWidget, row, **kwargs):
         # get the object from the table
@@ -400,14 +400,17 @@ class EditTab(QFrame):
         else:
             class_name = table.cellWidget(row, ID_COL+1).currentText()
         args_dict = self.getArgsFromRow(table, row, **kwargs)
-                
-        try:     
-            obj = self.get_function(class_name, **args_dict) #@IgnoreException
-        except Exception as e:
-            MyMessageBox(f"Error trying to get {class_name} from tab {self.key}:\n{e}"
-                         "\nMake sure all arguments are correctly set for the respective class")
-            obj = None
-                         
+
+        if not isinstance(args_dict, Exception):
+            try:     
+                obj = self.get_function(class_name, **args_dict) #@IgnoreException
+            except Exception as e:
+                MyMessageBox(f"Error trying to get {class_name} from tab {self.key}:\n{e}"
+                            "\nMake sure all arguments are correctly set for the respective class")
+                obj = e
+        else:
+            obj = args_dict
+                                
         return obj
                     
     def getArgsFromRow(self, table: QTableWidget, row: int, convert=True, **kwargs) -> dict:
@@ -454,7 +457,11 @@ class EditTab(QFrame):
             else:
                 raise Exception("Unknown widget type ", type(widget), " for arg ", arg, " in row ", row, " of tab ", self.name)
             
-            args_dict[arg] = value
+            if isinstance(value, Exception):
+                return value
+            else:
+                args_dict[arg] = value
+
         return args_dict    
     
     def convertString(self, arg, string: str, **kwargs):

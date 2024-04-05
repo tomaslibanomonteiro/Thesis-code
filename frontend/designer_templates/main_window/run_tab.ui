@@ -25,7 +25,7 @@
      <x>10</x>
      <y>10</y>
      <width>1111</width>
-     <height>641</height>
+     <height>651</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0,0">
@@ -81,6 +81,13 @@
        <widget class="QPushButton" name="save_result">
         <property name="text">
          <string>Save Result</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="save_table">
+        <property name="text">
+         <string>Save Table</string>
         </property>
        </widget>
       </item>
@@ -209,7 +216,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="n_seeds_label">
+         <widget class="QLabel" name="label_5">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
             <horstretch>0</horstretch>
@@ -217,11 +224,49 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Averaged on: x seeds&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Showing Values:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
           </property>
+         </widget>
+        </item>
+        <item alignment="Qt::AlignHCenter">
+         <widget class="QComboBox" name="showing_values">
+          <property name="minimumSize">
+           <size>
+            <width>181</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>181</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="editable">
+           <bool>true</bool>
+          </property>
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <property name="insertPolicy">
+           <enum>QComboBox::InsertAlphabetically</enum>
+          </property>
+          <property name="frame">
+           <bool>true</bool>
+          </property>
+          <item>
+           <property name="text">
+            <string>Best, Median, Worst</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Averaged across seeds</string>
+           </property>
+          </item>
          </widget>
         </item>
         <item>
@@ -240,6 +285,22 @@
           </property>
           <property name="indent">
            <number>-1</number>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="n_seeds_label">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;number of seeds: &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>

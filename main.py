@@ -1,9 +1,9 @@
 from PyQt5.QtWidgets import QApplication
 from frontend.main_window import MyMainWindow
-from utils.defines import N_SEEDS_KEY, TERM_KEY, PI_KEY, ALGO_KEY, PROB_KEY
+from utils.defines import SEEDS_KEY, TERM_KEY, PI_KEY, ALGO_KEY, PROB_KEY
 
 
-INIT_FROM_FILE = True
+INIT_FROM_FILE = False
 RUN = True
 
 def MOOstartFromFile():
@@ -38,15 +38,15 @@ def defaultStart():
         ALGO_KEY: ['nsga2', 'nsga3'],
         PI_KEY: ['gd', 'gd+', 'igd+', 'igd'],
         TERM_KEY: ['n_eval'],
-        N_SEEDS_KEY: 3
+        SEEDS_KEY: 3
     }
 
     run_options_soo = {
-        PROB_KEY: ['ackley', 'griewank', 'rastrigin'],
-        ALGO_KEY: ['ga', 'pso'],
-        PI_KEY: ['best'],
-        TERM_KEY: ['n_eval'],
-        N_SEEDS_KEY: 3
+        # PROB_KEY: ['ackley', 'griewank', 'rastrigin'],
+        # ALGO_KEY: ['ga', 'pso'],
+        # PI_KEY: ['best'],
+        # TERM_KEY: ['n_eval'],
+        # SEEDS_KEY: 3
     }    
     return run_options_moo, run_options_soo
 
