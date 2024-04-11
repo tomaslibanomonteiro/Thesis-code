@@ -24,6 +24,17 @@ DEBUG_PRINT = False
 def debug_print(*args):
     if DEBUG_PRINT:
         print(*args)
+        
+def setCombobox(combobox, items=None, center_items=False, index_changed_function=None):
+    from PyQt5.QtCore import Qt
+    
+    if items is not None:
+        combobox.addItems(items)
+    if center_items:
+        combobox.lineEdit().setAlignment(Qt.AlignCenter)
+        combobox.lineEdit().setReadOnly(True)
+    if index_changed_function is not None:
+        combobox.currentIndexChanged.connect(index_changed_function)
 class MyMessageBox(QMessageBox):
     """A class to show a message box with the given text and title."""
     def __init__(self, text, title="Warning", warning_icon=True):

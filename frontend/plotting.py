@@ -4,7 +4,7 @@ from pymoo.visualization.scatter import Scatter, Plot
 from pymoo.visualization.pcp import PCP
 
 from PyQt5.QtWidgets import QVBoxLayout, QWidget
-
+import pandas as pd
 import numpy as np
 
 import matplotlib
@@ -185,16 +185,21 @@ class Plotter(QWidget):
     plotFitnessLandscape(self): Plots the fitness landscape of the checked algorithms for the given problem and checked seeds.
     plotSolutions(self, plot): Plots the best solution for each run_id.
     """
-    def __init__(self, plot_type, prob_id:str, prob_object, run_thread:RunThread, algo_ids:list, other_ids:list, title='Plot'):
+    def __init__(self, plot_type, title, run_thread:RunThread, stats_seeds_df:pd.DataFrame, 
+                 pi_id, prob_id, prob_object, algo_ids, runs_to_plot):
         super().__init__()
-        
+            
         self.plot_type = plot_type
-        self.sc = None
         self.run_thread = run_thread
+        self.stats_seeds_df = stats_seeds_df
+        
+        self.pi_id = pi_id
         self.prob_id = prob_id
         self.prob_object = prob_object
         self.algo_ids = algo_ids
-        self.other_ids = other_ids
+        self.runs_to_plot = runs_to_plot
+
+        self.sc = None
 
         try:
             self.plotRespectivetype() #@IgnoreException
@@ -235,8 +240,8 @@ class Plotter(QWidget):
         
         if len(self.algo_ids) == 0:
             raise Exception("No algorithms were selected") #@IgnoreException
-        elif len(self.other_ids) == 0:
-            raise Exception("No seeds were selected") #@IgnoreException
+        elif len(self.runs_to_plot) == 0:
+            raise Exception("No Runs were selected") #@IgnoreException
             
         self.sc = MplCanvas()
         
@@ -246,18 +251,18 @@ class Plotter(QWidget):
         # get the data for the given algorithms
         for algo_id in self.algo_ids:
             df_algo = df_prob[df_prob[ALGO_KEY] == algo_id]
-            for pi_id in self.other_ids:
-                # get the data for the given performance indicator
-                df_pi = df_algo[[N_EVAL_KEY, pi_id]]
-                df_pi = df_pi.dropna(subset=[pi_id])  # Filter rows where pi_id has nan value
-                
-                # calculate mean and standard deviation
-                mean = df_pi.groupby(N_EVAL_KEY)[pi_id].mean()
-                std = df_pi.groupby(N_EVAL_KEY)[pi_id].std()
+            pi_id = self.prob_id
+            # get the data for the given performance indicator
+            df_pi = df_algo[[N_EVAL_KEY, pi_id]]
+            df_pi = df_pi.dropna(subset=[pi_id])  # Filter rows where pi_id has nan value
+            
+            # calculate mean and standard deviation
+            mean = df_pi.groupby(N_EVAL_KEY)[pi_id].mean()
+            std = df_pi.groupby(N_EVAL_KEY)[pi_id].std()
 
-                # plot the data
-                self.sc.axes.plot(mean.index, mean.values, label=f"{algo_id}/{pi_id}")
-                self.sc.axes.fill_between(mean.index, (mean-std).values, (mean+std).values, alpha=0.2)
+            # plot the data
+            self.sc.axes.plot(mean.index, mean.values, label=f"{algo_id}/{pi_id}")
+            self.sc.axes.fill_between(mean.index, (mean-std).values, (mean+std).values, alpha=0.2)
                 
         # name the plot
         self.sc.axes.set_title(f"Progress on problem: '{self.prob_id}'")
@@ -270,19 +275,19 @@ class Plotter(QWidget):
     def plotPCP(self):
         """Plot the Parallel Coordinates of the checked algorithms for the given problem and checked seeds"""
         
-        if PROB_KEY not in self.other_ids and len(self.algo_ids) == 0:
+        if PROB_KEY not in self.runs_to_plot and len(self.algo_ids) == 0:
             raise Exception("No algorithms or problem were selected to be plotted") #@IgnoreException
         
         plot = PCP(legend=True)
         
         # see if other ids contain PROB_KEY, if so, get it out of the list
-        if PROB_KEY in self.other_ids:
+        if PROB_KEY in self.runs_to_plot:
             pareto_front = self.prob_object.pareto_front()
             if pareto_front is None:
                 raise Exception(f"Problem '{self.prob_id}' does not have a Pareto Front available") #@IgnoreException
             else:
                 plot.add(pareto_front, label = self.prob_id)
-            self.other_ids.remove(PROB_KEY)
+            self.runs_to_plot.remove(PROB_KEY)
             
         self.plotSolutions(plot)        
         self.sc.axes.set_title(f"Parallel Coordinates on Problem: '{self.prob_id}'", y=1.05)
@@ -296,12 +301,12 @@ class Plotter(QWidget):
         plot = Scatter(title=f"Scatter Plot on Problem: '{self.prob_id}'", legend=True)
     
         # see if other ids contain PROB_KEY, if so, get it out of the list
-        if PROB_KEY in self.other_ids:
+        if PROB_KEY in self.runs_to_plot:
             if self.prob_object.pareto_front() is None:
                 MyMessageBox(f"Problem '{self.prob_id}' does not have a Pareto Front available")
             else:
                 plot.add(self.prob_object.pareto_front(), label = self.prob_id)
-            self.other_ids.remove(PROB_KEY)
+            self.runs_to_plot.remove(PROB_KEY)
             
         self.plotSolutions(plot)
         
@@ -316,16 +321,26 @@ class Plotter(QWidget):
             
     def plotSolutions(self, plot:Plot, **kwargs):
         
-        self.other_ids = [int(id) for id in self.other_ids]
-        data = self.run_thread.data.copy()
-        filtered_data = data[(data[PROB_KEY] == self.prob_id) & data[ALGO_KEY].isin(self.algo_ids) & data[SEEDS_KEY].isin(self.other_ids)]
-        filtered_data = filtered_data[[PROB_KEY, ALGO_KEY, SEEDS_KEY]].drop_duplicates()
+        df, stats, filtered_df = self.run_thread.data, self.stats_seeds_df, pd.DataFrame()
         
-        for prob_id, algo_id, n_seeds in filtered_data.values:
+        # Loop over each combination of 'algo' and 'value'
+        for algo in self.algo_ids:
+            for run_type in self.runs_to_plot:
+                # find the seed using the self.stats_seeds_df
+                seed = stats[(stats[ALGO_KEY] == algo) & (stats[PROB_KEY] == self.prob_id)][self.pi_id, run_type, SEEDS_KEY].values[0]
+                # add row to temp_df with the prob_id, algo_id and seed
+                temp_df = pd.DataFrame([[self.prob_id, algo, seed, run_type]], columns=[PROB_KEY, ALGO_KEY, SEEDS_KEY, 'Run Type'])
+                # Append the results to 'filtered_df'
+                filtered_df = pd.concat([filtered_df, temp_df])
+        
+        # Reset the index of 'filtered_df'
+        filtered_df.reset_index(drop=True, inplace=True)            
+            
+        for prob_id, algo_id, seed, run_type in filtered_df.values:
             # get the best solution for each run_id
-            best_gen = self.run_thread.best_gen[(prob_id, algo_id, n_seeds)]
+            best_gen = self.run_thread.best_gen[(prob_id, algo_id, seed)]
             # plot the best solution
-            plot.add(best_gen, label = f"Algo: '{algo_id}'/Seed: {n_seeds}", **kwargs)
+            plot.add(best_gen, label = f"Algo '{algo_id}'{run_type}", **kwargs)
         
         plot.do()
         handles, labels = plot.ax.get_legend_handles_labels()

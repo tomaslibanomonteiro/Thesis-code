@@ -62,7 +62,7 @@ class Defaults():
             self.parameters[ALGO_KEY]['ga']['selection'] = 'tournament_by_cv_and_fitness'
             
         self.parameters[TERM_KEY]['n_eval']['n_max_evals'] = 200
-        self.parameters[TERM_KEY]['n_gen']['n_max_gen'] = '3' + CONVERT_KEY
+        self.parameters[TERM_KEY]['n_gen']['n_max_gen'] = 10
         self.parameters[TERM_KEY]['fmin']['fmin'] = 1
         self.parameters[TERM_KEY]['time']['max_time'] = 100
         

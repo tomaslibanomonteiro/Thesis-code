@@ -390,8 +390,10 @@ class EditTab(QFrame):
                 continue
             if self.table.cellWidget(row, ID_COL).text() == object_id:
                 return self.getObjectFromRow(self.table, row, **kwargs)
-              
-        raise Exception("Object ID '", object_id, "' not found in table from tab ", self.name) 
+            
+        MyMessageBox(f"Object ID '{object_id}' not found in table from tab {self.name}")
+        
+        return Exception("Object ID '", object_id, "' not found in table from tab ", self.name) 
             
     def getObjectFromRow(self, table: QTableWidget, row, **kwargs):
         # get the object from the table

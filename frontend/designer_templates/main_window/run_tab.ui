@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1128</width>
-    <height>662</height>
+    <height>677</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,7 +25,7 @@
      <x>10</x>
      <y>10</y>
      <width>1111</width>
-     <height>651</height>
+     <height>661</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0,0">
@@ -305,22 +305,6 @@
          </widget>
         </item>
         <item>
-         <spacer name="verticalSpacer_3">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Fixed</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>10</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
          <layout class="QHBoxLayout" name="horizontalLayout_3">
           <property name="spacing">
            <number>0</number>
@@ -331,7 +315,7 @@
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_3">
             <property name="spacing">
-             <number>10</number>
+             <number>5</number>
             </property>
             <property name="topMargin">
              <number>0</number>
@@ -387,6 +371,41 @@
             </item>
             <item alignment="Qt::AlignHCenter">
              <widget class="QComboBox" name="plot_prob">
+              <property name="minimumSize">
+               <size>
+                <width>181</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>181</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="editable">
+               <bool>true</bool>
+              </property>
+              <property name="currentIndex">
+               <number>-1</number>
+              </property>
+              <property name="insertPolicy">
+               <enum>QComboBox::InsertAlphabetically</enum>
+              </property>
+              <property name="frame">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_11">
+              <property name="text">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;And Perf. Indicator:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
+            </item>
+            <item alignment="Qt::AlignHCenter">
+             <widget class="QComboBox" name="plot_pi">
               <property name="minimumSize">
                <size>
                 <width>181</width>
@@ -515,7 +534,7 @@
                <bool>false</bool>
               </attribute>
               <attribute name="horizontalHeaderStretchLastSection">
-               <bool>false</bool>
+               <bool>true</bool>
               </attribute>
               <attribute name="verticalHeaderVisible">
                <bool>false</bool>
@@ -570,7 +589,7 @@
               </column>
               <column>
                <property name="text">
-                <string>Prob/Seed</string>
+                <string>Prob/Run</string>
                </property>
               </column>
              </widget>

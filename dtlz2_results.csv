@@ -1,0 +1,4 @@
+Algorithm,Best IGD,Worst IGD,Median IGD
+NSGA3,1.262 × 10−3 ,1.0021e-03,1.357 × 10−3
+MOEAD - PBI,5.432 × 10−4,8.006 × 10−4 ,6.406 × 10−4
+MOEAD - Tchebicheff,7.499 × 10−2,7.8147e-02,7.574 × 10−2
