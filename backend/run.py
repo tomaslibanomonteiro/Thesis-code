@@ -25,13 +25,17 @@ class MyCallback(Callback):
         self.pi_objects = pi_objects
 
     def notify(self, algo: Algorithm):
-        if algo.opt is None or algo.pop is None:
+        if algo.opt is None:
             return
 
         self.data[N_EVAL_KEY].append(algo.evaluator.n_eval)
         self.data[N_GEN_KEY].append(algo.n_gen)
-        feas = np.where(algo.opt.get("feasible"))[0]
-        best_sol = algo.pop.get("F")[feas]
+    
+        feas = np.where(algo.pop.get("feasible"))[0] #! fica assim?
+        algo_pop = algo.pop.get("F")[feas]
+        from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
+        non_dom_pop_idx = NonDominatedSorting().do(algo_pop, only_non_dominated_front=True)
+        best_sol = algo_pop[non_dom_pop_idx] 
                 
         # get the performance indicators values
         for pi_id, pi_object in zip(self.pi_ids, self.pi_objects):
@@ -54,35 +58,35 @@ class RunArgs():
         
 class RunThread(QThread):
     """
-    A class that extends QThread to run the optimization process in a separate thread,
-    calling the minimize function from pymoo.
+        A class that extends QThread to run the optimization process in a separate thread,
+        calling the minimize function from pymoo.
 
-    It emits a signal to update the progress bar and the status bar.
-    The run can be canceled by calling the cancel method.
-    
-    AFTER RUN:
-    -----------
-    self.data
-    -----------
-    
-    stores the data from all runs in a pandas DataFrame with structure:
-    number of seeds | algorithm name | problem name | number of evaluations | number of generations | performance indicators values  
-    
-    -----------
-    self.best_gen
-    -----------
-    
-    It stores the last generation of solutions and the best solution so far, depending on the problem type:
-    
-    If SOO, the format is:
-    (problem name, algorithm name, seed): 
-    -> [solution coordinates in decision space, solution value in objective space]
-    
-    so that the Fitness Landscape can be plotted later.
-    
-    If MOO, the format is:
-    (problem name, algorithm name, seed):
-    -> [objective values of the best pareto set]
+        It emits a signal to update the progress bar and the status bar.
+        The run can be canceled by calling the cancel method.
+        
+        AFTER RUN:
+        -----------
+        self.data
+        -----------
+        
+        stores the data from all runs in a pandas DataFrame with structure:
+        number of seeds | algorithm name | problem name | number of evaluations | number of generations | performance indicators values  
+        
+        -----------
+        self.best_gen
+        -----------
+        
+        It stores the last generation of solutions and the best solution so far, depending on the problem type:
+        
+        If SOO, the format is:
+        (problem name, algorithm name, seed): 
+        -> [solution coordinates in decision space, solution value in objective space]
+        
+        so that the Fitness Landscape can be plotted later.
+        
+        If MOO, the format is:
+        (problem name, algorithm name, seed):
+        -> [objective values of the best pareto set]
     """
     progressSignal = pyqtSignal(str, int)
     
@@ -108,10 +112,8 @@ class RunThread(QThread):
 
     def run(self):
         #!
-        import sys
-        if sys.gettrace() is not None:
-            import debugpy
-            debugpy.debug_this_thread()
+        import debugpy
+        debugpy.debug_this_thread()
         seeds = np.arange(self.n_seeds) if self.fixed_seeds else np.random.choice(100000, size=self.n_seeds, replace=False)
         for run_args in self.run_args_list:
             for seed in seeds:
@@ -131,6 +133,7 @@ class RunThread(QThread):
                         save_history=False,
                         progress_bar=True,
                         callback=MyCallback(run_args.pi_ids, run_args.pi_objects))
+            
         except Exception as e: 
             res = None
             self.canceled = True
@@ -163,7 +166,8 @@ class RunThread(QThread):
         else:
             self.data = pd.concat([self.data, pd.DataFrame(single_run_data)])
         
-        optimal_pareto = res.algorithm.opt.get("F")[np.where(res.algorithm.opt.get("feasible"))[0]]
+        feas = np.where(res.algorithm.opt.get("feasible"))[0]
+        optimal_pareto = res.algorithm.opt.get("F")[feas]
         key = (run_args.prob_id, run_args.algo_id, seed)
         
         if len(optimal_pareto) == 0:
@@ -176,7 +180,7 @@ class RunThread(QThread):
             # for SOO, record the best value coordinates in decision space followed by the value in objective space
             best_sol = np.concatenate((res.algorithm.opt.get("X")[0], optimal_pareto[0]))
 
-            # Get all solutions from the last generation
+            # Get all the solutions from the last generation
             last_generation = res.algorithm.pop
 
             # Get the decision variables and objective values for each solution

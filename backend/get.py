@@ -289,7 +289,21 @@ def get_termination_options(objectives = 'all'):
     from pymoo.termination.max_eval import MaximumFunctionCallTermination
     from pymoo.termination.max_gen import MaximumGenerationTermination
     from pymoo.termination.max_time import TimeBasedTermination
-        
+    
+    class MyNumGen(MaximumGenerationTermination):
+        def __init__(self, prob_id='prob_id(convert)', **kwargs):
+            if 'dtlz1' in prob_id:
+                n_gen = 400
+            elif 'dtlz2' in prob_id:
+                n_gen = 250
+            elif 'dtlz3' in prob_id:
+                n_gen = 1000
+            elif 'dtlz4' in prob_id:
+                n_gen = 600
+            else:
+                raise Exception("Problem id must be 'dtlz1', 'dtlz2', 'dtlz3' or 'dtlz4'")
+            super().__init__(n_gen, **kwargs)
+            
     TERMINATION_SINGLE = [
         ("n_eval", MaximumFunctionCallTermination),
         ("n_gen", MaximumGenerationTermination),
@@ -304,6 +318,7 @@ def get_termination_options(objectives = 'all'):
         ("fmin", MinimumFunctionValueTermination),
         ("time", TimeBasedTermination),
         ("moo", DefaultMultiObjectiveTermination),
+        ("my_num_gen", MyNumGen)
         ]
     
     return returnOptions(objectives, TERMINATION_SINGLE, TERMINATION_MULTI) 
@@ -787,7 +802,7 @@ def get_decomposition_options(objectives = 'all'):
     from pymoo.decomposition.tchebicheff import Tchebicheff
     from pymoo.decomposition.weighted_sum import WeightedSum
 
-    DECOMPOSITION = [
+    DECOMPOSITION_MULTI = [
         ("weighted-sum", WeightedSum),
         ("tchebi", Tchebicheff),
         ("pbi", PBI),
@@ -796,7 +811,7 @@ def get_decomposition_options(objectives = 'all'):
         ("perp_dist", PerpendicularDistance)
     ]
 
-    return DECOMPOSITION
+    return returnOptions(objectives, [], DECOMPOSITION_MULTI)
 
 
 def get_decomposition(name, *args, d={}, **kwargs):

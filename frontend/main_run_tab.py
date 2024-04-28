@@ -30,7 +30,7 @@ class RunTab(QFrame):
         
     Important Methods
     -------
-        setPlotCheckBoxes(event=None, set_algos=False): Sets the checkboxes for the given ids in the tables, when the plotting
+        setPlotOptionsTable(event=None, set_algos=False): Sets the checkboxes for the given ids in the tables, when the plotting
         mode changes, so the user chooses the seeds or the performance indicators to plot.
         changeTable(): Updates the table based on the selected item id.
         plot(): Calls the Plotter class to plot the results in the respective plot mode.
@@ -145,7 +145,7 @@ class RunTab(QFrame):
         # plot section
         self.plot_button.clicked.connect(self.plot)
         items = [PLOT_PROGRESS_KEY, PLOT_PS_KEY, PLOT_PC_KEY] if self.run_thread.moo else [PLOT_FL_KEY, PLOT_PROGRESS_KEY]
-        setCombobox(self.plot_comboBox, items, True, self.setPlotCheckBoxes)
+        setCombobox(self.plot_comboBox, items, True, self.setPlotOptionsTable)
         setCombobox(self.plot_prob, self.prob_ids, True)
         setCombobox(self.plot_pi, self.pi_ids, True)
 
@@ -163,9 +163,9 @@ class RunTab(QFrame):
         
         # set the table
         self.tableOptionsChanged()
-        self.setPlotCheckBoxes(set_algos=True)
+        self.setPlotOptionsTable(set_algos=True)
 
-    def setPlotCheckBoxes(self, event=None, set_algos=False):
+    def setPlotOptionsTable(self, event=None, set_algos=False):
         """set the checkboxes for the given ids in the tables"""
 
         # set the checkboxes for the algorithms in the first column
@@ -178,8 +178,6 @@ class RunTab(QFrame):
         # if plot mode is progress, only display one column with the algorithms
         if self.plot_comboBox.currentText() == PLOT_PROGRESS_KEY:
             self.checkBox_table.setColumnCount(1)
-            #stretch the table to the size of the frame
-            
         else:
             # else add a column with the best median and worst runs
             self.checkBox_table.setColumnCount(2)
@@ -257,7 +255,7 @@ class RunTab(QFrame):
         grey, light_grey = QColor(242, 242, 242), QColor(250, 250, 250)
         color = grey
         
-        # set the rest of the table    
+        # set the non voting columns
         for i in range(n_rows):
             if (i % 3 == 0 and not avg) or avg:
                 color = light_grey if color == grey else grey
@@ -273,10 +271,12 @@ class RunTab(QFrame):
                 rows_to_check = [row + i % 3 for row in rows] if not avg else [ii for ii in range(len(self.algo_ids))]
                 if df.iloc[i, j] == df.iloc[rows_to_check, j].min():
                     setBold(item)
-                    df[VOTING_KEY][i] += 1
+                    df.loc[df.index[i], VOTING_KEY] += 1
                 item.setBackground(color)
                 self.table.setItem(i, j, item)
-                
+        
+        color = grey
+        # set the voting column
         for i in range(n_rows):
             if (i % 3 == 0 and not avg) or avg:
                 color = light_grey if color == grey else grey
@@ -347,7 +347,7 @@ class RunTab(QFrame):
         # get the seed
         seed = self.stats_seeds_df[(self.stats_seeds_df[PROB_KEY] == prob_id) & (self.stats_seeds_df[ALGO_KEY] == algo_id)][pi_id,lvl2,SEEDS_KEY].values[0]
         
-        MyMessageBox(f"Run of problem {prob_id} with algorithm {algo_id} and performance indicator {pi_id} {lvl2} value was obtained with seed {seed}", 'Seed', warning_icon=False)
+        MyMessageBox(f"Run of problem {prob_id} with algorithm {algo_id} and performance indicator {pi_id}{lvl2} value was obtained with seed {seed}", 'Seed', warning_icon=False)
 
     def seeTermination(self, event):
         """See the termination criteria"""

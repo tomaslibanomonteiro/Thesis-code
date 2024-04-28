@@ -15,9 +15,10 @@
             "name": "Current File",
             "type": "debugpy",
             "request": "launch",
+            "cwd": "${fileDirname}",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": true,
+            "justMyCode": false,
             "subProcess": true
         },
         {

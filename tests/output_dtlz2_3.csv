@@ -1,0 +1,4 @@
+Problem,Algorithm,Best IGD (O),Median IGD (O),Worst IGD (O),Best IGD (P),Median IGD (P),Worst IGD (P)
+dtlz2,NSGA3,1.37e-03,1.44e-03,1.51e-03,1.37e-03,1.44e-03,1.51e-03
+dtlz2,MOEAD - PBI,3.01e-03,3.03e-03,3.06e-03,3.01e-03,3.03e-03,3.06e-03
+dtlz2,MOEAD - Tchebicheff,7.69e-02,7.71e-02,7.73e-02,7.69e-02,7.71e-02,7.73e-02

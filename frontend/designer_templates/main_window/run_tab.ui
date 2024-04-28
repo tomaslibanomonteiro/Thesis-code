@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1128</width>
-    <height>677</height>
+    <height>680</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,7 +25,7 @@
      <x>10</x>
      <y>10</y>
      <width>1111</width>
-     <height>661</height>
+     <height>663</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0,0">
@@ -217,12 +217,6 @@
         </item>
         <item>
          <widget class="QLabel" name="label_5">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
           <property name="text">
            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Showing Values:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
@@ -233,6 +227,12 @@
         </item>
         <item alignment="Qt::AlignHCenter">
          <widget class="QComboBox" name="showing_values">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="minimumSize">
            <size>
             <width>181</width>
@@ -271,12 +271,6 @@
         </item>
         <item>
          <widget class="QLabel" name="term_label">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
           <property name="text">
            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Termination: &lt;br/&gt;(Double Click to see parameters)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
@@ -290,12 +284,6 @@
         </item>
         <item>
          <widget class="QLabel" name="n_seeds_label">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
           <property name="text">
            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;number of seeds: &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
@@ -310,7 +298,7 @@
            <number>0</number>
           </property>
           <property name="topMargin">
-           <number>10</number>
+           <number>0</number>
           </property>
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -439,21 +427,27 @@
               </property>
              </widget>
             </item>
-            <item alignment="Qt::AlignHCenter">
+            <item>
              <widget class="QTableWidget" name="checkBox_table">
               <property name="enabled">
                <bool>true</bool>
               </property>
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
               <property name="minimumSize">
                <size>
-                <width>240</width>
-                <height>0</height>
+                <width>250</width>
+                <height>120</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>250</width>
+                <height>120</height>
                </size>
               </property>
               <property name="styleSheet">
@@ -477,7 +471,7 @@
                <enum>Qt::ScrollBarAsNeeded</enum>
               </property>
               <property name="horizontalScrollBarPolicy">
-               <enum>Qt::ScrollBarAlwaysOff</enum>
+               <enum>Qt::ScrollBarAsNeeded</enum>
               </property>
               <property name="sizeAdjustPolicy">
                <enum>QAbstractScrollArea::AdjustToContents</enum>
@@ -534,13 +528,13 @@
                <bool>false</bool>
               </attribute>
               <attribute name="horizontalHeaderStretchLastSection">
-               <bool>true</bool>
+               <bool>false</bool>
               </attribute>
               <attribute name="verticalHeaderVisible">
                <bool>false</bool>
               </attribute>
               <attribute name="verticalHeaderCascadingSectionResizes">
-               <bool>true</bool>
+               <bool>false</bool>
               </attribute>
               <attribute name="verticalHeaderDefaultSectionSize">
                <number>20</number>
@@ -569,17 +563,12 @@
               </row>
               <row>
                <property name="text">
-                <string>2</string>
+                <string>New Row</string>
                </property>
               </row>
               <row>
                <property name="text">
-                <string>3</string>
-               </property>
-              </row>
-              <row>
-               <property name="text">
-                <string>4</string>
+                <string>New Row</string>
                </property>
               </row>
               <column>

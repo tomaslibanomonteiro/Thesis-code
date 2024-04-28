@@ -125,13 +125,10 @@ class MyFitnessLandscape(Plot):
         best_point = points[0, :]
         
         # if the number of points is greater than 10, get a random sample of 10 points
-        cutoff = 10
+        cutoff = 100
         if len(points[:, 0]) > cutoff:
             points = points[np.random.choice(len(points[1:, 0]), cutoff, replace=False), :]
-            word = 'rand.'
-        else:
-            word = '(all)'
-        gen_label = label + f"\n({len(points[:, 0])} {word} sol of last gen)"
+        gen_label = label + f"\n({len(points[:, 0])} sol of last gen)"
         best_label = label + f" (Best)"
         
         points = np.concatenate((best_point[np.newaxis,:], points))
@@ -240,18 +237,14 @@ class Plotter(QWidget):
         
         if len(self.algo_ids) == 0:
             raise Exception("No algorithms were selected") #@IgnoreException
-        elif len(self.runs_to_plot) == 0:
-            raise Exception("No Runs were selected") #@IgnoreException
             
-        self.sc = MplCanvas()
+        self.sc, pi_id, data = MplCanvas(), self.pi_id, self.run_thread.data
         
-        data = self.run_thread.data.copy()
         df_prob = data[data[PROB_KEY] == self.prob_id]
         
         # get the data for the given algorithms
         for algo_id in self.algo_ids:
             df_algo = df_prob[df_prob[ALGO_KEY] == algo_id]
-            pi_id = self.prob_id
             # get the data for the given performance indicator
             df_pi = df_algo[[N_EVAL_KEY, pi_id]]
             df_pi = df_pi.dropna(subset=[pi_id])  # Filter rows where pi_id has nan value
@@ -261,11 +254,11 @@ class Plotter(QWidget):
             std = df_pi.groupby(N_EVAL_KEY)[pi_id].std()
 
             # plot the data
-            self.sc.axes.plot(mean.index, mean.values, label=f"{algo_id}/{pi_id}")
+            self.sc.axes.plot(mean.index, mean.values, label=f"{algo_id}")
             self.sc.axes.fill_between(mean.index, (mean-std).values, (mean+std).values, alpha=0.2)
                 
         # name the plot
-        self.sc.axes.set_title(f"Progress on problem: '{self.prob_id}'")
+        self.sc.axes.set_title(f"'{pi_id}' progress on problem '{self.prob_id}'")
         # add labels
         self.sc.axes.set_xlabel('Number of evaluations')
         self.sc.axes.set_ylabel('Performance Indicator')
@@ -318,10 +311,10 @@ class Plotter(QWidget):
         self.plotSolutions(plot)
         if plot.sets_of_points == []:
             plot.ax.get_legend().remove()
-            
+        
     def plotSolutions(self, plot:Plot, **kwargs):
         
-        df, stats, filtered_df = self.run_thread.data, self.stats_seeds_df, pd.DataFrame()
+        stats, filtered_df = self.stats_seeds_df, pd.DataFrame()
         
         # Loop over each combination of 'algo' and 'value'
         for algo in self.algo_ids:

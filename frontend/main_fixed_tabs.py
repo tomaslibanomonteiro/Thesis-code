@@ -266,7 +266,7 @@ class MainTabsWidget(QTabWidget):
 
             # ALGOS 
             for algo_id in algo_ids:            
-                algo_object = tabs[ALGO_KEY].getObjectFromID(algo_id, n_obj=n_obj, n_var=n_var)
+                algo_object = tabs[ALGO_KEY].getObjectFromID(algo_id, n_obj=n_obj, n_var=n_var, prob_id=prob_id)
                 
                 if isinstance(algo_object, Exception):
                     return None                
@@ -278,12 +278,14 @@ class MainTabsWidget(QTabWidget):
                     pf = prob_object.pareto_front() if prob_object.pareto_front else None
                 
                 # TERMINATIONS
-                term_object = tabs[TERM_KEY].getObjectFromID(term_id, n_obj=n_obj, n_var=n_var)
+                term_object = tabs[TERM_KEY].getObjectFromID(term_id, n_obj=n_obj, n_var=n_var, prob_id=prob_id, algo_id=algo_id)
+                if isinstance(term_object, Exception):
+                    return None
                 
                 # PERFORMANCE INDICATORS
                 pi_objects = []
                 for pi_id in pi_ids:
-                    pi_object = tabs[PI_KEY].getObjectFromID(pi_id, get_problem_pf=pf)
+                    pi_object = tabs[PI_KEY].getObjectFromID(pi_id, get_problem_pf=pf, n_obj=n_obj, n_var=n_var, prob_id=prob_id, algo_id=algo_id)
                     pi_objects.append(pi_object)
                 
                     if isinstance(pi_object, Exception):
