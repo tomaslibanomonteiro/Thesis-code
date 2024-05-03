@@ -1,7 +1,7 @@
 #code adapted from http://tillbergmann.com/blog/python-gradient-descent.html
 
 import numpy as np
-import seaborn as sns
+# import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from scipy import stats 

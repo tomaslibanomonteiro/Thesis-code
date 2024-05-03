@@ -99,40 +99,6 @@ def get_algorithm(name, objectives = 'all', *args, d={}, **kwargs):
 
 
 # =========================================================================================================
-# Other Classes
-# =========================================================================================================
-
-def get_other_class_options(objectives = 'all'):
-        
-    from pymoo.algorithms.soo.nonconvex.cmaes import CMAESOutput
-    from pymoo.algorithms.soo.nonconvex.ga import FitnessSurvival
-    from pymoo.algorithms.soo.nonconvex.nelder import adaptive_params
-    from pymoo.algorithms.soo.nonconvex.pso import PSOFuzzyOutput
-    from pymoo.core.repair import NoRepair
-    from pymoo.operators.sampling.lhs import criterion_maxmin
-    from pymoo.util.display.multi import MultiObjectiveOutput
-    from pymoo.util.display.single import SingleObjectiveOutput
-    
-    OTHER_CLASS_OPTIONS_SINGLE = [
-        ("SingleObjectiveOutput", SingleObjectiveOutput), # output
-        ("PSOFuzzyOutput", PSOFuzzyOutput),               # output  
-        ("CMAESOutput", CMAESOutput),                     # output
-        ("FitnessSurvival", FitnessSurvival),             # survival  
-        ("adaptive_params", adaptive_params),             # func_params
-        ("NoRepair", NoRepair),                           # repair
-        ("criterion_maxmin", criterion_maxmin)            # criterion  
-    ]
-
-    OTHER_CLASS_OPTIONS_MULTI = [
-        ("MultiObjectiveOutput", MultiObjectiveOutput)   # output   
-    ]
-    
-    return returnOptions(objectives, OTHER_CLASS_OPTIONS_SINGLE, OTHER_CLASS_OPTIONS_MULTI)
-
-def get_other_class(name, objectives = 'all', *args, d={}, **kwargs):
-    return get_from_list(get_other_class_options(objectives), name, args, {**d, **kwargs})
-
-# =========================================================================================================
 # Sampling
 # =========================================================================================================
 
@@ -657,7 +623,7 @@ def get_problem(name, *args, **kwargs):
     return PROBLEM[name](*args, **kwargs)
 
 # =========================================================================================================
-# Weights
+# Reference Directions
 # =========================================================================================================
 
 
@@ -790,7 +756,7 @@ def get_performance_indicator(name, *args, d={}, **kwargs):
 
 
 # =========================================================================================================
-# DECOMPOSITION
+# Decomposition
 # =========================================================================================================
 
 def get_decomposition_options(objectives = 'all'):
@@ -819,22 +785,22 @@ def get_decomposition(name, *args, d={}, **kwargs):
 
 
 # =========================================================================================================
-# DECISION MAKING
+# VISUALIZATION TECHNIQUES
 # =========================================================================================================
 
-def get_decision_making_options(objectives = 'all'):
+def get_visualization_options(objectives = 'all'): #! deixar assim?
         
-    from pymoo.mcdm.high_tradeoff import HighTradeoffPoints
-    from pymoo.mcdm.pseudo_weights import PseudoWeights
-
-    DECISION_MAKING = [
-        ("high-tradeoff", HighTradeoffPoints),
-        ("pseudo-weights", PseudoWeights)
+    VISUALIZATION_SINGLE = [
+        
     ]
 
-    return DECISION_MAKING
+    VISUALIZATION_MULTI = [
+        
+    ]
+    
+    return returnOptions(objectives, VISUALIZATION_SINGLE, VISUALIZATION_MULTI)
 
 
-def get_decision_making(name, *args, d={}, **kwargs):
-    return get_from_list(get_decision_making_options(), name, args, {**d, **kwargs})
+def get_visualization(name, *args, d={}, **kwargs):
+    return get_from_list(get_visualization_options(), name, args, {**d, **kwargs})
 

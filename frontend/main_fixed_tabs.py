@@ -8,11 +8,12 @@ from backend.run import RunThread
 from backend.run import RunThread, RunArgs
 
 from frontend.small_widgets import MyComboBox
-from frontend.edit_window import EditWindow, ArgsAreSet
+from frontend.edit_window import EditWindow
 from frontend.main_run_tab import RunTab
 from utils.utils import myFileManager, showAndRaise, getAvailableName, MyMessageBox
-from utils.defines import (DESIGNER_HISTORY_FRAME,RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_FIXED_TABS, HISTORY_LAYOUT_WIDGETS,
-                           MAX_HISTORY_FRAMES, ALGO_KEY, PROB_KEY, PI_KEY, TERM_KEY, SEEDS_KEY, MOO_KEY, OPERATORS_ARGS_DICT, RUN_OPTIONS_ARGS_DICT)
+from utils.defines import (DESIGNER_HISTORY_FRAME,RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_FIXED_TABS,
+                           HISTORY_LAYOUT_WIDGETS, MAX_HISTORY_FRAMES, ALGO_KEY, PROB_KEY, PI_KEY, TERM_KEY, 
+                           SEEDS_KEY, MOO_KEY, OPERATORS_ARGS_DICT, RUN_OPTIONS_ARGS_DICT)
 
 class MainTabsWidget(QTabWidget):
     """
@@ -75,8 +76,8 @@ class MainTabsWidget(QTabWidget):
         self.edit_window = EditWindow(parameters, self.moo)
         self.edit_window.itemUpdates.connect(self.updateComboBoxItems)
         
-        # set run run_options
-        self.initialComboBoxItems(parameters)
+        # # set run run_options
+        self.setComboBoxes(parameters)
         
         missing_keys = set(RUN_OPTIONS_KEYS) - set(run_options.keys())
         for key in missing_keys:
@@ -150,7 +151,7 @@ class MainTabsWidget(QTabWidget):
         for row in range(table.rowCount()):
             table.cellWidget(row, 0).updateItems(items)
             
-    def initialComboBoxItems(self, parameters):
+    def setComboBoxes(self, parameters):
         """Set one comboBox for each table with the initial items from the parameters"""
         
         keys = RUN_OPTIONS_KEYS.copy() 
@@ -158,7 +159,7 @@ class MainTabsWidget(QTabWidget):
         
         for key in keys: 
             table = self.tables_dict[key]
-            items = [obj_id for obj_id in parameters[key].keys() if ArgsAreSet(parameters[key])]
+            items = [obj_id for obj_id in parameters[key].keys()]
             combobox = MyComboBox(items, table=table, add_rows= table != self.term_table)
             table.setCellWidget(0, 0, combobox)
                         

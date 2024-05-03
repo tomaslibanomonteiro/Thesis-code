@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QApplication
-from frontend.main_window import MyMainWindow
+from frontend.main_window import MainWindow
 from utils.defines import SEEDS_KEY, TERM_KEY, PI_KEY, ALGO_KEY, PROB_KEY, CROSS_KEY, MUT_KEY
 import pickle
 
@@ -43,10 +43,10 @@ def main():
 
     if INIT_FROM_FILE:
         run_options_moo, parameters_moo = MOOstartFromFile()
-        main_window = MyMainWindow(run_options_moo=run_options_moo, parameters_moo=parameters_moo)
+        main_window = MainWindow(run_options_moo=run_options_moo, parameters_moo=parameters_moo)
     else:
         run_options_moo, run_options_soo = defaultStart()
-        main_window = MyMainWindow(run_options_soo, run_options_moo)
+        main_window = MainWindow(run_options_soo, run_options_moo)
         
     if RUN:
         main_window.activeTabs().runButton()

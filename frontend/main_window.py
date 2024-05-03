@@ -6,7 +6,7 @@ from frontend.main_fixed_tabs import MainTabsWidget
 from utils.defines import DESIGNER_MAIN, MOO_TAB, SOO_TAB
 from utils.utils import showAndRaise
 
-class MyMainWindow(QMainWindow):
+class MainWindow(QMainWindow):
     """
     Main Window of the application. Contains two pages, with their respective tabs:
     - Multi Objective Optimization Page and Single Obejective Optimization Tab

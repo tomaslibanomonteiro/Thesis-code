@@ -128,8 +128,8 @@ class MyFitnessLandscape(Plot):
         cutoff = 100
         if len(points[:, 0]) > cutoff:
             points = points[np.random.choice(len(points[1:, 0]), cutoff, replace=False), :]
-        gen_label = label + f"\n({len(points[:, 0])} sol of last gen)"
-        best_label = label + f" (Best)"
+        gen_label = label
+        best_label = label + f" (Best sol)"
         
         points = np.concatenate((best_point[np.newaxis,:], points))
         self.sets_of_points.append(points)  

@@ -1,5 +1,5 @@
 from backend.defaults import Defaults
-from frontend.main_window import MyMainWindow
+from frontend.main_window import MainWindow
 from utils.defines import RESULTS_FOLDER, RUN_OPTIONS_KEYS, PROB_KEY, ALGO_KEY, PI_KEY, TERM_KEY, SEEDS_KEY, MOO_KEY
 
 TEST_NAME_KEY = 'test_name'
@@ -31,7 +31,7 @@ class Test():
         run_options_soo, parameters_soo = (self.options, self.parameters) if not self.moo else ({}, Defaults(False).parameters)
         run_options_moo, parameters_moo = (self.options, self.parameters) if self.moo else ({}, Defaults(True).parameters)
         
-        self.main_window = MyMainWindow(run_options_soo, run_options_moo, parameters_soo, parameters_moo)
+        self.main_window = MainWindow(run_options_soo, run_options_moo, parameters_soo, parameters_moo)
         self.run_thread = self.main_window.activeTabs().getRunThread()
         self.run_thread.finished.connect(self.afterRun)
     

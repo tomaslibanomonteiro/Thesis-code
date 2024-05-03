@@ -40,19 +40,19 @@ partial_float_re = re.compile(partial_float_regex)
 
 class MyWidgetsFrame(QFrame):
     """
-    A frame that contains various widgets with certain styles. All the widgets from this file 
-    will inherit the style and size policy of the respective widgets of the frame, providing a 
-    quick way to modify them through the Designer Tool of PyQt5, instead of having to code the 
-    desired characteristics. 
-    
-    Important Method
-    ---------------
-    
-    - copyStyleAndSizePolicy(self, widget, copy_key): Copies the style and size policy of the widget specified by copy_key
-    to the given widget. It raises a ValueError if copy_key does not match any known keys.
+        A frame that contains various widgets with certain styles. All the widgets from this file 
+        will inherit the style and size policy of the respective widgets of the frame, providing a 
+        quick way to modify them through the Designer Tool of PyQt5, instead of having to code the 
+        desired characteristics. 
+        
+        Important Method
+        ---------------
+        
+        - copyStyleAndSizePolicy(self, widget, copy_key): Copies the style and size policy of the widget specified by copy_key
+        to the given widget. It raises a ValueError if copy_key does not match any known keys.
 
-    copy_key values can be:
-    - default_id, variant_id, arg, value, no_def, none, default_class, variant_class, comboBox, spinBox, doubleSpinBox, checkBox.
+        copy_key values can be:
+        - default_id, variant_id, arg, value, no_def, none, default_class, variant_class, comboBox, spinBox, doubleSpinBox, checkBox.
     """
     def __init__(self):
         super().__init__()
@@ -106,25 +106,24 @@ class MyWidgetsFrame(QFrame):
         widget.setStyleSheet(copy_widget.styleSheet())
         widget.sizePolicy().setHorizontalPolicy(copy_widget.sizePolicy().horizontalPolicy())
         widget.sizePolicy().setVerticalPolicy(copy_widget.sizePolicy().verticalPolicy())
-
 class MyLineEdit(QLineEdit):
     """
-    LineEdit that emits a signal when the text changes and ensures that the text is unique within a certain context.
+        LineEdit that emits a signal when the text changes and ensures that the text is unique within a certain context.
 
-    Attributes
-    ----------
-    - itemsSignal: A PyQt signal that is emitted when the text changes.
-    - tab: A reference to the tab that contains the line edit. If it is None, the signal will not be emitted.
-    - recorded_text: The initial text of the line edit.
-    - widgets_frame: A reference to the widgets frame from where the style will be copied.
-    - copy_style: defines what is the widget from widgets frame from which the style will be copied.
+        Attributes
+        ----------
+        - itemsSignal: A PyQt signal that is emitted when the text changes.
+        - tab: A reference to the tab that contains the line edit. If it is None, the signal will not be emitted.
+        - recorded_text: The initial text of the line edit.
+        - widgets_frame: A reference to the widgets frame from where the style will be copied.
+        - copy_style: defines what is the widget from widgets frame from which the style will be copied.
 
-    Methods:
-    - __init__(text, copy_style, widgets_frame, read_only, tab): Initializes the instance.
-    - focusOutEvent(event): Trims whitespace from the text when the widget loses focus and emits a signal if the text has changed.
-    - emitSignal(): Emits a signal with the key of the tab and a list of unique items.
-    - makeUnique(): Ensures that the text in the line edit is unique within the context of the table it belongs to.
-    - copy(): Creates a copy of the MyLineEdit instance.
+        Methods:
+        - __init__(text, copy_style, widgets_frame, read_only, tab): Initializes the instance.
+        - focusOutEvent(event): Trims whitespace from the text when the widget loses focus and emits a signal if the text has changed.
+        - emitSignal(): Emits a signal with the key of the tab and a list of unique items.
+        - makeUnique(): Ensures that the text in the line edit is unique within the context of the table it belongs to.
+        - copy(): Creates a copy of the MyLineEdit instance.
     """
     itemsSignal = pyqtSignal(str, list)
     def __init__(self, text="", copy_style=None, widgets_frame:MyWidgetsFrame=None, read_only=False, tab=None):
@@ -216,8 +215,8 @@ class MyLineEdit(QLineEdit):
     
 class MyEmptyLineEdit(QLineEdit):
     """
-    LineEdit that is read only and has no border or background.
-    Exists to be used as a placeholder for empty cells in the table.
+        LineEdit that is read only and has no border or background.
+        Exists to be used as a placeholder for empty cells in the table.
     """
     def __init__(self):
         super().__init__()
@@ -231,66 +230,66 @@ class MyEmptyLineEdit(QLineEdit):
     
 class MyComboBox(QComboBox):
     """
-    A custom QComboBox with additional functionality depending on its place:
-    
-    ComboBox in Main Window Table
-    ------------------------------
-    If it is on the Main Window Table, it can add rows to the table and remove itself from the table.
-    Also, when a Line Edit from Edit Window that contains the IDs of the Run Options Objects emits a signal 
-    saying the IDs have changed, it can update its items if the signal key matches the key of the tab:
-    (algorithm Ids have changed -> If it has the key=ALGO_KEY, updates the items).
-    
-    Variant Class ComboBox in Edit Window
-    -------------------------------------
-    If it is a comboBox from a Variant Class, whenever the current index changes, it can copy the row from 
-    the table that matches the current text, so the arguments of the variant matches the ones from the 
-    Default Class. 
-    
-    Operator ComboBox in Edit Window
-    ------------------------------
-    when a Line Edit from Edit Window that contains the IDs of the operators Objects emits a signal 
-    saying the IDs have changed, it can update its items if the signal key matches the key of the tab:
-    (operator 'mutation' Ids have changed -> If it has the key=OPERATOR_KEY, updates the items).
-    
-    Attributes
-    ----------
-        table: The QTableWidget in which the combobox is located.
-        add_rows: A boolean indicating whether the combobox can add rows to the table.
-        col: The column in the table where the combobox is located.
-        row: The row in the table where the combobox is located.
-        tab: The tab in which the combobox is located.
-        key: The key used to update the combobox items when a signal is received.
-        copy_style: A widget from which to copy the style and size policy.
-        widgets_frame: The MyWidgetsFrame in which the combobox is located.
-        context_menu: The custom context menu for the combobox.
-        clear_action: The action to clear the combobox selection.
-        add_rows: The action to add a row to the table.
-        remove_combobox_action: The action to remove a row from the table.
+        A custom QComboBox with additional functionality depending on its place:
+        
+        ComboBox in Main Window Table
+        ------------------------------
+        If it is on the Main Window Table, it can add rows to the table and remove itself from the table.
+        Also, when a Line Edit from Edit Window that contains the IDs of the Run Options Objects emits a signal 
+        saying the IDs have changed, it can update its items if the signal key matches the key of the tab:
+        (algorithm Ids have changed -> If it has the key=ALGO_KEY, updates the items).
+        
+        Variant Class ComboBox in Edit Window
+        -------------------------------------
+        If it is a comboBox from a Variant Class, whenever the current index changes, it can copy the row from 
+        the table that matches the current text, so the arguments of the variant matches the ones from the 
+        Default Class. 
+        
+        Operator ComboBox in Edit Window
+        ------------------------------
+        when a Line Edit from Edit Window that contains the IDs of the operators Objects emits a signal 
+        saying the IDs have changed, it can update its items if the signal key matches the key of the tab:
+        (operator 'mutation' Ids have changed -> If it has the key=OPERATOR_KEY, updates the items).
+        
+        Attributes
+        ----------
+            table: The QTableWidget in which the combobox is located.
+            add_rows: A boolean indicating whether the combobox can add rows to the table.
+            col: The column in the table where the combobox is located.
+            row: The row in the table where the combobox is located.
+            tab: The tab in which the combobox is located.
+            key: The key used to update the combobox items when a signal is received.
+            copy_style: A widget from which to copy the style and size policy.
+            widgets_frame: The MyWidgetsFrame in which the combobox is located.
+            context_menu: The custom context menu for the combobox.
+            clear_action: The action to clear the combobox selection.
+            add_rows: The action to add a row to the table.
+            remove_combobox_action: The action to remove a row from the table.
 
-    Methods
-    -------
-        showContextMenu(pos): Shows the custom context menu at the given position.
-        addRowToTable(): Adds a new row to the table.
-        removeRowFromTable(): Removes a row from the table.
-        clearSelection(): Clears the current selection in the combobox.
-        copyRowFromClass(): Copies a row from the table that matches the current text of the combobox.
-        receiveSignal(key, items): Updates the items in the combobox when a signal with a matching key is received.
-        updateItems(items): Updates the items in the combobox.
-        copy(): Returns a copy of the combobox.
+        Methods
+        -------
+            showContextMenu(pos): Shows the custom context menu at the given position.
+            addRowToTable(): Adds a new row to the table.
+            removeRowFromTable(): Removes a row from the table.
+            clearSelection(): Clears the current selection in the combobox.
+            copyRowFromClass(): Copies a row from the table that matches the current text of the combobox.
+            receiveSignal(key, items): Updates the items in the combobox when a signal with a matching key is received.
+            updateItems(items): Updates the items in the combobox.
+            copy(): Returns a copy of the combobox.
 
-    Args
-    ----
-        items (list, optional): The initial items for the combobox. Defaults to an empty list.
-        initial_item (str, optional): The initial selected item in the combobox. Defaults to an empty string.
-        enabled (bool, optional): Whether the combobox is enabled. Defaults to True.
-        table (QTableWidget, optional): The table in which the combobox is located. Defaults to None.
-        col (int, optional): The column in the table where the combobox is located. Defaults to 0.
-        row (int, optional): The row in the table where the combobox is located. Defaults to None.
-        add_rows (bool, optional): Whether the combobox can add rows to the table. Defaults to False.
-        tab (optional): The tab in which the combobox is located. Defaults to None.
-        key (optional): The key used to update the combobox items when a signal is received. Defaults to None.
-        copy_style (optional): A widget from which to copy the style and size policy. Defaults to None.
-        widgets_frame (MyWidgetsFrame, optional): The MyWidgetsFrame in which the combobox is located. Defaults to None.
+        Args
+        ----
+            items (list, optional): The initial items for the combobox. Defaults to an empty list.
+            initial_item (str, optional): The initial selected item in the combobox. Defaults to an empty string.
+            enabled (bool, optional): Whether the combobox is enabled. Defaults to True.
+            table (QTableWidget, optional): The table in which the combobox is located. Defaults to None.
+            col (int, optional): The column in the table where the combobox is located. Defaults to 0.
+            row (int, optional): The row in the table where the combobox is located. Defaults to None.
+            add_rows (bool, optional): Whether the combobox can add rows to the table. Defaults to False.
+            tab (optional): The tab in which the combobox is located. Defaults to None.
+            key (optional): The key used to update the combobox items when a signal is received. Defaults to None.
+            copy_style (optional): A widget from which to copy the style and size policy. Defaults to None.
+            widgets_frame (MyWidgetsFrame, optional): The MyWidgetsFrame in which the combobox is located. Defaults to None.
     """
     def __init__(self, items=[], initial_item:str="", enabled: bool=True, table: QTableWidget=None, 
                  col:int=0, row:int=None, add_rows:bool=False, tab=None, key=None, copy_style=None, widgets_frame:MyWidgetsFrame=None):
@@ -414,8 +413,8 @@ class MyComboBox(QComboBox):
     
 class MyCheckBox(QCheckBox):
     """
-    Initializes an instance of the MyCheckBox class.
-    When it is checked, it sets the text to "True". When it is unchecked, it sets the text to "False".
+        Initializes an instance of the MyCheckBox class.
+        When it is checked, it sets the text to "True". When it is unchecked, it sets the text to "False".
     """
 
     def __init__(self, checked=False, widgets_frame=None, enabled=True):

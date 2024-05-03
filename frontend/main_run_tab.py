@@ -49,7 +49,7 @@ class RunTab(QFrame):
         self.term_df = self.run_thread.data.groupby([PROB_KEY, ALGO_KEY, SEEDS_KEY]).last().reset_index()
         
         # get the statistics (min, max, median, average) of the data
-        self.stats, self.stats_seeds_df, self.avg_df, self.colapsed_stats_df = self.getStatisticsDFs() 
+        self.stats_seeds_df, self.avg_df, self.colapsed_stats_df = self.getStatisticsDFs() 
            
         # get column by name
         self.prob_ids = list(self.term_df[PROB_KEY].unique())
@@ -85,9 +85,7 @@ class RunTab(QFrame):
                 else:
                     seeds = self.findSeeds(pi_id, lvl2, stats_seeds_df, self.term_df)
                 stats_seeds_df[(pi_id, lvl2, SEEDS_KEY)] = seeds
-        
-        stats_df = df.copy()
-        
+                
         avg_df = df.copy()
         # get only the average column
         columns_to_drop_list = [[(pi_id, BEST_KEY), (pi_id, WORST_KEY), (pi_id, MEDIAN_KEY)] for pi_id in self.pi_ids]
@@ -107,7 +105,7 @@ class RunTab(QFrame):
                 
         colapsed_stats_df = pd.DataFrame(lst, columns=[PROB_KEY, ALGO_KEY] + self.pi_ids)
 
-        return stats_df, stats_seeds_df, avg_df, colapsed_stats_df
+        return stats_seeds_df, avg_df, colapsed_stats_df
     
     def findSeeds(self, pi_id, lvl2, data, term_data):
         seeds = np.zeros(len(data)).astype(int)
