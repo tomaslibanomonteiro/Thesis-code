@@ -18,10 +18,10 @@ class EditWindow(QWidget):
         
         Signals
         -----------
-        It has two PyQt signals, itemUpdates and operatorUpdates, which are used to communicate 
+        It has two PyQt signals, runOptionsUpdates and operatorUpdates, which are used to communicate 
         changes of the MyEditText widgets that contain the IDs to the comboBoxes, so they are updated. 
         
-        itemUpdates(str, list) - All comboBoxes from the main window are connected. If the string matches
+        runOptionsUpdates(str, list) - All comboBoxes from the main window are connected. If the string matches
         the one from their table id, updates the current items to the ones in the list, matching with the 
         new/removed IDs
         
@@ -41,7 +41,7 @@ class EditWindow(QWidget):
         loadParameters():
             Loads parameters from a file and converts them into tabs in the window.
     """    
-    itemUpdates = pyqtSignal(str,list) 
+    runOptionsUpdates = pyqtSignal(str,list) 
     operatorUpdates = pyqtSignal(str,list)
 
     def __init__(self, parameters: dict, moo: bool):
@@ -266,7 +266,7 @@ class EditTab(QFrame):
         
         # connect the signal to the slot to update the items in the other tables
         if self.key in RUN_OPTIONS_ARGS_DICT.keys():
-            id_widget.itemsSignal.connect(self.edit_window.itemUpdates.emit)
+            id_widget.itemsSignal.connect(self.edit_window.runOptionsUpdates.emit)
         else:
             id_widget.itemsSignal.connect(self.edit_window.operatorUpdates.emit)
             
