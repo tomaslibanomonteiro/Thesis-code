@@ -179,7 +179,7 @@ class EditTab(QFrame):
         
         self.edit_window = edit_window
         self.key = key
-        self.name, label, self.get_function, _ = tab_args
+        self.name, label, self.get_function = tab_args
         self.initial_table_dict = parameters[self.key]
     
         self.label.setText(label)

@@ -87,23 +87,20 @@ VALUE_TYPES = (int, float, str, bool, type(None), NO_DEFAULT) # to be put in ui 
 ID_COL = 1 # object id col number in the edit parameters tables
 
 from backend.get import (get_algorithm, get_performance_indicator, get_problem, get_termination, get_crossover, 
-                         get_decomposition, get_mutation, get_reference_directions, get_sampling, get_selection,
-                         get_algorithm_options, get_crossover_options, get_decomposition_options, get_mutation_options,
-                         get_performance_indicator_options, get_problem_options, get_reference_direction_options,
-                         get_sampling_options, get_selection_options, get_termination_options)
+                         get_decomposition, get_mutation, get_reference_directions, get_sampling, get_selection)
 
 # for the creation of the tabs in the edit window: (key: (tab name, label, get_object, get_options)) 
-OPERATORS_ARGS_DICT = {  MUT_KEY: ('(op) Mutations', 'Edit Mutations', get_mutation, get_mutation_options),
-                    CROSS_KEY: ('(op) Crossovers', 'Edit Crossovers', get_crossover, get_crossover_options),
-                    SEL_KEY: ('(op) Selections', 'Edit Selections', get_selection, get_selection_options),
-                    SAMP_KEY: ('(op) Samplings', 'Edit Samplings', get_sampling, get_sampling_options),
-                    DECOMP_KEY: ('(op) Decomposition', 'Edit Decompositions', get_decomposition, get_decomposition_options),
-                    REF_DIR_KEY: ('(op) Ref. Dir.', 'Edit Ref_dirs', get_reference_directions, get_reference_direction_options)}
+OPERATORS_ARGS_DICT = {  MUT_KEY: ('(op) Mutations', 'Edit Mutations', get_mutation),
+                    CROSS_KEY: ('(op) Crossovers', 'Edit Crossovers', get_crossover),
+                    SEL_KEY: ('(op) Selections', 'Edit Selections', get_selection),
+                    SAMP_KEY: ('(op) Samplings', 'Edit Samplings', get_sampling),
+                    DECOMP_KEY: ('(op) Decomposition', 'Edit Decompositions', get_decomposition),
+                    REF_DIR_KEY: ('(op) Ref. Dir.', 'Edit Ref_dirs', get_reference_directions)}
 
-RUN_OPTIONS_ARGS_DICT = {PROB_KEY: ('Problems', 'Edit Problems', get_problem, get_problem_options), 
-                    ALGO_KEY: ('Algorithms', 'Edit Algorithms', get_algorithm, get_algorithm_options), 
-                    PI_KEY: ('Perf. Ind.', 'Edit Performance Indicators', get_performance_indicator, get_performance_indicator_options),
-                    TERM_KEY: ('Terminations', 'Edit Termination Criteria', get_termination, get_termination_options)}
+RUN_OPTIONS_ARGS_DICT = {PROB_KEY: ('Problems', 'Edit Problems', get_problem), 
+                    ALGO_KEY: ('Algorithms', 'Edit Algorithms', get_algorithm), 
+                    PI_KEY: ('Perf. Ind.', 'Edit Performance Indicators', get_performance_indicator),
+                    TERM_KEY: ('Terminations', 'Edit Termination Criteria', get_termination)}
 
 KEY_ARGS_DICT = {**OPERATORS_ARGS_DICT, **RUN_OPTIONS_ARGS_DICT}
 

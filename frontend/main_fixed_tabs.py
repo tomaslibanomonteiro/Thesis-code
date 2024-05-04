@@ -74,7 +74,7 @@ class MainTabsWidget(QTabWidget):
 
         # set edit window        
         self.edit_window = EditWindow(parameters, self.moo)
-        self.edit_window.itemUpdates.connect(self.updateComboBoxItems)
+        self.edit_window.runOptionsUpdates.connect(self.updateComboBoxItems)
         
         # # set run run_options
         self.setComboBoxes(parameters)

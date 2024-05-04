@@ -23,17 +23,17 @@ class Defaults():
     """
     def __init__(self, moo: bool): 
         
-        self.get_str = 'moo' if moo else 'soo' 
-        key_get_pairs = [(key, get_options_function) for key, (_, _, _, get_options_function) in KEY_ARGS_DICT.items()]
+        self.get_str = 'moo_options' if moo else 'soo_options' 
+        key_get_pairs = [(key, get_function) for key, (_, _, get_function) in KEY_ARGS_DICT.items()]
         
         self.parameters = {}
         self.parameters[MOO_KEY] = moo
         self.get_dict = {}
-        for key, get_options_function in key_get_pairs:
-            self.parameters[key] = self.get_table_dict(get_options_function(self.get_str))
-            self.get_dict[key] = get_options_function
+        for key, (_, _, get_function) in KEY_ARGS_DICT.items():
+            self.parameters[key] = self.get_table_dict(get_function(self.get_str))
+            self.get_dict[key] = get_function
                   
-        # add a customable arg
+        # add a customable arg in the end
         for key in self.parameters.keys():
             if key != MOO_KEY:    
                 for obj in self.parameters[key].keys():
@@ -66,12 +66,9 @@ class Defaults():
         self.parameters[TERM_KEY]['fmin']['fmin'] = 1
         self.parameters[TERM_KEY]['time']['max_time'] = 100
         
-            
-    def return_dict(self):
-        return self.parameters
     
-    def get_table_dict(self, options_list):
-        return {name: self.get_class_dict(name, obj) for name, obj in options_list}
+    def get_table_dict(self, options_dict):
+        return {name: self.get_class_dict(name, obj) for name, obj in options_dict.items()}
                 
     def get_class_dict(self, get_name: str, cls: type):
         """ get a dict with the class name, the object id and the arguments with their default values.
@@ -90,31 +87,24 @@ class Defaults():
                 
             # if arg is an operator, value is an object. Get the operator id from the object
             if arg in OPERATORS and cls.__name__ not in FAKE_OPERATORS:
-                ret_dict[arg] = self.getOperators(arg, value)
+                ret_dict[arg] = self.getOperator(arg, value)
             # check if arg and value are valid, otherwise remove it from the dict     
             elif arg not in ["self", "args", "kwargs"] and type(value) in VALUE_TYPES: 
                 ret_dict[arg] = value
                 
         return ret_dict
 
-    def getOperators(self, arg: str, obj):
+    def getOperator(self, arg: str, operator_obj):
+        operator_dict = self.get_dict[arg](self.get_str)
+        
         if arg == SEL_KEY: # selection must be 'by hand' because one arg is a function
             return 'by hand'                                  
-        elif arg not in OPERATORS: 
-            raise Exception("unknown operator", arg)
+        elif operator_obj in [None, NO_DEFAULT]: # if has no default value, return the first operator in the list
+            return list(operator_dict.keys())[0]
         else:
-            return self.getOperator(obj, self.parameters[arg], self.get_dict[arg](self.get_str))
+            for op_id, op_class in operator_dict.items():
+                # compare class names
+                if operator_obj.__class__.__name__ == op_class.__name__: 
+                    return op_id
+            raise Exception("unknown operator", operator_obj)
         
-    def getOperator(self, obj: str, op_table: dict, get_list: list):
-        
-        # if operator has no default value, return the first operator in the list
-        if obj in [None, NO_DEFAULT]:
-            return get_list[0][0]
-        # get object class name    
-        for get_name, cls in get_list:
-            if obj.__class__.__name__ == cls.__name__:
-                for op_id, op_dict in op_table.items():
-                    if get_name == op_dict[CLASS_KEY]:
-                        return op_id
-                
-        raise Exception("unknown operator", obj)                
