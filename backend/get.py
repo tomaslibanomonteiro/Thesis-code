@@ -393,7 +393,6 @@ def get_performance_indicator(name, *args, **kwargs):
     from pymoo.indicators.igd import IGD
     from pymoo.indicators.igd_plus import IGDPlus
     from pymoo.indicators.rmetric import RMetric
-    import numpy as np
     from others.added_classes import BestSol
     
                  

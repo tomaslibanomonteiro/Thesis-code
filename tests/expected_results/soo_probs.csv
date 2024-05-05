@@ -169,3 +169,8 @@ seed,problem,algorithm,n_eval,n_gen,best
 0,zakharov,de,300,3,0.04137876435220121
 0,zakharov,de,400,4,0.04137876435220121
 0,zakharov,de,500,5,0.04137876435220121
+0,random_knp_single,de,100,1,-71.88039511660799
+0,random_knp_single,de,200,2,-74.29358571530464
+0,random_knp_single,de,300,3,-78.14434283168242
+0,random_knp_single,de,400,4,-81.1532186040875
+0,random_knp_single,de,500,5,-81.18578070572119

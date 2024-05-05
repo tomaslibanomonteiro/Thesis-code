@@ -15,9 +15,11 @@ def main():
 
     # create a new folder RESULTS_FOLDER
     if os.path.exists(RESULTS_FOLDER):
-        import shutil
-        shutil.rmtree(RESULTS_FOLDER)    
-    os.mkdir(RESULTS_FOLDER)
+        for file in os.listdir(RESULTS_FOLDER):
+            if file.endswith(".csv"):
+                os.remove(os.path.join(RESULTS_FOLDER, file))
+    else:
+        os.mkdir(RESULTS_FOLDER)
     
     # create the app to instantiate the MainWindows
     app = QApplication([])
@@ -36,7 +38,7 @@ def main():
             
     # get the list of files to compare
     expected_files = [file for file in os.listdir(EXPECTED_RESULTS_FOLDER)]
-    files = [file for file in os.listdir(RESULTS_FOLDER)]
+    files = [file for file in os.listdir(RESULTS_FOLDER) if file.endswith(".csv")]
             
     # compare the CSV files
     for file in files:
