@@ -24,7 +24,6 @@ class Defaults():
     def __init__(self, moo: bool): 
         
         self.get_str = 'moo_options' if moo else 'soo_options' 
-        key_get_pairs = [(key, get_function) for key, (_, _, get_function) in KEY_ARGS_DICT.items()]
         
         self.parameters = {}
         self.parameters[MOO_KEY] = moo

@@ -34,12 +34,15 @@ class MyCallback(Callback):
         feas = np.where(algo.pop.get("feasible"))[0] #! fica assim?
         algo_pop = algo.pop.get("F")[feas]
         from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
-        non_dom_pop_idx = NonDominatedSorting().do(algo_pop, only_non_dominated_front=True)
-        best_sol = algo_pop[non_dom_pop_idx] 
+        if len(algo_pop) == 0: # no feasible solution found
+            best_sol = np.nan
+        else:
+            non_dom_pop_idx = NonDominatedSorting().do(algo_pop, only_non_dominated_front=True)
+            best_sol = algo_pop[non_dom_pop_idx] 
                 
         # get the performance indicators values
         for pi_id, pi_object in zip(self.pi_ids, self.pi_objects):
-            pi = pi_object.do(best_sol)
+            pi = pi_object.do(best_sol) if best_sol is not np.nan else np.nan
             if isinstance(pi_object, Hypervolume): # invert the hypervolume for voting
                 pi = -pi
             # add the data to the data frame    
