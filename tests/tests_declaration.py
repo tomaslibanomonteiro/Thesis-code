@@ -47,23 +47,22 @@ class Test():
 ######################################### SOO TESTS ########################################################
 ############################################################################################################
 
-# 'brkga' is elementwise algo?
+# 'brkga' is combinatorial algo
 # 'cmaes' and 'pso' not giving consistent results
 
 soo_algos = { 
     MOO_KEY: False,
     PI_KEY: ['best'],
-    ALGO_KEY: ['ga', 'de', 'nelder-mead', 'pattern-search', 'cmaes', 'pso'],
+    ALGO_KEY: ['ga', 'de', 'nelder-mead', 'pattern-search', 'pso', 'cmaes'],
     PROB_KEY: ['ackley'],
     TEST_NAME_KEY: 'soo_algos',
 }
 
-# 'knp' not set?
 soo_probs = {
     MOO_KEY: False,
     PI_KEY: ['best'],
     ALGO_KEY: ['de'],
-    PROB_KEY: ['ackley', 'g1', 'g2', 'g3', 'g4', 'g5', 'g6', 'g7', 'g8', 'g9', 'g10', 'g11', 'g12', 'g13', 'g14', 'g15', 'g16', 'g17', 'g18', 'g19', 'g20', 'g21', 'g22', 'g23', 'g24', 'cantilevered_beam', 'griewank', 'himmelblau', 'pressure_vessel', 'rastrigin', 'rosenbrock', 'schwefel', 'sphere', 'zakharov'],
+    PROB_KEY: ['ackley', 'g1', 'g2', 'g3', 'g4', 'g5', 'g6', 'g7', 'g8', 'g9', 'g10', 'g11', 'g12', 'g13', 'g14', 'g15', 'g16', 'g17', 'g18', 'g19', 'g20', 'g21', 'g22', 'g23', 'g24', 'cantilevered_beam', 'griewank', 'himmelblau', 'pressure_vessel', 'rastrigin', 'rosenbrock', 'schwefel', 'sphere', 'zakharov', 'random_knp_single'],
     TEST_NAME_KEY: 'soo_probs'
 }
 

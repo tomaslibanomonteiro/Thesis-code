@@ -28,7 +28,6 @@ def get_algorithm(name, *args, **kwargs):
     from pymoo.algorithms.moo.rnsga2 import RNSGA2
     from pymoo.algorithms.moo.rnsga3 import RNSGA3
     from pymoo.algorithms.moo.unsga3 import UNSGA3
-    from pymoo.algorithms.soo.nonconvex.brkga import BRKGA
     from pymoo.algorithms.soo.nonconvex.cmaes import CMAES
     from pymoo.algorithms.soo.nonconvex.de import DE
     from pymoo.algorithms.soo.nonconvex.ga import GA
@@ -39,7 +38,6 @@ def get_algorithm(name, *args, **kwargs):
 
     ALGORITHMS_SINGLE = {
         "ga": GA,
-        "brkga": BRKGA,
         "de": DE,
         "nelder-mead": NelderMead,
         "pattern-search": PatternSearch,
@@ -67,7 +65,6 @@ def get_algorithm(name, *args, **kwargs):
 def get_sampling(name, *args, **kwargs):
         
     from pymoo.operators.sampling.lhs import LHS
-    # from pymoo.operators.integer_from_float_operator import IntegerFromFloatSampling
     from pymoo.operators.sampling.rnd import (BinaryRandomSampling,
                                               FloatRandomSampling,
                                               PermutationRandomSampling)
@@ -87,34 +84,9 @@ def get_sampling(name, *args, **kwargs):
 
 def get_selection(name, *args, **kwargs):
         
-    from pymoo.algorithms.moo.ctaea import (RestrictedMating,
-                                            comp_by_cv_dom_then_random)
-    from pymoo.algorithms.moo.nsga2 import binary_tournament
-    from pymoo.algorithms.moo.nsga3 import comp_by_cv_then_random
-    from pymoo.algorithms.moo.unsga3 import comp_by_rank_and_ref_line_dist
-    from pymoo.algorithms.soo.nonconvex.ga import comp_by_cv_and_fitness
     from pymoo.operators.selection.rnd import RandomSelection
-    from pymoo.operators.selection.tournament import TournamentSelection
-    class TournamentByCVAndFitness(TournamentSelection):
-        def __init__(self, pressure=2, **kwargs):
-            super().__init__(func_comp=comp_by_cv_and_fitness, **kwargs)
-        
-    class RestrictedMatingCTAEA(RestrictedMating):
-        def __init__(self, pressure=2, **kwargs):
-            super().__init__(func_comp=comp_by_cv_dom_then_random, **kwargs)
-            
-    class BinaryTournament(TournamentSelection):
-        def __init__(self, pressure=2, **kwargs):
-            super().__init__(func_comp=binary_tournament, **kwargs)
-    
-    class TournamentByCVThenRandom(TournamentSelection):
-        def __init__(self, pressure=2, **kwargs):
-            super().__init__(func_comp=comp_by_cv_then_random, **kwargs)
-            
-    class TournamentByRankAndRefLineDist(TournamentSelection):
-        def __init__(self, pressure=2, **kwargs):
-            super().__init__(func_comp=comp_by_rank_and_ref_line_dist, **kwargs)
-    
+    from others.added_classes import (TournamentByCVAndFitness, RestrictedMatingCTAEA, BinaryTournament, 
+                                        TournamentByCVThenRandom, TournamentByRankAndRefLineDist)
     SELECTION_SINGLE = {
         "random": RandomSelection,
         "tournament_by_cv_and_fitness": TournamentByCVAndFitness  # ga
@@ -143,7 +115,7 @@ def get_crossover(name, *args, **kwargs):
     from pymoo.operators.crossover.ox import OrderCrossover
     from pymoo.operators.crossover.pcx import PCX
     from pymoo.operators.crossover.pntx import PointCrossover
-    from pymoo.operators.crossover.sbx import SBX, SimulatedBinaryCrossover
+    from pymoo.operators.crossover.sbx import SBX
     from pymoo.operators.crossover.ux import UniformCrossover
     
     CROSSOVER = {
@@ -193,20 +165,7 @@ def get_termination(name, *args, **kwargs):
     from pymoo.termination.max_eval import MaximumFunctionCallTermination
     from pymoo.termination.max_gen import MaximumGenerationTermination
     from pymoo.termination.max_time import TimeBasedTermination
-    
-    class MyNumGen(MaximumGenerationTermination):
-        def __init__(self, prob_id='prob_id(convert)', **kwargs):
-            if 'dtlz1' in prob_id:
-                n_gen = 400
-            elif 'dtlz2' in prob_id:
-                n_gen = 250
-            elif 'dtlz3' in prob_id:
-                n_gen = 1000
-            elif 'dtlz4' in prob_id:
-                n_gen = 600
-            else:
-                raise Exception("Problem id must be 'dtlz1', 'dtlz2', 'dtlz3' or 'dtlz4'")
-            super().__init__(n_gen, **kwargs)
+    from others.added_classes import MyNumGen
             
     TERMINATION_SINGLE = {
         "n_eval": MaximumFunctionCallTermination,
@@ -254,9 +213,10 @@ def get_problem(name, *args, **kwargs):
     from pymoo.problems.single import (G1, G2, G3, G4, G5, G6, G7, G8, G9, G10,
                                        G11, G12, G13, G14, G15, G16, G17, G18,
                                        G19, G20, G21, G22, G23, G24, Ackley,
-                                       CantileveredBeam, Griewank, Himmelblau,
-                                       Knapsack, PressureVessel, Rastrigin,
+                                       CantileveredBeam, Griewank, Himmelblau, PressureVessel, Rastrigin,
                                        Rosenbrock, Schwefel, Sphere, Zakharov)
+    from others.added_classes import RandomKnapsackMulti, RandomKnapsackSingle
+    
     PROBLEM_SINGLE = {
         'ackley': Ackley,
         'g1': G1,
@@ -286,7 +246,7 @@ def get_problem(name, *args, **kwargs):
         'cantilevered_beam': CantileveredBeam,
         'griewank': Griewank,
         'himmelblau': Himmelblau,
-        'knp': Knapsack,
+        'random_knp_single': RandomKnapsackSingle,
         'pressure_vessel': PressureVessel,
         'rastrigin': Rastrigin,
         'rosenbrock': Rosenbrock,
@@ -297,6 +257,7 @@ def get_problem(name, *args, **kwargs):
 
     PROBLEM_MULTI = {
         'bnh': BNH,
+        'random_knp_multi': RandomKnapsackMulti,
         'carside': Carside,
         'ctp1': CTP1,
         'ctp2': CTP2,
@@ -403,36 +364,9 @@ def get_reference_directions(name, *args, **kwargs):
         LayerwiseRieszEnergyReferenceDirectionFactory
     from pymoo.util.ref_dirs.reduction import \
         ReductionBasedReferenceDirectionFactory
-    from pymoo.util.reference_direction import MultiLayerReferenceDirectionFactory
-
     from pymoo.util.reference_direction import UniformReferenceDirectionFactory
-
-    class MyLayers(MultiLayerReferenceDirectionFactory):
-        def __init__(self, n_dim: int):
-            super().__init__()
-            
-            layer_2 = None
-            if n_dim == 2:
-                layer_1 = UniformReferenceDirectionFactory(n_dim, n_partitions=99).do()
-            elif n_dim == 3:
-                layer_1 = UniformReferenceDirectionFactory(n_dim, n_partitions=12).do()
-            elif n_dim in [4,5]:
-                layer_1 = UniformReferenceDirectionFactory(n_dim, n_partitions=6).do()
-            elif n_dim in [6,7,8,9,10]:
-                layer_1 = UniformReferenceDirectionFactory(n_dim, n_partitions=2, scaling=0.5).do()
-                layer_2 = UniformReferenceDirectionFactory(n_dim, n_partitions=3, scaling=1).do()
-            elif n_dim in [11,12,13,14,15]:
-                layer_1 = UniformReferenceDirectionFactory(n_dim, n_partitions=1, scaling=0.5).do()
-                layer_2 = UniformReferenceDirectionFactory(n_dim, n_partitions=2, scaling=1).do()
-            elif not isinstance(n_dim, int):
-                raise Exception("n_dim must be an integer.")
-            elif n_dim > 15 or n_dim < 2:
-                raise Exception("Not implemented for n_dim > 15 or n_dim < 2.")
-            
-            self.add_layer(layer_1)
-            if layer_2 is not None:
-                self.add_layer(layer_2)
-            
+    from others.added_classes import MyLayers   
+                
     REFERENCE_DIRECTIONS = {
         "(das-dennis|uniform)": UniformReferenceDirectionFactory,
         "(energy|riesz)": RieszEnergyReferenceDirectionFactory,
@@ -441,7 +375,7 @@ def get_reference_directions(name, *args, **kwargs):
         "my_layers": MyLayers
     }
 
-    ref_dirs = returnObjectOrOptions(name, REFERENCE_DIRECTIONS, REFERENCE_DIRECTIONS, *args, **kwargs)
+    ref_dirs = returnObjectOrOptions(name, {}, REFERENCE_DIRECTIONS, *args, **kwargs)
     if isinstance(ref_dirs, dict):
         return ref_dirs
     else:
@@ -460,15 +394,8 @@ def get_performance_indicator(name, *args, **kwargs):
     from pymoo.indicators.igd_plus import IGDPlus
     from pymoo.indicators.rmetric import RMetric
     import numpy as np
+    from others.added_classes import BestSol
     
-    class BestSol():
-        """used in the case of single-objective optimization,just for code compatibility. 
-        Only returns the input, because it should consist of only the best solution"""
-        def __init__(self, *args, **kwargs):
-            pass
-        
-        def do(self, solution_np_array, *args, **kwargs):
-            return solution_np_array[0][0] if len(solution_np_array) > 0 else np.nan
                  
     PERFORMANCE_INDICATOR_SINGLE = {
         "best": BestSol
@@ -507,7 +434,7 @@ def get_decomposition(name, *args, **kwargs):
         "perp_dist": PerpendicularDistance
     }
 
-    return returnObjectOrOptions(name, DECOMPOSITION_MULTI, DECOMPOSITION_MULTI, *args, **kwargs)
+    return returnObjectOrOptions(name, {}, DECOMPOSITION_MULTI, *args, **kwargs)
 
 # =========================================================================================================
 # VISUALIZATION TECHNIQUES #!?

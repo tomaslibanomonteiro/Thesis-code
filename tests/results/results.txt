@@ -1,3 +1,3 @@
-05/05/2024 10:35:50 Test soo_algos.csv failed!
-05/05/2024 10:35:50 Test soo_mixed.csv passed!
-05/05/2024 10:35:50 Test soo_probs.csv passed!
+05/05/2024 17:43:03 Test soo_algos.csv failed!
+05/05/2024 17:43:03 Test soo_mixed.csv passed!
+05/05/2024 17:43:03 Test soo_probs.csv failed!

@@ -258,7 +258,7 @@ class MainTabsWidget(QTabWidget):
                     
         # PROBLEMS
         for prob_id in prob_ids:
-            prob_object = tabs[PROB_KEY].getObjectFromID(prob_id)
+            prob_object = tabs[PROB_KEY].getObjectFromID(prob_id, seed=0)
             n_obj = prob_object.n_obj if prob_object.n_obj else None
             n_var = prob_object.n_var if prob_object.n_var else None
             
@@ -267,7 +267,7 @@ class MainTabsWidget(QTabWidget):
 
             # ALGOS 
             for algo_id in algo_ids:            
-                algo_object = tabs[ALGO_KEY].getObjectFromID(algo_id, n_obj=n_obj, n_var=n_var, prob_id=prob_id)
+                algo_object = tabs[ALGO_KEY].getObjectFromID(algo_id, n_obj=n_obj, n_var=n_var, prob_id=prob_id, seed=0)
                 
                 if isinstance(algo_object, Exception):
                     return None                
