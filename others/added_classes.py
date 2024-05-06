@@ -108,4 +108,9 @@ class BestSol():
         
         def do(self, solution_np_array, *args, **kwargs):
             return solution_np_array[0][0] if len(solution_np_array) > 0 else np.nan
-    
+
+from pymoo.indicators.hv import Hypervolume
+
+class negativeHypervolume(Hypervolume):
+    def _do(self, F):
+        return - super()._do(F)

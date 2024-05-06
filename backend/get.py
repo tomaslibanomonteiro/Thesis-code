@@ -25,8 +25,8 @@ def get_algorithm(name, *args, **kwargs):
     from pymoo.algorithms.moo.moead import MOEAD
     from pymoo.algorithms.moo.nsga2 import NSGA2
     from pymoo.algorithms.moo.nsga3 import NSGA3
-    from pymoo.algorithms.moo.rnsga2 import RNSGA2
-    from pymoo.algorithms.moo.rnsga3 import RNSGA3
+    # from pymoo.algorithms.moo.rnsga2 import RNSGA2 # needs a numpy array to set, cannot be done through the app
+    # from pymoo.algorithms.moo.rnsga3 import RNSGA3 # needs a numpy array to set, cannot be done through the app
     from pymoo.algorithms.moo.unsga3 import UNSGA3
     from pymoo.algorithms.soo.nonconvex.cmaes import CMAES
     from pymoo.algorithms.soo.nonconvex.de import DE
@@ -34,7 +34,9 @@ def get_algorithm(name, *args, **kwargs):
     from pymoo.algorithms.soo.nonconvex.nelder import NelderMead
     from pymoo.algorithms.soo.nonconvex.pattern import PatternSearch
     from pymoo.algorithms.soo.nonconvex.pso import PSO
-    from integrate_user_classes import MyAlgorithm
+    from pymoo.algorithms.soo.nonconvex.brkga import BRKGA
+    from others.integrate_user_classes import MyAlgorithm
+    
 
     ALGORITHMS_SINGLE = {
         "ga": GA,
@@ -43,15 +45,14 @@ def get_algorithm(name, *args, **kwargs):
         "pattern-search": PatternSearch,
         "cmaes": CMAES,
         "pso": PSO,
+        "brkga": BRKGA,
         "my_algorithm": MyAlgorithm
     }
     
     ALGORITHMS_MULTI = {
         "nsga2": NSGA2,
-        "rnsga2": RNSGA2,
         "nsga3": NSGA3,
         "unsga3": UNSGA3,
-        "rnsga3": RNSGA3,
         "moead": MOEAD,
         "ctaea": CTAEA,
     }
@@ -195,13 +196,15 @@ def get_problem(name, *args, **kwargs):
     from pymoo.problems.dynamic.df import (DF1, DF2, DF3, DF4, DF5, DF6, DF7,
                                            DF8, DF9, DF10, DF11, DF12, DF13,
                                            DF14)
+    #InvertedDTLZ1 not well implemented
+    # ConvexDTLZ2 and ConvexDTLZ4 are just dtlz with different args
     from pymoo.problems.many import (C1DTLZ1, C1DTLZ3, C2DTLZ2, C3DTLZ1,
                                      C3DTLZ4, DC1DTLZ1, DC1DTLZ3, DC2DTLZ1,
                                      DC2DTLZ3, DC3DTLZ1, DC3DTLZ3, DTLZ1,
                                      DTLZ2, DTLZ3, DTLZ4, DTLZ5, DTLZ6, DTLZ7,
                                      WFG1, WFG2, WFG3, WFG4, WFG5, WFG6, WFG7,
-                                     WFG8, WFG9, ConvexDTLZ2, ConvexDTLZ4,
-                                     InvertedDTLZ1, ScaledDTLZ1)
+                                     WFG8, WFG9, ScaledDTLZ1) 
+    # MODAct needs to install module
     from pymoo.problems.multi import (BNH, CTP1, CTP2, CTP3, CTP4, CTP5, CTP6,
                                       CTP7, CTP8, DASCMOP1, DASCMOP2, DASCMOP3,
                                       DASCMOP4, DASCMOP5, DASCMOP6, DASCMOP7,
@@ -209,7 +212,7 @@ def get_problem(name, *args, **kwargs):
                                       MW5, MW6, MW7, MW8, MW9, MW10, MW11,
                                       MW12, MW13, MW14, OSY, SRN, TNK, ZDT1,
                                       ZDT2, ZDT3, ZDT4, ZDT5, ZDT6, Carside,
-                                      Kursawe, MODAct, Truss2D, WeldedBeam)
+                                      Kursawe, Truss2D, WeldedBeam) 
     from pymoo.problems.single import (G1, G2, G3, G4, G5, G6, G7, G8, G9, G10,
                                        G11, G12, G13, G14, G15, G16, G17, G18,
                                        G19, G20, G21, G22, G23, G24, Ackley,
@@ -246,7 +249,7 @@ def get_problem(name, *args, **kwargs):
         'cantilevered_beam': CantileveredBeam,
         'griewank': Griewank,
         'himmelblau': Himmelblau,
-        'random_knp_single': RandomKnapsackSingle,
+        'random_knp': RandomKnapsackSingle,
         'pressure_vessel': PressureVessel,
         'rastrigin': Rastrigin,
         'rosenbrock': Rosenbrock,
@@ -257,7 +260,7 @@ def get_problem(name, *args, **kwargs):
 
     PROBLEM_MULTI = {
         'bnh': BNH,
-        'random_knp_multi': RandomKnapsackMulti,
+        'random_knp': RandomKnapsackMulti,
         'carside': Carside,
         'ctp1': CTP1,
         'ctp2': CTP2,
@@ -290,7 +293,6 @@ def get_problem(name, *args, **kwargs):
         'df12': DF12,
         'df13': DF13,
         'df14': DF14,
-        'modact': MODAct,
         'mw1': MW1,
         'mw2': MW2,
         'mw3': MW3,
@@ -305,7 +307,6 @@ def get_problem(name, *args, **kwargs):
         'mw12': MW12,
         'mw13': MW13,
         'mw14': MW14,
-        'dtlz1^-1': InvertedDTLZ1,
         'dtlz1': DTLZ1,
         'dtlz2': DTLZ2,
         'dtlz3': DTLZ3,
@@ -313,8 +314,6 @@ def get_problem(name, *args, **kwargs):
         'dtlz5': DTLZ5,
         'dtlz6': DTLZ6,
         'dtlz7': DTLZ7,
-        'convex_dtlz2': ConvexDTLZ2,
-        'convex_dtlz4': ConvexDTLZ4,
         'sdtlz1': ScaledDTLZ1,
         'c1dtlz1': C1DTLZ1,
         'c1dtlz3': C1DTLZ3,
@@ -389,11 +388,10 @@ def get_performance_indicator(name, *args, **kwargs):
         
     from pymoo.indicators.gd import GD
     from pymoo.indicators.gd_plus import GDPlus
-    from pymoo.indicators.hv import Hypervolume
     from pymoo.indicators.igd import IGD
     from pymoo.indicators.igd_plus import IGDPlus
     from pymoo.indicators.rmetric import RMetric
-    from others.added_classes import BestSol
+    from others.added_classes import BestSol, negativeHypervolume
     
                  
     PERFORMANCE_INDICATOR_SINGLE = {
@@ -405,7 +403,7 @@ def get_performance_indicator(name, *args, **kwargs):
         "gd+": GDPlus,
         "igd": IGD,
         "igd+": IGDPlus,
-        "hv": Hypervolume,
+        "-hv": negativeHypervolume,
         "rmetric": RMetric
     }
     

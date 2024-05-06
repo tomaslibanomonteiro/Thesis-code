@@ -1,6 +1,7 @@
 import os
 import filecmp
 import time
+import datetime
 
 # import all tests and declare them in ALL_TESTS
 from utils.defines import RESULTS_FOLDER, EXPECTED_RESULTS_FOLDER, RESULTS_FILE
@@ -8,8 +9,7 @@ from PyQt5.QtWidgets import QApplication
 
 from tests.tests_declaration import Test, soo_algos, soo_probs, soo_mixed, moo_algos, moo_probs, moo_mixed
 
-# TESTS_TO_RUN = [moo_probs, moo_algos, moo_mixed, soo_probs, soo_algos, soo_mixed]
-TESTS_TO_RUN = [soo_probs, soo_algos, soo_mixed]
+TESTS_TO_RUN = [soo_algos, soo_probs, soo_mixed, moo_algos, moo_probs, moo_mixed]
 
 def main():
 
@@ -44,15 +44,14 @@ def main():
     for file in files:
         # append the results to the file inside RESULTS_FOLDER
         with open(RESULTS_FILE, 'a') as f:
+            date_time = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             if file not in expected_files:
-                f.write('No comparison for test ' + file + '\n')
+                string = date_time + ' No comparison for test ' + file + '\n'
             else:
-                import datetime
-                date_time = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-                if filecmp.cmp(RESULTS_FOLDER + '/' + file, EXPECTED_RESULTS_FOLDER + '/' + file):
-                    f.write(date_time + ' Test ' + file + ' passed!\n')
-                else:
-                    f.write(date_time + ' Test ' + file + ' failed!\n')
+                test_result = ' failed!' if filecmp.cmp(RESULTS_FOLDER + '/' + file, EXPECTED_RESULTS_FOLDER + '/' + file) else ' passed!'
+                string = date_time + ' Test ' + file + test_result + '\n'
+            print(string)
+            f.write(string)
 
 if __name__ == '__main__':
     main()

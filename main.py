@@ -11,10 +11,10 @@ RUN = False
 def MOOstartFromFile():
 
     shorter = '_shorter' if SHORTER else ''
-    with open(f'moo_run_options{shorter}.pickle', 'rb') as file:
+    with open(f'others/moo_run_options{shorter}.pickle', 'rb') as file:
         run_options_moo = pickle.load(file) #@IgnoreException
 
-    with open(f'moo_parameters.pickle', 'rb') as file:
+    with open(f'others/moo_parameters.pickle', 'rb') as file:
         parameters_moo = pickle.load(file) #@IgnoreException
     
     return run_options_moo, parameters_moo

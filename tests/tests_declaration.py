@@ -1,6 +1,8 @@
 from backend.defaults import Defaults
 from frontend.main_window import MainWindow
 from utils.defines import RESULTS_FOLDER, RUN_OPTIONS_KEYS, PROB_KEY, ALGO_KEY, PI_KEY, TERM_KEY, SEEDS_KEY, MOO_KEY
+import pandas as pd
+from backend.get import get_algorithm, get_problem
 
 TEST_NAME_KEY = 'test_name'
 class Test():
@@ -33,13 +35,20 @@ class Test():
         
         self.main_window = MainWindow(run_options_soo, run_options_moo, parameters_soo, parameters_moo)
         self.run_thread = self.main_window.activeTabs().getRunThread()
-        self.run_thread.finished.connect(self.afterRun)
+        self.run_thread.finished.connect(self.afterRun) if self.run_thread is not None else None
     
     def run(self):
-        self.run_thread.start()
+        if self.run_thread is not None: 
+            self.run_thread.start()
+        else:
+            self.afterRun()
         
     def afterRun(self):
-        data = self.run_thread.data
+        if self.run_thread is not None:
+            data = self.run_thread.data
+        else:
+            df = {'error': ['RunThread was not created.']}
+            data = pd.DataFrame(df)
         data.to_csv(RESULTS_FOLDER + '/' + self.test_name, index=False)
         self.is_finished = True
 
@@ -47,22 +56,28 @@ class Test():
 ######################################### SOO TESTS ########################################################
 ############################################################################################################
 
-# 'brkga' is combinatorial algo
-# 'cmaes' and 'pso' not giving consistent results
+# 'brkga' is combinatorial algo, has to be run with a combinatorial problem like 'random_knp'
+# 'cmaes' not giving consistent results - not setting the seed correctly?
+
+soo_algos_list = list(get_algorithm('soo_options').keys())
+soo_algos_list.remove('brkga')
+soo_algos_list.remove('cmaes')
 
 soo_algos = { 
     MOO_KEY: False,
     PI_KEY: ['best'],
-    ALGO_KEY: ['ga', 'de', 'nelder-mead', 'pattern-search', 'pso', 'cmaes'],
+    ALGO_KEY: soo_algos_list,
     PROB_KEY: ['ackley'],
     TEST_NAME_KEY: 'soo_algos',
 }
+
+soo_probs_list = list(get_problem('soo_options').keys())
 
 soo_probs = {
     MOO_KEY: False,
     PI_KEY: ['best'],
     ALGO_KEY: ['de'],
-    PROB_KEY: ['ackley', 'g1', 'g2', 'g3', 'g4', 'g5', 'g6', 'g7', 'g8', 'g9', 'g10', 'g11', 'g12', 'g13', 'g14', 'g15', 'g16', 'g17', 'g18', 'g19', 'g20', 'g21', 'g22', 'g23', 'g24', 'cantilevered_beam', 'griewank', 'himmelblau', 'pressure_vessel', 'rastrigin', 'rosenbrock', 'schwefel', 'sphere', 'zakharov', 'random_knp_single'],
+    PROB_KEY: soo_probs_list, 
     TEST_NAME_KEY: 'soo_probs'
 }
 
@@ -78,25 +93,29 @@ soo_mixed = {
 ######################################### MOO TESTS ########################################################
 ############################################################################################################
 
+moo_algos_list = list(get_algorithm('moo_options').keys())
+
 moo_algos = {
     MOO_KEY: True,
-    ALGO_KEY: ['nsga2', 'rnsga2', 'nsga3', 'unsga3', 'rnsga3', 'moead', 'ctaea'],
+    ALGO_KEY: moo_algos_list,
     PI_KEY: ['gd+'],
     PROB_KEY: ['dtlz4'],
     TEST_NAME_KEY: 'moo_algos'
 }
 
+moo_probs_list = list(get_problem('moo_options').keys())
+
 moo_probs = {
     MOO_KEY: True,
     PI_KEY: ['gd+'],
     ALGO_KEY: ['nsga2'],
-    PROB_KEY: ['bnh', 'carside', 'ctp1', 'ctp2', 'ctp3', 'ctp4', 'ctp5', 'ctp6', 'ctp7', 'ctp8', 'dascmop1', 'dascmop2', 'dascmop3', 'dascmop4', 'dascmop5', 'dascmop6', 'dascmop7', 'dascmop8', 'dascmop9', 'df1', 'df2', 'df3', 'df4', 'df5', 'df6', 'df7', 'df8', 'df9', 'df10', 'df11', 'df12', 'df13', 'df14', 'modact', 'mw1', 'mw2', 'mw3', 'mw4', 'mw5', 'mw6', 'mw7', 'mw8', 'mw9', 'mw10', 'mw11', 'mw12', 'mw13', 'mw14', 'dtlz1^-1', 'dtlz1', 'dtlz2', 'dtlz3', 'dtlz4', 'dtlz5', 'dtlz6', 'dtlz7', 'convex_dtlz2', 'convex_dtlz4', 'sdtlz1', 'c1dtlz1', 'c1dtlz3', 'c2dtlz2', 'c3dtlz1', 'c3dtlz4', 'dc1dtlz1', 'dc1dtlz3', 'dc2dtlz1', 'dc2dtlz3', 'dc3dtlz1', 'dc3dtlz3', 'kursawe', 'osy', 'srn', 'tnk', 'truss2d', 'welded_beam', 'zdt1', 'zdt2', 'zdt3', 'zdt4', 'zdt5', 'zdt6', 'wfg1', 'wfg2', 'wfg3', 'wfg4', 'wfg5', 'wfg6', 'wfg7', 'wfg8', 'wfg9'],
+    PROB_KEY: moo_probs_list,
     TEST_NAME_KEY: 'moo_probs'
 }
 
 moo_mixed = {
     MOO_KEY: True,
-    PI_KEY: ['gd', 'gd+', 'igd+', 'igd'],
+    PI_KEY: ['gd', 'gd+', 'igd+', 'igd', '-hv'],
     ALGO_KEY: ['nsga2', 'nsga3'],
     PROB_KEY: ['bnh','ctp1'],
     TEST_NAME_KEY: 'moo_mixed'

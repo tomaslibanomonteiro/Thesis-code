@@ -38,25 +38,31 @@ class Defaults():
                 for obj in self.parameters[key].keys():
                     self.parameters[key][obj]["(Custom Arg)" + WRITABLE_ARG_KEY] = ""
                     
-        # manualy changed defaults
+        # manualy changed MOO defaults
         if self.parameters[MOO_KEY]:
             self.parameters[PI_KEY]['gd']['pf'] = 'get_problem_pf' + CONVERT_KEY
             self.parameters[PI_KEY]['igd']['pf'] = 'get_problem_pf' + CONVERT_KEY
             self.parameters[PI_KEY]['igd+']['pf'] = 'get_problem_pf' + CONVERT_KEY
             self.parameters[PI_KEY]['gd+']['pf'] = 'get_problem_pf' + CONVERT_KEY
-            self.parameters[PI_KEY]['hv']['pf'] = 'get_problem_pf' + CONVERT_KEY
+            self.parameters[PI_KEY]['-hv']['pf'] = 'get_problem_pf' + CONVERT_KEY
             self.parameters[ALGO_KEY]['nsga2']['selection'] = 'binary_tournament'
             self.parameters[ALGO_KEY]['nsga3']['selection'] = 'tournament_by_cv_then_random'
             self.parameters[ALGO_KEY]['unsga3']['selection'] = 'tournament_by_rank_and_ref_line_dist'
             self.parameters[ALGO_KEY]['ctaea']['selection'] = 'restricted_mating_ctaea'
-            self.parameters[ALGO_KEY]['rnsga3']['selection'] = 'tournament_by_cv_then_random'
             self.parameters[ALGO_KEY]['moead']['decomposition'] = 'pbi'
-            self.parameters[REF_DIR_KEY]['(das-dennis|uniform)']['n_dim'] = 'n_obj*1' + CONVERT_KEY
-            self.parameters[REF_DIR_KEY]['(das-dennis|uniform)']['n_partitions'] = 12 #!
+            self.parameters[REF_DIR_KEY]['(das-dennis|uniform)']['n_dim'] = 'n_obj' + CONVERT_KEY
+            self.parameters[REF_DIR_KEY]['(das-dennis|uniform)']['n_partitions'] = 12
             self.parameters[REF_DIR_KEY]['(energy|riesz)']['n_dim'] = 'n_obj*1' + CONVERT_KEY
-            self.parameters[REF_DIR_KEY]['(layer-energy|layer-riesz)']['n_dim'] = 'n_obj*1' + CONVERT_KEY
+            self.parameters[REF_DIR_KEY]['(layer-energy|layer-riesz)']['n_dim'] = 'n_obj' + CONVERT_KEY
             self.parameters[REF_DIR_KEY]['red']['n_dim'] = 'n_obj*1' + CONVERT_KEY
             self.parameters[REF_DIR_KEY]['my_layers']['n_dim'] = 'n_obj*1' + CONVERT_KEY
+            for i in range(1, 10):
+                arg = 'difficulty_factors' if i in [7,8,9] else 'difficulty' 
+                self.parameters[PROB_KEY][f'dascmop' + str(i)][arg] = 1 
+                self.parameters[PROB_KEY][f'wfg' + str(i)]['n_var'] = 10
+                self.parameters[PROB_KEY][f'wfg' + str(i)]['n_obj'] = 3
+            
+        # manualy changed SOO defaults
         else:
             self.parameters[ALGO_KEY]['ga']['selection'] = 'tournament_by_cv_and_fitness'
             

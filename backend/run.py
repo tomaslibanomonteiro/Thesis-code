@@ -5,7 +5,6 @@ from pymoo.core.algorithm import Algorithm
 from pymoo.core.callback import Callback
 from pymoo.core.result import Result
 from pymoo.optimize import minimize
-from pymoo.indicators.hv import Hypervolume
 
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtCore import QThread
@@ -43,8 +42,6 @@ class MyCallback(Callback):
         # get the performance indicators values
         for pi_id, pi_object in zip(self.pi_ids, self.pi_objects):
             pi = pi_object.do(best_sol) if best_sol is not np.nan else np.nan
-            if isinstance(pi_object, Hypervolume): # invert the hypervolume for voting
-                pi = -pi
             # add the data to the data frame    
             self.data[pi_id].append(pi)
 

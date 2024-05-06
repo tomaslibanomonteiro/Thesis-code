@@ -258,17 +258,16 @@ class MainTabsWidget(QTabWidget):
                     
         # PROBLEMS
         for prob_id in prob_ids:
-            prob_object = tabs[PROB_KEY].getObjectFromID(prob_id, seed=0)
-            n_obj = prob_object.n_obj if prob_object.n_obj else None
-            n_var = prob_object.n_var if prob_object.n_var else None
-            
+            prob_object = tabs[PROB_KEY].getObjectFromID(prob_id)
             if isinstance(prob_object, Exception):
                 return None
+            
+            n_var = prob_object.n_var if hasattr(prob_object,'n_var') else None
+            n_obj = prob_object.n_obj if hasattr(prob_object,'n_obj') else None
 
             # ALGOS 
             for algo_id in algo_ids:            
-                algo_object = tabs[ALGO_KEY].getObjectFromID(algo_id, n_obj=n_obj, n_var=n_var, prob_id=prob_id, seed=0)
-                
+                algo_object = tabs[ALGO_KEY].getObjectFromID(algo_id, n_obj=n_obj, n_var=n_var, prob_id=prob_id)
                 if isinstance(algo_object, Exception):
                     return None                
 
@@ -288,7 +287,6 @@ class MainTabsWidget(QTabWidget):
                 for pi_id in pi_ids:
                     pi_object = tabs[PI_KEY].getObjectFromID(pi_id, get_problem_pf=pf, n_obj=n_obj, n_var=n_var, prob_id=prob_id, algo_id=algo_id)
                     pi_objects.append(pi_object)
-                
                     if isinstance(pi_object, Exception):
                         return None
                     
