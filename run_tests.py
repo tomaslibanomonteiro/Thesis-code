@@ -48,7 +48,7 @@ def main():
             if file not in expected_files:
                 string = date_time + ' No comparison for test ' + file + '\n'
             else:
-                test_result = ' failed!' if filecmp.cmp(RESULTS_FOLDER + '/' + file, EXPECTED_RESULTS_FOLDER + '/' + file) else ' passed!'
+                test_result = ' passed!' if filecmp.cmp(RESULTS_FOLDER + '/' + file, EXPECTED_RESULTS_FOLDER + '/' + file) else ' failed!'
                 string = date_time + ' Test ' + file + test_result + '\n'
             print(string)
             f.write(string)
