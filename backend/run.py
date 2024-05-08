@@ -30,18 +30,14 @@ class MyCallback(Callback):
         self.data[N_EVAL_KEY].append(algo.evaluator.n_eval)
         self.data[N_GEN_KEY].append(algo.n_gen)
     
-        feas = np.where(algo.pop.get("feasible"))[0] #! fica assim?
-        algo_pop = algo.pop.get("F")[feas]
-        from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
-        if len(algo_pop) == 0: # no feasible solution found
-            best_sol = np.nan
-        else:
-            non_dom_pop_idx = NonDominatedSorting().do(algo_pop, only_non_dominated_front=True)
-            best_sol = algo_pop[non_dom_pop_idx] 
+        feas = np.where(algo.opt.get("feasible"))[0]
+        algo_opt = algo.opt.get("F")[feas]
+        if len(algo_opt) == 0: # no feasible solution found
+            algo_opt = np.nan
                 
         # get the performance indicators values
         for pi_id, pi_object in zip(self.pi_ids, self.pi_objects):
-            pi = pi_object.do(best_sol) if best_sol is not np.nan else np.nan
+            pi = pi_object.do(algo_opt) if algo_opt is not np.nan else np.nan
             # add the data to the data frame    
             self.data[pi_id].append(pi)
 
@@ -149,7 +145,7 @@ class RunThread(QThread):
         text = f"Running Algorithm '{algo_id}' on Problem '{prob_id}', seed {seed}"
         percentage = self.run_counter/self.total_runs*100                
         self.progressSignal.emit(text, percentage)
-        debug_print(f"{percentage:.0f}%  - ",text) #!
+        debug_print(f"{percentage:.0f}%  - ",text)
         self.run_counter += 1    
         
     def updateData(self, run_args: RunArgs, res: Result, seed:int, callback: MyCallback):
@@ -170,7 +166,7 @@ class RunThread(QThread):
         optimal_pareto = res.algorithm.opt.get("F")[feas]
         key = (run_args.prob_id, run_args.algo_id, seed)
         
-        if len(optimal_pareto) == 0:
+        if len(optimal_pareto) == 0: #! change to X and F stored?
             # no feasible solution found
             self.best_gen[key] = np.nan
         elif self.moo:

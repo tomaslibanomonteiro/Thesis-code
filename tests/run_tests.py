@@ -1,12 +1,15 @@
+# insert full path
+
+
 import os
 import filecmp
 import time
 import datetime
-
-# import all tests and declare them in ALL_TESTS
-from utils.defines import RESULTS_FOLDER, EXPECTED_RESULTS_FOLDER, RESULTS_FILE
 from PyQt5.QtWidgets import QApplication
+import sys
+sys.path.insert(1, r"C:\Users\tomas\OneDrive - Universidade de Lisboa\Desktop\Tese\Thesis-code")
 
+from utils.defines import RESULTS_FOLDER, EXPECTED_RESULTS_FOLDER, RESULTS_FILE
 from tests.tests_declaration import Test, soo_algos, soo_probs, soo_mixed, moo_algos, moo_probs, moo_mixed
 
 TESTS_TO_RUN = [soo_algos, soo_probs, soo_mixed, moo_algos, moo_probs, moo_mixed]

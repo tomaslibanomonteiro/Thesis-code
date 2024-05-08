@@ -301,7 +301,7 @@ class RunTab(QFrame):
             return
         
         id = item.text()
-        if self.showing_values.currentText() != "Averaged across seeds" and key == ALGO_KEY: #! sera ainda preciso?
+        if self.showing_values.currentText() != "Averaged across seeds" and key == ALGO_KEY:
             for end_key in [BEST_KEY, MEDIAN_KEY, WORST_KEY]:
                 id = id[:-len(end_key)] if id.endswith(end_key) else id
                 

@@ -325,6 +325,3 @@ seed,problem,algorithm,n_eval,n_gen,best
 0,ackley,pso,450,18,0.10090446725742241
 0,ackley,pso,475,19,0.08108507629340922
 0,ackley,pso,500,20,0.05834615289031264
-0,ackley,my_algorithm,200,1,9.637227800116744
-0,ackley,my_algorithm,400,2,8.356941033729118
-0,ackley,my_algorithm,600,3,4.55063212296626

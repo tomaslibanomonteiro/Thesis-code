@@ -107,8 +107,6 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         self.close()
         exit(0)
-
-    #####! TODO: Implement the functionality for the following actions
     
     def seeTutorial(self):
         #! TODO: Implement the functionality for the See Tutorial action

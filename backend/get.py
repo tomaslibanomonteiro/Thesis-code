@@ -35,8 +35,6 @@ def get_algorithm(name, *args, **kwargs):
     from pymoo.algorithms.soo.nonconvex.pattern import PatternSearch
     from pymoo.algorithms.soo.nonconvex.pso import PSO
     from pymoo.algorithms.soo.nonconvex.brkga import BRKGA
-    from others.integrate_user_classes import MyAlgorithm
-    
 
     ALGORITHMS_SINGLE = {
         "ga": GA,
@@ -46,7 +44,6 @@ def get_algorithm(name, *args, **kwargs):
         "cmaes": CMAES,
         "pso": PSO,
         "brkga": BRKGA,
-        "my_algorithm": MyAlgorithm
     }
     
     ALGORITHMS_MULTI = {
@@ -86,7 +83,7 @@ def get_sampling(name, *args, **kwargs):
 def get_selection(name, *args, **kwargs):
         
     from pymoo.operators.selection.rnd import RandomSelection
-    from others.added_classes import (TournamentByCVAndFitness, RestrictedMatingCTAEA, BinaryTournament, 
+    from utils.useful_classes import (TournamentByCVAndFitness, RestrictedMatingCTAEA, BinaryTournament, 
                                         TournamentByCVThenRandom, TournamentByRankAndRefLineDist)
     SELECTION_SINGLE = {
         "random": RandomSelection,
@@ -166,7 +163,7 @@ def get_termination(name, *args, **kwargs):
     from pymoo.termination.max_eval import MaximumFunctionCallTermination
     from pymoo.termination.max_gen import MaximumGenerationTermination
     from pymoo.termination.max_time import TimeBasedTermination
-    from others.added_classes import MyNumGen
+    from thesis.nsga3_vs_moead.custom_classes import MyNumGen
             
     TERMINATION_SINGLE = {
         "n_eval": MaximumFunctionCallTermination,
@@ -218,7 +215,7 @@ def get_problem(name, *args, **kwargs):
                                        G19, G20, G21, G22, G23, G24, Ackley,
                                        CantileveredBeam, Griewank, Himmelblau, PressureVessel, Rastrigin,
                                        Rosenbrock, Schwefel, Sphere, Zakharov)
-    from others.added_classes import RandomKnapsackMulti, RandomKnapsackSingle
+    from utils.useful_classes import RandomKnapsackMulti, RandomKnapsackSingle
     
     PROBLEM_SINGLE = {
         'ackley': Ackley,
@@ -249,7 +246,7 @@ def get_problem(name, *args, **kwargs):
         'cantilevered_beam': CantileveredBeam,
         'griewank': Griewank,
         'himmelblau': Himmelblau,
-        'random_knp': RandomKnapsackSingle,
+        'soo_rnd_knp': RandomKnapsackSingle,
         'pressure_vessel': PressureVessel,
         'rastrigin': Rastrigin,
         'rosenbrock': Rosenbrock,
@@ -260,7 +257,7 @@ def get_problem(name, *args, **kwargs):
 
     PROBLEM_MULTI = {
         'bnh': BNH,
-        'random_knp': RandomKnapsackMulti,
+        'moo_rnd_knp': RandomKnapsackMulti,
         'carside': Carside,
         'ctp1': CTP1,
         'ctp2': CTP2,
@@ -364,7 +361,7 @@ def get_reference_directions(name, *args, **kwargs):
     from pymoo.util.ref_dirs.reduction import \
         ReductionBasedReferenceDirectionFactory
     from pymoo.util.reference_direction import UniformReferenceDirectionFactory
-    from others.added_classes import MyLayers   
+    from thesis.nsga3_vs_moead.custom_classes import MyLayers   
                 
     REFERENCE_DIRECTIONS = {
         "(das-dennis|uniform)": UniformReferenceDirectionFactory,
@@ -391,7 +388,7 @@ def get_performance_indicator(name, *args, **kwargs):
     from pymoo.indicators.igd import IGD
     from pymoo.indicators.igd_plus import IGDPlus
     from pymoo.indicators.rmetric import RMetric
-    from others.added_classes import BestSol, negativeHypervolume
+    from utils.useful_classes import BestSol, negativeHypervolume
     
                  
     PERFORMANCE_INDICATOR_SINGLE = {
