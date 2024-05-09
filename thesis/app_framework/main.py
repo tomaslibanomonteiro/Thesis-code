@@ -11,7 +11,7 @@ from pymoo.optimize import minimize
 from threading import Thread
 
 
-from backend.get import get_algorithm, get_problem, get_performance_indicator, get_termination
+from backend.get import get_algorithm, get_problem, get_performance_indicator, get_termination, get_reference_directions
 from utils.defines import EXPECTED_RESULTS_FOLDER, PROB_KEY, ALGO_KEY, PI_KEY, SEEDS_KEY, MOO_KEY, N_EVAL_KEY
 from backend.run import MyCallback
 
@@ -30,16 +30,27 @@ from pymoo.algorithms.moo.nsga3 import NSGA3
 from pymoo.algorithms.moo.moead import MOEAD
 from pymoo.algorithms.moo.ctaea import CTAEA
 
-def correctAlgos(algos: dict):
+def correctProbs(probs:dict):
+    for key in probs.keys():    
+        for i in range(1, 10):
+            dascmop_key = f'dascmop' + str(i)
+            wfg_key = f'wfg' + str(i)
+            if key == dascmop_key:
+                probs[dascmop_key] = get_problem(dascmop_key,difficulty_factors=1) if i in [7,8,9] else get_problem(dascmop_key,difficulty=1)
+            elif key == wfg_key:
+                probs[wfg_key] = get_problem(wfg_key,n_var=10,n_obj=3)
+            
+def correctAlgos(algos: dict, n_obj, n_partitions=12):
+    ref_dirs = get_reference_directions('uniform', n_dim=n_obj, n_partitions=n_partitions)
     for key in algos.keys():
         if key == 'nsga2':
             algos[key] = NSGA2(crossover=SBX())
         elif key == 'nsga3':
-            algos[key] = NSGA3(crossover=SBX())
+            algos[key] = NSGA3(ref_dirs,crossover=SBX())
         elif key == 'moead':
-            algos[key] = MOEAD(crossover=SBX())
+            algos[key] = MOEAD(ref_dirs,crossover=SBX())
         elif key == 'ctaea':
-            algos[key] = CTAEA(crossover=SBX())
+            algos[key] = CTAEA(ref_dirs,crossover=SBX())
                     
     return algos
     
@@ -60,16 +71,20 @@ class FrameworkTest(Thread):
             raise Exception('Invalid options dictionary. Test options must contain at least: ' + str([MOO_KEY, PI_KEY, ALGO_KEY, PROB_KEY]))
         self.options = options
         self.moo = self.options.pop(MOO_KEY) 
-                
-        algos = {algo_id: get_algorithm(algo_id) for algo_id in options[ALGO_KEY]}
-        self.algos = correctAlgos(algos)
-        self.problems = {prob_id: get_problem(prob_id) for prob_id in options[PROB_KEY]}
-        self.pi_objects = [get_performance_indicator(pi_id) for pi_id in options[PI_KEY]]
         self.data = pd.DataFrame()
         
     def run(self):
+        problems = {prob_id: get_problem(prob_id) for prob_id in self.options[PROB_KEY]}
+        self.problems = correctProbs(problems)
         for prob_id, prob in self.problems.items():
+            algos = {algo_id: get_algorithm(algo_id) for algo_id in self.options[ALGO_KEY]}
+            self.algos = correctAlgos(algos, prob.n_obj)
             for algo_id, algo in self.algos.items():
+                try:
+                    pf = prob.pareto_front(ref_dirs=algo.ref_dirs)
+                except:
+                    pf = prob.pareto_front() if prob.pareto_front else None
+                self.pi_objects = [get_performance_indicator(pi_id, pf=pf) for pi_id in self.options[PI_KEY]]
                 for seed in range(self.options[SEEDS_KEY]):
                     res = minimize(algorithm=algo,
                                     problem=prob,
@@ -80,7 +95,7 @@ class FrameworkTest(Thread):
                                     progress_bar=True,
                                     callback=MyCallback(self.options[PI_KEY], self.pi_objects))
         
-                    self.updateData(prob_id, algo_id, res, seed, MyCallback(self.options[PI_KEY], self.pi_objects)) if res is not None else None
+                    self.updateData(prob_id, algo_id, res, seed, res.algorithm.callback) if res is not None else None
 
         self.data.to_csv(RESULTS_FOLDER + '/' + self.test_name, index=False)
         self.is_finished = True
@@ -101,7 +116,7 @@ class FrameworkTest(Thread):
             self.data = pd.concat([self.data, pd.DataFrame(single_run_data)])
 
 TESTS_TO_RUN = [soo_algos, soo_probs, soo_mixed, moo_algos, moo_probs, moo_mixed]
- 
+
 def main():
 
     # create a new folder RESULTS_FOLDER

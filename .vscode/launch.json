@@ -2,23 +2,23 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "App Test",
+            "name": "General App Test",
             "type": "debugpy",
             "request": "launch",
             "cwd": "${workspaceFolder}",
             "program": "tests/run_tests.py",
             "console": "integratedTerminal",
-            "justMyCode": false,
+            "justMyCode": true,
             "subProcess": true
         },
         {
-            "name": "Pymoo Test",
+            "name": "Framework Test",
             "type": "debugpy",
             "request": "launch",
             "cwd": "${workspaceFolder}",
             "program": "thesis/app_framework/main.py",
             "console": "integratedTerminal",
-            "justMyCode": false,
+            "justMyCode": true,
             "subProcess": true
         },
         {
@@ -28,7 +28,7 @@
             "cwd": "${fileDirname}",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": false,
+            "justMyCode": true,
             "subProcess": true
         },
         {

@@ -65,7 +65,7 @@ class RunTab(QFrame):
         # drop unnecessary columns
         df = self.term_df.drop(columns=[N_GEN_KEY, N_EVAL_KEY, SEEDS_KEY])
         # get the average, median, min and max of the data    
-        df = df.groupby([PROB_KEY, ALGO_KEY]).agg([min, max, np.median, np.average]).reset_index()
+        df = df.groupby([PROB_KEY, ALGO_KEY]).agg(["min", "max", "median", np.average]).reset_index()
         cols = tuple([(PROB_KEY, ''), (ALGO_KEY, '')] + [(pi_id,lvl2) for pi_id in self.pi_ids for lvl2 in [BEST_KEY, WORST_KEY, MEDIAN_KEY, AVG_KEY]])
         df.columns = pd.MultiIndex.from_tuples(cols)
         

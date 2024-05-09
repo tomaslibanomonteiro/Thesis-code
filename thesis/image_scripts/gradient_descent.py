@@ -1,4 +1,4 @@
-#code adapted from http://tillbergmann.com/blog/python-gradient-descent.html
+"""#code adapted from http://tillbergmann.com/blog/python-gradient-descent.html
 
 import numpy as np
 # import seaborn as sns
@@ -85,4 +85,4 @@ ax.view_init(elev=20., azim=30)
 
 ax.plot([t[0] for t in history], [t[1] for t in history], cost , markerfacecolor='lightblue', markeredgecolor='blue', marker='o', markersize=4, alpha=0.6)
 
-plt.show()
+plt.show()"""
