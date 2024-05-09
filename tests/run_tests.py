@@ -1,5 +1,8 @@
-# insert full path
-
+####################################################################################################
+######################## MODIFY to full path to the project folder #################################
+full_path = r"C:\Users\tomas\OneDrive - Universidade de Lisboa\Desktop\Tese\Thesis-code"
+####################################################################################################
+####################################################################################################
 
 import os
 import filecmp
@@ -7,7 +10,7 @@ import time
 import datetime
 from PyQt5.QtWidgets import QApplication
 import sys
-sys.path.insert(1, r"C:\Users\tomas\OneDrive - Universidade de Lisboa\Desktop\Tese\Thesis-code")
+sys.path.insert(1, full_path)
 
 from utils.defines import RESULTS_FOLDER, EXPECTED_RESULTS_FOLDER, RESULTS_FILE
 from tests.tests_declaration import Test, soo_algos, soo_probs, soo_mixed, moo_algos, moo_probs, moo_mixed

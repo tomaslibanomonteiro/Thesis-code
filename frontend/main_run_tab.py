@@ -149,8 +149,8 @@ class RunTab(QFrame):
 
         # set the labels                         
         self.label.setText(label)
-        seed_str = "seed" if self.run_thread.n_seeds == 1 else "seeds"
-        self.n_seeds_label.setText(f"Run on: <b>{self.run_thread.n_seeds} {seed_str}</b>")
+        seed_str = "seed" if self.run_thread.n_seeds == 1 else "different seeds"
+        self.n_seeds_label.setText(f"Run on <b>{self.run_thread.n_seeds}</b> {seed_str}")
         self.n_seeds_label.setAlignment(Qt.AlignCenter)
         self.term_label.setText(f"Termination criteria: <b>{self.run_thread.term_id}</b> <br>(Double click to see parameters)</font>")
         self.term_label.setAlignment(Qt.AlignCenter)
