@@ -15,7 +15,7 @@ sys.path.insert(1, full_path)
 from utils.defines import RESULTS_FOLDER, EXPECTED_RESULTS_FOLDER, RESULTS_FILE
 from tests.tests_declaration import Test, soo_algos, soo_probs, soo_mixed, moo_algos, moo_probs, moo_mixed
 
-TESTS_TO_RUN = [moo_probs]
+TESTS_TO_RUN = [soo_algos, soo_probs, soo_mixed, moo_algos, moo_probs, moo_mixed]
 
 def main():
 

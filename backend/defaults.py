@@ -59,8 +59,6 @@ class Defaults():
             for i in range(1, 10):
                 arg = 'difficulty_factors' if i in [7,8,9] else 'difficulty' 
                 self.parameters[PROB_KEY][f'dascmop' + str(i)][arg] = 1 
-                self.parameters[PROB_KEY][f'wfg' + str(i)]['n_var'] = 10
-                self.parameters[PROB_KEY][f'wfg' + str(i)]['n_obj'] = 3
             
         # manualy changed SOO defaults
         else:

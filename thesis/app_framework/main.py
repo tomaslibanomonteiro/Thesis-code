@@ -99,9 +99,7 @@ class FrameworkTest(QThread):
                     pf = prob.pareto_front(ref_dirs=algo.ref_dirs) #@IgnoreException
                 except:
                     pf = prob.pareto_front() if prob.pareto_front else None
-                import numpy as np
-                np.savetxt('pf_framework.txt', pf)
-                print('framework') #!
+
                 self.pi_objects = [get_performance_indicator(pi_id, pf=pf) for pi_id in self.options[PI_KEY]]
                 for seed in range(self.options[SEEDS_KEY]):
                     res = minimize(algorithm=algo,
@@ -130,8 +128,7 @@ class FrameworkTest(QThread):
         else:
             self.data = pd.concat([self.data, pd.DataFrame(single_run_data)])
 
-# TESTS_TO_RUN = [soo_algos, soo_probs, soo_mixed, moo_algos, moo_probs, moo_mixed]
-TESTS_TO_RUN = [moo_probs]
+TESTS_TO_RUN = [soo_algos, soo_probs, soo_mixed, moo_algos, moo_probs, moo_mixed]
 
 def main():
 

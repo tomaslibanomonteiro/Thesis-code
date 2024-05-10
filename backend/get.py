@@ -198,9 +198,8 @@ def get_problem(name, *args, **kwargs):
     from pymoo.problems.many import (C1DTLZ1, C1DTLZ3, C2DTLZ2, C3DTLZ1,
                                      C3DTLZ4, DC1DTLZ1, DC1DTLZ3, DC2DTLZ1,
                                      DC2DTLZ3, DC3DTLZ1, DC3DTLZ3, DTLZ1,
-                                     DTLZ2, DTLZ3, DTLZ4, DTLZ5, DTLZ6, DTLZ7,
-                                     WFG1, WFG2, WFG3, WFG4, WFG5, WFG6, WFG7,
-                                     WFG8, WFG9, ScaledDTLZ1) 
+                                     DTLZ2, DTLZ3, DTLZ4, DTLZ5, DTLZ6, DTLZ7, #WFG not giving consistent pfs
+                                     ScaledDTLZ1) 
     # MODAct needs to install module
     from pymoo.problems.multi import (BNH, CTP1, CTP2, CTP3, CTP4, CTP5, CTP6,
                                       CTP7, CTP8, DASCMOP1, DASCMOP2, DASCMOP3,
@@ -335,15 +334,6 @@ def get_problem(name, *args, **kwargs):
         "zdt4": ZDT4,
         "zdt5": ZDT5,
         "zdt6": ZDT6,
-        "wfg1": WFG1,
-        "wfg2": WFG2,
-        "wfg3": WFG3,
-        "wfg4": WFG4,
-        "wfg5": WFG5,
-        "wfg6": WFG6,
-        "wfg7": WFG7,
-        "wfg8": WFG8,
-        "wfg9": WFG9,
     }
 
     return returnObjectOrOptions(name, PROBLEM_SINGLE, PROBLEM_MULTI, *args, **kwargs)

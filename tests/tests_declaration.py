@@ -108,7 +108,7 @@ moo_probs = {
     MOO_KEY: True,
     PI_KEY: ['gd+'],
     ALGO_KEY: ['nsga2'],
-    PROB_KEY: ['wfg1'], #!
+    PROB_KEY: moo_probs_list,
     TEST_NAME_KEY: 'moo_probs'
 }
 
