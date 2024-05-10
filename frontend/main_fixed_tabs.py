@@ -275,7 +275,9 @@ class MainTabsWidget(QTabWidget):
                     pf = prob_object.pareto_front(ref_dirs=algo_object.ref_dirs) #@IgnoreException
                 except:
                     pf = prob_object.pareto_front() if prob_object.pareto_front else None
-                
+                import numpy as np
+                np.savetxt('pf_general.txt', pf) #!
+                print(f"general")
                 # TERMINATIONS
                 term_object = tabs[TERM_KEY].getObjectFromID(term_id, n_obj=n_obj, n_var=n_var, prob_id=prob_id, algo_id=algo_id)
                 if isinstance(term_object, Exception):

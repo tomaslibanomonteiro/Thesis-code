@@ -36,3 +36,6 @@
 10/05/2024 04:26:18 Test soo_algos.csv passed!
 10/05/2024 04:26:18 Test soo_mixed.csv passed!
 10/05/2024 04:26:18 Test soo_probs.csv passed!
+10/05/2024 04:59:29 Test moo_probs.csv failed!
+10/05/2024 17:36:16 Test moo_probs.csv failed!
+10/05/2024 17:36:51 Test moo_probs.csv failed!

@@ -25,6 +25,8 @@ RESULTS_FILE = 'thesis/app_framework/results/results.txt'
 RESULTS_FOLDER = 'thesis/app_framework/results'
 # EXPECTED_RESULTS_FOLDER = 'thesis/app_framework/expected_results'
 
+from pymoo.problems.many.wfg import WFG1
+
 def correctProbs(probs:dict):
     for key in probs.keys():    
         for i in range(1, 10):
@@ -33,7 +35,8 @@ def correctProbs(probs:dict):
             if key == dascmop_key:
                 probs[dascmop_key] = get_problem(dascmop_key,difficulty_factors=1) if i in [7,8,9] else get_problem(dascmop_key,difficulty=1)
             elif key == wfg_key:
-                probs[wfg_key] = get_problem(wfg_key,n_var=10,n_obj=3)
+                probs[wfg_key] = WFG1(n_var=10,n_obj=3)
+                # probs[wfg_key] = get_problem(wfg_key,n_var=10,n_obj=3)
     
     return probs
 
@@ -96,6 +99,9 @@ class FrameworkTest(QThread):
                     pf = prob.pareto_front(ref_dirs=algo.ref_dirs) #@IgnoreException
                 except:
                     pf = prob.pareto_front() if prob.pareto_front else None
+                import numpy as np
+                np.savetxt('pf_framework.txt', pf)
+                print('framework') #!
                 self.pi_objects = [get_performance_indicator(pi_id, pf=pf) for pi_id in self.options[PI_KEY]]
                 for seed in range(self.options[SEEDS_KEY]):
                     res = minimize(algorithm=algo,
