@@ -52,7 +52,7 @@ def correctAlgos(algos: dict, n_obj, n_partitions=12):
         elif key == 'nsga3':
             algos[key] = NSGA3(ref_dirs,crossover=SBX())
         elif key == 'unsga3':
-            algos[key] = UNSGA3(ref_dirs,crossover=SBX())
+            algos[key] = UNSGA3(ref_dirs)
         elif key == 'moead':
             algos[key] = MOEAD(ref_dirs,crossover=SBX())
         elif key == 'ctaea':
@@ -124,8 +124,8 @@ class FrameworkTest(QThread):
         else:
             self.data = pd.concat([self.data, pd.DataFrame(single_run_data)])
 
-TESTS_TO_RUN = [soo_algos, soo_probs, soo_mixed, moo_algos, moo_probs, moo_mixed]
-# TESTS_TO_RUN = [moo_algos]
+# TESTS_TO_RUN = [soo_algos, soo_probs, soo_mixed, moo_algos, moo_probs, moo_mixed]
+TESTS_TO_RUN = [moo_probs]
 
 def main():
 
@@ -139,32 +139,15 @@ def main():
     
     
     app = QApplication([])
-    tests=[]    
     # run the tests
     for test_options in TESTS_TO_RUN: 
         test = FrameworkTest(test_options)
-        tests.append(test)
         test.run()
-    
-    # Wait for all tests to finish
-    for test in tests:
+        print(f"Waiting for test {test.test_name}")
         while not test.is_finished:
             app.processEvents()
             time.sleep(0.1)
-
-    # # create the app to instantiate the MainWindows
-    # tests=[]    
-    # # run the tests
-    # for test_options in TESTS_TO_RUN: 
-    #     test = FrameworkTest(test_options)
-    #     test.start()
-    #     test.join()
-    #     print('Test ' + test.test_name + ' finished!')
     
-    # # Wait for all tests threads to finish
-    # for test in tests:
-    #     test.join()
-
     # get the list of files to compare
     expected_files = [file for file in os.listdir(EXPECTED_RESULTS_FOLDER)]
     files = [file for file in os.listdir(RESULTS_FOLDER) if file.endswith(".csv")]

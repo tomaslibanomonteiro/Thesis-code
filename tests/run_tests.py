@@ -29,19 +29,15 @@ def main():
     
     # create the app to instantiate the MainWindows
     app = QApplication([])
-    tests=[]    
     # run the tests
     for test_options in TESTS_TO_RUN: 
         test = Test(test_options)
-        tests.append(test)
         test.run()
-    
-    # Wait for all tests to finish
-    for test in tests:
+        print(f"Waiting for test {test.test_name}")
         while not test.is_finished:
             app.processEvents()
             time.sleep(0.1)
-            
+                
     # get the list of files to compare
     expected_files = [file for file in os.listdir(EXPECTED_RESULTS_FOLDER)]
     files = [file for file in os.listdir(RESULTS_FOLDER) if file.endswith(".csv")]
