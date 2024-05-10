@@ -80,8 +80,7 @@ with open(f'output{i}.csv', 'w', newline='') as f:
                 res = minimize(prob[1],
                             algo[1],
                             termination=get_termination("n_gen", n_gen),
-                            seed=seed,
-                            verbose=False)
+                            seed=seed)
 
                 # Get the objective values
                 import numpy as np

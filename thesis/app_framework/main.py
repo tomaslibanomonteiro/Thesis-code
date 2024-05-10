@@ -8,25 +8,22 @@ import sys
 sys.path.insert(1, PATH_TO_REPO_FOLDER)
 import pandas as pd
 from pymoo.optimize import minimize
-from threading import Thread
 import os
 import filecmp
 import datetime
-from pymoo.operators.crossover.sbx import SBX
-from pymoo.algorithms.moo.nsga2 import NSGA2
-from pymoo.algorithms.moo.nsga3 import NSGA3
-from pymoo.algorithms.moo.unsga3 import UNSGA3
-from pymoo.algorithms.moo.moead import MOEAD
-from pymoo.algorithms.moo.ctaea import CTAEA
+from PyQt5.QtCore import QThread
+import time
+import datetime
+from PyQt5.QtWidgets import QApplication
 
 from backend.get import get_algorithm, get_problem, get_performance_indicator, get_termination, get_reference_directions
-from utils.defines import PROB_KEY, ALGO_KEY, PI_KEY, SEEDS_KEY, MOO_KEY, N_EVAL_KEY
+from utils.defines import PROB_KEY, ALGO_KEY, PI_KEY, SEEDS_KEY, MOO_KEY, N_EVAL_KEY, EXPECTED_RESULTS_FOLDER
 from backend.run import MyCallback
 from tests.tests_declaration import TEST_NAME_KEY, soo_algos, soo_probs, soo_mixed, moo_algos, moo_probs, moo_mixed
 
 RESULTS_FILE = 'thesis/app_framework/results/results.txt'
 RESULTS_FOLDER = 'thesis/app_framework/results'
-EXPECTED_RESULTS_FOLDER = 'thesis/app_framework/expected_results'
+# EXPECTED_RESULTS_FOLDER = 'thesis/app_framework/expected_results'
 
 def correctProbs(probs:dict):
     for key in probs.keys():    
@@ -39,6 +36,13 @@ def correctProbs(probs:dict):
                 probs[wfg_key] = get_problem(wfg_key,n_var=10,n_obj=3)
     
     return probs
+
+from pymoo.operators.crossover.sbx import SBX
+from pymoo.algorithms.moo.nsga2 import NSGA2
+from pymoo.algorithms.moo.nsga3 import NSGA3
+from pymoo.algorithms.moo.unsga3 import UNSGA3
+from pymoo.algorithms.moo.moead import MOEAD
+from pymoo.algorithms.moo.ctaea import CTAEA
 
 def correctAlgos(algos: dict, n_obj, n_partitions=12):
     ref_dirs = get_reference_directions('das-dennis', n_dim=n_obj, n_partitions=n_partitions)
@@ -62,11 +66,10 @@ def try_get_function(get_function, id):
     except:
         object = 'failed to get object'
     return object
-class FrameworkTest(Thread):
+class FrameworkTest(QThread):
     def __init__(self, options: dict, n_seeds:int=1, n_evals:int=500):
         super().__init__()
         self.test_name = options.pop(TEST_NAME_KEY) + '.csv'
-        self.is_finished = False
         
         if SEEDS_KEY not in options.keys():
             options[SEEDS_KEY] = n_seeds
@@ -80,6 +83,7 @@ class FrameworkTest(Thread):
         self.options = options
         self.moo = self.options.pop(MOO_KEY) 
         self.data = pd.DataFrame()
+        self.is_finished = False
         
     def run(self):
         problems = {prob_id: try_get_function(get_problem,prob_id) for prob_id in self.options[PROB_KEY]}
@@ -98,9 +102,6 @@ class FrameworkTest(Thread):
                                     problem=prob,
                                     termination=self.termination,
                                     seed=seed,
-                                    verbose=False,
-                                    save_history=False,
-                                    progress_bar=True,
                                     callback=MyCallback(self.options[PI_KEY], self.pi_objects))
         
                     self.updateData(prob_id, algo_id, res, seed, res.algorithm.callback) if res is not None else None
@@ -124,6 +125,7 @@ class FrameworkTest(Thread):
             self.data = pd.concat([self.data, pd.DataFrame(single_run_data)])
 
 TESTS_TO_RUN = [soo_algos, soo_probs, soo_mixed, moo_algos, moo_probs, moo_mixed]
+# TESTS_TO_RUN = [moo_algos]
 
 def main():
 
@@ -135,17 +137,33 @@ def main():
     else:
         os.mkdir(RESULTS_FOLDER)
     
-    # create the app to instantiate the MainWindows
+    
+    app = QApplication([])
     tests=[]    
     # run the tests
     for test_options in TESTS_TO_RUN: 
         test = FrameworkTest(test_options)
         tests.append(test)
-        test.start()
+        test.run()
     
-    # Wait for all tests threads to finish
+    # Wait for all tests to finish
     for test in tests:
-        test.join()
+        while not test.is_finished:
+            app.processEvents()
+            time.sleep(0.1)
+
+    # # create the app to instantiate the MainWindows
+    # tests=[]    
+    # # run the tests
+    # for test_options in TESTS_TO_RUN: 
+    #     test = FrameworkTest(test_options)
+    #     test.start()
+    #     test.join()
+    #     print('Test ' + test.test_name + ' finished!')
+    
+    # # Wait for all tests threads to finish
+    # for test in tests:
+    #     test.join()
 
     # get the list of files to compare
     expected_files = [file for file in os.listdir(EXPECTED_RESULTS_FOLDER)]

@@ -125,9 +125,6 @@ class RunThread(QThread):
                         problem=run_args.prob_object,
                         termination=run_args.term_object,
                         seed=seed,
-                        verbose=False,
-                        save_history=False,
-                        progress_bar=True,
                         callback=MyCallback(run_args.pi_ids, run_args.pi_objects))
             
         except Exception as e: 
