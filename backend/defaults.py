@@ -50,10 +50,10 @@ class Defaults():
             self.parameters[ALGO_KEY]['unsga3']['selection'] = 'tournament_by_rank_and_ref_line_dist'
             self.parameters[ALGO_KEY]['ctaea']['selection'] = 'restricted_mating_ctaea'
             self.parameters[ALGO_KEY]['moead']['decomposition'] = 'pbi'
-            self.parameters[REF_DIR_KEY]['(das-dennis|uniform)']['n_dim'] = 'n_obj' + CONVERT_KEY
-            self.parameters[REF_DIR_KEY]['(das-dennis|uniform)']['n_partitions'] = 12
-            self.parameters[REF_DIR_KEY]['(energy|riesz)']['n_dim'] = 'n_obj*1' + CONVERT_KEY
-            self.parameters[REF_DIR_KEY]['(layer-energy|layer-riesz)']['n_dim'] = 'n_obj' + CONVERT_KEY
+            self.parameters[REF_DIR_KEY]['das-dennis']['n_dim'] = 'n_obj' + CONVERT_KEY
+            self.parameters[REF_DIR_KEY]['das-dennis']['n_partitions'] = 12
+            self.parameters[REF_DIR_KEY]['energy']['n_dim'] = 'n_obj*1' + CONVERT_KEY
+            self.parameters[REF_DIR_KEY]['layer-energy']['n_dim'] = 'n_obj' + CONVERT_KEY
             self.parameters[REF_DIR_KEY]['red']['n_dim'] = 'n_obj' + CONVERT_KEY
             self.parameters[REF_DIR_KEY]['my_layers']['n_dim'] = 'n_obj' + CONVERT_KEY
             for i in range(1, 10):

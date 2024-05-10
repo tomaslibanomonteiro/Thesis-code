@@ -364,9 +364,9 @@ def get_reference_directions(name, *args, **kwargs):
     from thesis.nsga3_vs_moead.custom_classes import MyLayers   
                 
     REFERENCE_DIRECTIONS = {
-        "(das-dennis|uniform)": UniformReferenceDirectionFactory,
-        "(energy|riesz)": RieszEnergyReferenceDirectionFactory,
-        "(layer-energy|layer-riesz)": LayerwiseRieszEnergyReferenceDirectionFactory,
+        "das-dennis": UniformReferenceDirectionFactory,
+        "energy": RieszEnergyReferenceDirectionFactory,
+        "layer-energy": LayerwiseRieszEnergyReferenceDirectionFactory,
         "red": ReductionBasedReferenceDirectionFactory,
         "my_layers": MyLayers
     }

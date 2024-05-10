@@ -9,26 +9,24 @@ sys.path.insert(1, PATH_TO_REPO_FOLDER)
 import pandas as pd
 from pymoo.optimize import minimize
 from threading import Thread
-
-
-from backend.get import get_algorithm, get_problem, get_performance_indicator, get_termination, get_reference_directions
-from utils.defines import EXPECTED_RESULTS_FOLDER, PROB_KEY, ALGO_KEY, PI_KEY, SEEDS_KEY, MOO_KEY, N_EVAL_KEY
-from backend.run import MyCallback
-
 import os
 import filecmp
 import datetime
+from pymoo.operators.crossover.sbx import SBX
+from pymoo.algorithms.moo.nsga2 import NSGA2
+from pymoo.algorithms.moo.nsga3 import NSGA3
+from pymoo.algorithms.moo.unsga3 import UNSGA3
+from pymoo.algorithms.moo.moead import MOEAD
+from pymoo.algorithms.moo.ctaea import CTAEA
 
+from backend.get import get_algorithm, get_problem, get_performance_indicator, get_termination, get_reference_directions
+from utils.defines import PROB_KEY, ALGO_KEY, PI_KEY, SEEDS_KEY, MOO_KEY, N_EVAL_KEY
+from backend.run import MyCallback
 from tests.tests_declaration import TEST_NAME_KEY, soo_algos, soo_probs, soo_mixed, moo_algos, moo_probs, moo_mixed
 
 RESULTS_FILE = 'thesis/app_framework/results/results.txt'
 RESULTS_FOLDER = 'thesis/app_framework/results'
-
-from pymoo.operators.crossover.sbx import SBX
-from pymoo.algorithms.moo.nsga2 import NSGA2
-from pymoo.algorithms.moo.nsga3 import NSGA3
-from pymoo.algorithms.moo.moead import MOEAD
-from pymoo.algorithms.moo.ctaea import CTAEA
+EXPECTED_RESULTS_FOLDER = 'thesis/app_framework/expected_results'
 
 def correctProbs(probs:dict):
     for key in probs.keys():    
@@ -39,24 +37,34 @@ def correctProbs(probs:dict):
                 probs[dascmop_key] = get_problem(dascmop_key,difficulty_factors=1) if i in [7,8,9] else get_problem(dascmop_key,difficulty=1)
             elif key == wfg_key:
                 probs[wfg_key] = get_problem(wfg_key,n_var=10,n_obj=3)
-            
+    
+    return probs
+
 def correctAlgos(algos: dict, n_obj, n_partitions=12):
-    ref_dirs = get_reference_directions('uniform', n_dim=n_obj, n_partitions=n_partitions)
+    ref_dirs = get_reference_directions('das-dennis', n_dim=n_obj, n_partitions=n_partitions)
     for key in algos.keys():
         if key == 'nsga2':
             algos[key] = NSGA2(crossover=SBX())
         elif key == 'nsga3':
             algos[key] = NSGA3(ref_dirs,crossover=SBX())
+        elif key == 'unsga3':
+            algos[key] = UNSGA3(ref_dirs,crossover=SBX())
         elif key == 'moead':
             algos[key] = MOEAD(ref_dirs,crossover=SBX())
         elif key == 'ctaea':
             algos[key] = CTAEA(ref_dirs,crossover=SBX())
                     
     return algos
-    
+
+def try_get_function(get_function, id):
+    try:
+        object = get_function(id)
+    except:
+        object = 'failed to get object'
+    return object
 class FrameworkTest(Thread):
     def __init__(self, options: dict, n_seeds:int=1, n_evals:int=500):
-        
+        super().__init__()
         self.test_name = options.pop(TEST_NAME_KEY) + '.csv'
         self.is_finished = False
         
@@ -74,14 +82,14 @@ class FrameworkTest(Thread):
         self.data = pd.DataFrame()
         
     def run(self):
-        problems = {prob_id: get_problem(prob_id) for prob_id in self.options[PROB_KEY]}
+        problems = {prob_id: try_get_function(get_problem,prob_id) for prob_id in self.options[PROB_KEY]}
         self.problems = correctProbs(problems)
         for prob_id, prob in self.problems.items():
-            algos = {algo_id: get_algorithm(algo_id) for algo_id in self.options[ALGO_KEY]}
+            algos = {algo_id: try_get_function(get_algorithm,algo_id) for algo_id in self.options[ALGO_KEY]}
             self.algos = correctAlgos(algos, prob.n_obj)
             for algo_id, algo in self.algos.items():
                 try:
-                    pf = prob.pareto_front(ref_dirs=algo.ref_dirs)
+                    pf = prob.pareto_front(ref_dirs=algo.ref_dirs) #@IgnoreException
                 except:
                     pf = prob.pareto_front() if prob.pareto_front else None
                 self.pi_objects = [get_performance_indicator(pi_id, pf=pf) for pi_id in self.options[PI_KEY]]
@@ -133,7 +141,7 @@ def main():
     for test_options in TESTS_TO_RUN: 
         test = FrameworkTest(test_options)
         tests.append(test)
-        test.run()
+        test.start()
     
     # Wait for all tests threads to finish
     for test in tests:
