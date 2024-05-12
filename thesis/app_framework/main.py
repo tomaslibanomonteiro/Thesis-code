@@ -31,12 +31,8 @@ def correctProbs(probs:dict):
     for key in probs.keys():    
         for i in range(1, 10):
             dascmop_key = f'dascmop' + str(i)
-            wfg_key = f'wfg' + str(i)
             if key == dascmop_key:
                 probs[dascmop_key] = get_problem(dascmop_key,difficulty_factors=1) if i in [7,8,9] else get_problem(dascmop_key,difficulty=1)
-            elif key == wfg_key:
-                probs[wfg_key] = WFG1(n_var=10,n_obj=3)
-                # probs[wfg_key] = get_problem(wfg_key,n_var=10,n_obj=3)
     
     return probs
 
@@ -69,6 +65,7 @@ def try_get_function(get_function, id):
     except:
         object = 'failed to get object'
     return object
+
 class FrameworkTest(QThread):
     def __init__(self, options: dict, n_seeds:int=1, n_evals:int=500):
         super().__init__()
