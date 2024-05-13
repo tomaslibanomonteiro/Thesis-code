@@ -76,13 +76,10 @@ class MainTabsWidget(QTabWidget):
         self.edit_window = EditWindow(parameters, self.moo)
         self.edit_window.runOptionsUpdates.connect(self.updateComboBoxItems)
         
-        # # set run run_options
-        self.setComboBoxes(parameters)
-        
         missing_keys = set(RUN_OPTIONS_KEYS) - set(run_options.keys())
         for key in missing_keys:
             run_options[key] = [] if key != SEEDS_KEY else 1
-        self.dictToTables(run_options)
+        self.dictToTables(run_options, parameters)
         
     def setUI(self):
         
@@ -191,8 +188,11 @@ class MainTabsWidget(QTabWidget):
                 
         return missing_options
                 
-    def dictToTables(self, run_options: dict):
+    def dictToTables(self, run_options: dict, parameters: dict=None):
         
+        if parameters is not None:
+            self.setComboBoxes(parameters)
+            
         missing_keys = set(RUN_OPTIONS_KEYS) - set(run_options.keys())
             
         for key in missing_keys:
@@ -408,10 +408,10 @@ class MainTabsWidget(QTabWidget):
             curr_parameters = self.edit_window.tabsToDict()
             curr_run_options = self.tablesToDict()
             self.edit_window.dictToTabs(loaded_data['parameters'])
-            self.dictToTables(loaded_data['run_options'])
+            self.dictToTables(loaded_data['run_options'], loaded_data['parameters'])
             run_thread = self.getRunThread()
             self.edit_window.dictToTabs(curr_parameters)
-            self.dictToTables(curr_run_options)
+            self.dictToTables(curr_run_options, curr_parameters)
             if run_thread is not None:
                 run_thread.data, run_thread.best_gen, run_thread.run_counter = loaded_data['data'], loaded_data['best_gen'], loaded_data['run_counter']
                 progress_frame = self.setHistoryFrame(run_thread, filename)

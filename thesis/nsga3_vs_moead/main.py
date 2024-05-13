@@ -27,7 +27,7 @@ from pymoo.operators.mutation.pm import PM
 
 SEEDS = 3
 
-n_gens = [250,
+n_gens = [400,
         #   1000,
         #   1000
           ]
@@ -35,7 +35,7 @@ n_gens = [250,
 n_var, n_obj = 12, 3 # 14, 5
 # Define the problem
 problems = [ 
-    ('dtlz2', get_problem("dtlz2", n_var=n_var, n_obj=n_obj)),
+    ('sdtlz1', get_problem("sdtlz1", n_var=n_var, n_obj=n_obj, scale_factor=1000)),
     # ('dtlz3', get_problem("dtlz3", n_var=n_var, n_obj=n_obj)),
     # ('dtlz4', get_problem("dtlz4", n_var=n_var, n_obj=n_obj)),
 ]
@@ -49,7 +49,7 @@ mutation=PM(prob=1/n_var, eta=20)
 algorithms = [
     ('NSGA3', NSGA3(ref_dirs=ref_dirs, mutation=mutation)), 
     ('MOEAD - PBI', MOEAD(ref_dirs=ref_dirs, decomposition=PBI(), mutation=mutation)),
-    ('MOEAD - Tchebicheff', MOEAD(ref_dirs=ref_dirs, decomposition=Tchebicheff(), mutation=mutation))
+    # ('MOEAD - Tchebicheff', MOEAD(ref_dirs=ref_dirs, decomposition=Tchebicheff(), mutation=mutation))
 ]
 
 # Open the unique file in write mode

@@ -189,6 +189,10 @@ class EditTab(QFrame):
     
     def dictToTable(self, table_dict: dict):
         
+        # add a customable arg in the end
+        for key in table_dict.keys():
+            table_dict[key]["(Custom Arg)" + WRITABLE_ARG_KEY] = ""
+        
         # store all different keys in table_dict
         self.classes = [table_dict[key][CLASS_KEY] for key in table_dict.keys() if table_dict[key][CLASS_KEY] == key]
         self.default_ids = []
@@ -274,7 +278,6 @@ class EditTab(QFrame):
         combo_box = MyComboBox(self.classes, table=self.table, col=ID_COL+1, row=row, copy_style="variant_class", widgets_frame=widgets_frame)
         self.table.setCellWidget(row, ID_COL+1, combo_box)
         self.table.cellWidget(row, ID_COL+1).setCurrentIndex(self.classes.index(class_name))
-        
 
         # functionalities if the call was not made from the "Add Variant" button
         if args_dict is not None: 
