@@ -71,3 +71,29 @@ from pymoo.indicators.hv import Hypervolume
 class negativeHypervolume(Hypervolume):
     def _do(self, F):
         return - super()._do(F)
+
+from pymoo.problems.many.dtlz import ScaledProblem
+from pymoo.problems.many.dtlz import DTLZ1, DTLZ2, DTLZ3, DTLZ4, DTLZ5, DTLZ6, DTLZ7
+
+class ScaledDTLZ(ScaledProblem):
+    def __init__(self, dtlz=1, n_obj=10, n_var=3, scale_factor=100, **kwargs):
+        if dtlz == 1:
+            problem = DTLZ1(n_var=n_var, n_obj=n_obj)
+        elif dtlz == 2:
+            problem = DTLZ2(n_var=n_var, n_obj=n_obj)
+        elif dtlz == 3:
+            problem = DTLZ3(n_var=n_var, n_obj=n_obj)
+        elif dtlz == 4:
+            problem = DTLZ4(n_var=n_var, n_obj=n_obj)
+        elif dtlz == 5:
+            problem = DTLZ5(n_var=n_var, n_obj=n_obj)
+        elif dtlz == 6:
+            problem = DTLZ6(n_var=n_var, n_obj=n_obj)
+        elif dtlz == 7:
+            problem = DTLZ7(n_var=n_var, n_obj=n_obj)
+        else:
+            raise ValueError("dtlz must be between 1 and 7")
+        
+        super().__init__(problem, scale_factor=scale_factor)
+    
+    

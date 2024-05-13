@@ -526,7 +526,7 @@ class HistoryFrame(QFrame):
 
         if reply == QMessageBox.Yes:
             self.tabWidget.edit_window.dictToTabs(self.run_thread.parameters)
-            self.tabWidget.dictToTables(self.run_thread.run_options)
+            self.tabWidget.dictToTables(self.run_thread.run_options, self.run_thread.parameters)
             self.tabWidget.setCurrentIndex(0)
 
     def erase(self):

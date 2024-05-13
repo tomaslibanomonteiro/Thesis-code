@@ -214,7 +214,7 @@ def get_problem(name, *args, **kwargs):
                                        G19, G20, G21, G22, G23, G24, Ackley,
                                        CantileveredBeam, Griewank, Himmelblau, PressureVessel, Rastrigin,
                                        Rosenbrock, Schwefel, Sphere, Zakharov)
-    from utils.useful_classes import RandomKnapsackMulti, RandomKnapsackSingle
+    from utils.useful_classes import RandomKnapsackMulti, RandomKnapsackSingle, ScaledDTLZ
     
     PROBLEM_SINGLE = {
         "ackley": Ackley,
@@ -310,7 +310,7 @@ def get_problem(name, *args, **kwargs):
         "dtlz5": DTLZ5,
         "dtlz6": DTLZ6,
         "dtlz7": DTLZ7,
-        "sdtlz1": ScaledDTLZ1,
+        "scaled_dtlz": ScaledDTLZ,
         "c1dtlz1": C1DTLZ1,
         "c1dtlz3": C1DTLZ3,
         "c2dtlz2": C2DTLZ2,
