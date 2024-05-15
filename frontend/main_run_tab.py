@@ -12,8 +12,7 @@ from utils.defines import (DESIGNER_RUN_TAB, PROB_KEY, ALGO_KEY, SEEDS_KEY, N_GE
                            CLASS_KEY, TERM_KEY, PLOT_PROGRESS_KEY, PLOT_PS_KEY, PLOT_PC_KEY, PLOT_FL_KEY, MEDIAN_KEY,
                            BEST_KEY, WORST_KEY, AVG_KEY, VALUE_KEY)
 from frontend.plotting import Plotter
-from utils.utils import myFileManager, setBold, MyMessageBox, setCombobox
-
+from utils.utils import myFileManager, setBold, MyMessageBox, setCombobox, numberPresentation
 class RunTab(QFrame):
     """
     Represents the tab in the GUI that is responsible for 
@@ -65,7 +64,7 @@ class RunTab(QFrame):
         # drop unnecessary columns
         df = self.term_df.drop(columns=[N_GEN_KEY, N_EVAL_KEY, SEEDS_KEY])
         # get the average, median, min and max of the data    
-        df = df.groupby([PROB_KEY, ALGO_KEY]).agg(["min", "max", "median", np.average]).reset_index()
+        df = df.groupby([PROB_KEY, ALGO_KEY]).agg(["min", "max", "median", "mean"]).reset_index()
         cols = tuple([(PROB_KEY, ''), (ALGO_KEY, '')] + [(pi_id,lvl2) for pi_id in self.pi_ids for lvl2 in [BEST_KEY, WORST_KEY, MEDIAN_KEY, AVG_KEY]])
         df.columns = pd.MultiIndex.from_tuples(cols)
         
@@ -108,21 +107,25 @@ class RunTab(QFrame):
         return stats_seeds_df, avg_df, colapsed_stats_df
     
     def findSeeds(self, pi_id, lvl2, data, term_data):
-        seeds = np.zeros(len(data)).astype(int)
-        seeds = seeds.astype(int)
+        
+        seeds = np.zeros(len(data)).astype(float)
         for i, row in data.iterrows():
             prob_id, algo_id = row[(PROB_KEY, '', '')], row[(ALGO_KEY, '', '')]
             value = row[(pi_id, lvl2, VALUE_KEY)]
+            
             # Calculate the absolute difference between the target value and each value in the column
             filt_term_data = term_data[(term_data[PROB_KEY] == prob_id) & (term_data[ALGO_KEY] == algo_id)]
             diff = abs(filt_term_data[pi_id] - value)
     
             # Find the index of the minimum value in the difference
-            idx = diff.idxmin()
-            
+            if diff.isna().all():
+                idx = np.nan
+            else:
+                idx = diff.idxmin()
+                            
             # Use this index to get the corresponding seed
             seeds[i] = term_data.loc[idx, SEEDS_KEY] if idx is not np.nan else np.nan
-            
+        
         return seeds
         
     def setUI(self, label):
@@ -263,7 +266,7 @@ class RunTab(QFrame):
                 
             # get the float into str representation and count the votes
             for j in range(n_cols-1):
-                nice_string = "{:.3e}".format(df.iloc[i, j]) 
+                nice_string = numberPresentation(df.iloc[i, j])
                 item = QTableWidgetItem(nice_string)
                 # set text to bold if it is the smallest value in the column
                 rows_to_check = [row + i % 3 for row in rows] if not avg else [ii for ii in range(len(self.algo_ids))]
@@ -344,7 +347,7 @@ class RunTab(QFrame):
         
         # get the seed
         seed = self.stats_seeds_df[(self.stats_seeds_df[PROB_KEY] == prob_id) & (self.stats_seeds_df[ALGO_KEY] == algo_id)][pi_id,lvl2,SEEDS_KEY].values[0]
-        
+        seed = int(seed) if seed == int(seed) else seed
         MyMessageBox(f"Run of problem {prob_id} with algorithm {algo_id} and performance indicator {pi_id}{lvl2} value was obtained with seed {seed}", 'Seed', warning_icon=False)
 
     def seeTermination(self, event):

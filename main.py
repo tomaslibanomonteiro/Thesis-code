@@ -31,7 +31,7 @@ def defaultStart():
     run_options_soo = {
         PROB_KEY: ['ackley', 'griewank', 'rastrigin'],
         ALGO_KEY: ['ga', 'pso'],
-        PI_KEY: ['best'],
+        PI_KEY: ['best', 'avg_fitness', '-goal_achieved', 'evals_on_goal'],
         TERM_KEY: ['n_eval'],
         SEEDS_KEY: 3
     }    

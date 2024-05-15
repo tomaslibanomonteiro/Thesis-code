@@ -27,17 +27,24 @@ class MyCallback(Callback):
         if algo.opt is None:
             return
 
-        self.data[N_EVAL_KEY].append(algo.evaluator.n_eval)
-        self.data[N_GEN_KEY].append(algo.n_gen)
+        n_gen, n_eval = algo.n_gen, algo.evaluator.n_eval
+        self.data[N_EVAL_KEY].append(n_eval)
+        self.data[N_GEN_KEY].append(n_gen)
     
-        feas = np.where(algo.opt.get("feasible"))[0]
-        algo_opt = algo.opt.get("F")[feas]
-        if len(algo_opt) == 0: # no feasible solution found
-            algo_opt = np.nan
+        opt_feas_idx = np.where(algo.opt.get("feasible"))[0]
+        opt = algo.opt.get("F")
+        opt_feas = opt[opt_feas_idx]
+        pop_feas_idx = np.where(algo.pop.get("feasible"))[0]
+        pop = algo.pop.get("F")
+        pop_feas = pop[pop_feas_idx]
+        
+        # if no feasible solution found
+        opt_feas = np.nan if len(opt) == 0 else opt 
+        pop_feas = np.nan if len(pop) == 0 else pop
                 
         # get the performance indicators values
         for pi_id, pi_object in zip(self.pi_ids, self.pi_objects):
-            pi = pi_object.do(algo_opt) if algo_opt is not np.nan else np.nan
+            pi = pi_object.do(opt_feas, opt=opt, pop=pop, pop_feas=pop_feas, n_eval=n_eval) if opt_feas is not np.nan else np.nan
             # add the data to the data frame    
             self.data[pi_id].append(pi)
 

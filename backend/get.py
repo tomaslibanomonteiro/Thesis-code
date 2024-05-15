@@ -163,7 +163,6 @@ def get_termination(name, *args, **kwargs):
     from pymoo.termination.max_eval import MaximumFunctionCallTermination
     from pymoo.termination.max_gen import MaximumGenerationTermination
     from pymoo.termination.max_time import TimeBasedTermination
-    from thesis.nsga3_vs_moead.custom_classes import MyNumGen
             
     TERMINATION_SINGLE = {
         "n_eval": MaximumFunctionCallTermination,
@@ -179,7 +178,6 @@ def get_termination(name, *args, **kwargs):
         "fmin": MinimumFunctionValueTermination,
         "time": TimeBasedTermination,
         "moo": DefaultMultiObjectiveTermination,
-        "my_num_gen": MyNumGen
     }
     
     return returnObjectOrOptions(name, TERMINATION_SINGLE, TERMINATION_MULTI, *args, **kwargs) 
@@ -351,14 +349,12 @@ def get_reference_directions(name, *args, **kwargs):
     from pymoo.util.ref_dirs.reduction import \
         ReductionBasedReferenceDirectionFactory
     from pymoo.util.reference_direction import UniformReferenceDirectionFactory
-    from thesis.nsga3_vs_moead.custom_classes import MyLayers   
                 
     REFERENCE_DIRECTIONS = {
         "das-dennis": UniformReferenceDirectionFactory,
         "energy": RieszEnergyReferenceDirectionFactory,
         "layer-energy": LayerwiseRieszEnergyReferenceDirectionFactory,
         "red": ReductionBasedReferenceDirectionFactory,
-        "my_layers": MyLayers
     }
 
     ref_dirs = returnObjectOrOptions(name, {}, REFERENCE_DIRECTIONS, *args, **kwargs)
@@ -378,11 +374,14 @@ def get_performance_indicator(name, *args, **kwargs):
     from pymoo.indicators.igd import IGD
     from pymoo.indicators.igd_plus import IGDPlus
     from pymoo.indicators.rmetric import RMetric
-    from utils.useful_classes import BestSol, negativeHypervolume
+    from utils.useful_classes import BestFitness, negativeHypervolume, AvgPopFitness, GoalAchieved, EvalsOnGoal
     
                  
     PERFORMANCE_INDICATOR_SINGLE = {
-        "best": BestSol
+        "best": BestFitness,
+        "avg_fitness": AvgPopFitness,
+        "-goal_achieved": GoalAchieved,
+        "evals_on_goal": EvalsOnGoal,
     }
         
     PERFORMANCE_INDICATOR_MULTI = {

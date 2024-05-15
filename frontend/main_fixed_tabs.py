@@ -201,7 +201,7 @@ class MainTabsWidget(QTabWidget):
         # set the combo boxes and the default run_options
         missing_options = self.setTable(self.prob_table, run_options[PROB_KEY], DEFAULT_ROW_NUMBERS[0])
         missing_options += self.setTable(self.algo_table, run_options[ALGO_KEY], DEFAULT_ROW_NUMBERS[1])
-        missing_options += self.setTable(self.pi_table, run_options[PI_KEY], DEFAULT_ROW_NUMBERS[2] if self.moo else 1)
+        missing_options += self.setTable(self.pi_table, run_options[PI_KEY], DEFAULT_ROW_NUMBERS[2])
         missing_options += self.setTable(self.term_table, run_options[TERM_KEY], DEFAULT_ROW_NUMBERS[3])
 
         self.seedsSpinBox.setValue(run_options[SEEDS_KEY]) 

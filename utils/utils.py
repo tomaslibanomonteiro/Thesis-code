@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 import pickle
+import numpy as np
 
 from utils.defines import MOO_KEY
 
@@ -107,3 +108,14 @@ def getAvailableName(name, names):
         while name + f" ({i})" in names:
             i += 1
         return name + f" ({i})"
+    
+def numberPresentation(number, max_int_conversion=10, decimal_places=3):
+    """Return a string representation of the number with 3 decimal places if not int"""
+    if np.isnan(number):
+        string =  "nan"
+    elif int(number) == number and abs(number) < max_int_conversion:
+        string = str(int(number))
+    else:
+        string = "{:.{}e}".format(number, decimal_places)
+    
+    return string
