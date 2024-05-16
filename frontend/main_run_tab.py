@@ -378,9 +378,9 @@ class RunTab(QFrame):
         # get algo ids from the checkboxes on the first column
         table = self.checkBox_table
         algo_ids = [table.cellWidget(i, 0).text() for i in range(len(self.algo_ids)) 
-                    if table.cellWidget(i, 0).isChecked()]
+                    if table.cellWidget(i, 0).isChecked()] #! if table.cellWidget(i, 0).isChecked()] AttributeError: 'NoneType' object has no attribute 'isChecked'
         
-        # get runs to plot from the checkboxes on the second column if it exists
+        # get runs to plot from the checkboxes on the second column if it exists+
         if table.columnCount() > 1:
             runs_to_plot = [table.cellWidget(i, 1).text() for i in range(table.rowCount()) 
                         if table.cellWidget(i, 1) is not None and table.cellWidget(i, 1).isChecked()]

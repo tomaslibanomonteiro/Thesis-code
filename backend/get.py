@@ -11,7 +11,14 @@ def returnObjectOrOptions(name, single_dict, multi_dict, *args, **kwargs):
     elif name == "moo_options":
         return multi_dict    
     elif name in merged_dict:
-        return merged_dict[name](*args, **kwargs)
+        # try to instantiate the object with kwargs, if it fails, try with args_dict
+        args_dict = kwargs.pop('args_dict', None)
+        try:
+            kwargs.update(args_dict) if args_dict is not None else None
+            obj = merged_dict[name](*args, **kwargs) #@IgnoreException
+        except:
+            obj = merged_dict[name](*args, **args_dict) if args_dict is not None else merged_dict[name](*args)
+        return obj
     else:
         raise Exception("Object '%s' for not found in %s. If you want options, call with 'all_options', 'all_soo_options' or 'all_moo_options'" % (name, list(merged_dict.keys())))
     
@@ -163,13 +170,18 @@ def get_termination(name, *args, **kwargs):
     from pymoo.termination.max_eval import MaximumFunctionCallTermination
     from pymoo.termination.max_gen import MaximumGenerationTermination
     from pymoo.termination.max_time import TimeBasedTermination
-            
+    from utils.useful_classes import MinFitnessTermination, StaledBestTermination
+    from thesis.pso.pso_classes import PSOTermination
+    
     TERMINATION_SINGLE = {
         "n_eval": MaximumFunctionCallTermination,
         "n_gen": MaximumGenerationTermination,
         "fmin": MinimumFunctionValueTermination,
         "time": TimeBasedTermination,
-        "soo": DefaultSingleObjectiveTermination
+        "soo": DefaultSingleObjectiveTermination,
+        "min_fitness": MinFitnessTermination,
+        "staled_best": StaledBestTermination,
+        "pso_termination": PSOTermination #!
     }
 
     TERMINATION_MULTI = {
@@ -196,8 +208,7 @@ def get_problem(name, *args, **kwargs):
     from pymoo.problems.many import (C1DTLZ1, C1DTLZ3, C2DTLZ2, C3DTLZ1,
                                      C3DTLZ4, DC1DTLZ1, DC1DTLZ3, DC2DTLZ1,
                                      DC2DTLZ3, DC3DTLZ1, DC3DTLZ3, DTLZ1,
-                                     DTLZ2, DTLZ3, DTLZ4, DTLZ5, DTLZ6, DTLZ7, #WFG not giving consistent pfs
-                                     ScaledDTLZ1) 
+                                     DTLZ2, DTLZ3, DTLZ4, DTLZ5, DTLZ6, DTLZ7) #WFG not giving consistent pfs 
     # MODAct needs to install module
     from pymoo.problems.multi import (BNH, CTP1, CTP2, CTP3, CTP4, CTP5, CTP6,
                                       CTP7, CTP8, DASCMOP1, DASCMOP2, DASCMOP3,
@@ -210,9 +221,9 @@ def get_problem(name, *args, **kwargs):
     from pymoo.problems.single import (G1, G2, G3, G4, G5, G6, G7, G8, G9, G10,
                                        G11, G12, G13, G14, G15, G16, G17, G18,
                                        G19, G20, G21, G22, G23, G24, Ackley,
-                                       CantileveredBeam, Griewank, Himmelblau, PressureVessel, Rastrigin,
-                                       Rosenbrock, Schwefel, Sphere, Zakharov)
-    from utils.useful_classes import RandomKnapsackMulti, RandomKnapsackSingle, ScaledDTLZ
+                                       CantileveredBeam, Himmelblau, PressureVessel,
+                                       Schwefel, Sphere, Zakharov) # Griewank, Rastrigin, Rosenbrock overwritten to set xl and xu
+    from utils.useful_classes import RandomKnapsackMulti, RandomKnapsackSingle, ScaledDTLZ, Griewank, Rastrigin, Rosenbrock
     
     PROBLEM_SINGLE = {
         "ackley": Ackley,
@@ -374,14 +385,16 @@ def get_performance_indicator(name, *args, **kwargs):
     from pymoo.indicators.igd import IGD
     from pymoo.indicators.igd_plus import IGDPlus
     from pymoo.indicators.rmetric import RMetric
-    from utils.useful_classes import BestFitness, negativeHypervolume, AvgPopFitness, GoalAchieved, EvalsOnGoal
-    
+    from utils.useful_classes import BestFitness, minusHypervolume, AvgPopFitness, MinusGoalAchieved, EvalsOnGoal
+    from thesis.pso.pso_classes import EvalsOnGoalPSO, MinusGoalAchievedPSO
                  
     PERFORMANCE_INDICATOR_SINGLE = {
         "best": BestFitness,
         "avg_fitness": AvgPopFitness,
-        "-goal_achieved": GoalAchieved,
+        "-goal_achieved": MinusGoalAchieved,
         "evals_on_goal": EvalsOnGoal,
+        "-goal_achieved_pso": MinusGoalAchievedPSO,
+        "evals_on_goal_pso": EvalsOnGoalPSO
     }
         
     PERFORMANCE_INDICATOR_MULTI = {
@@ -389,7 +402,7 @@ def get_performance_indicator(name, *args, **kwargs):
         "gd+": GDPlus,
         "igd": IGD,
         "igd+": IGDPlus,
-        "-hv": negativeHypervolume,
+        "-hv": minusHypervolume,
         "rmetric": RMetric
     }
     

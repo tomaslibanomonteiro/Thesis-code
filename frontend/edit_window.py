@@ -140,7 +140,7 @@ class EditWindow(QWidget):
         moo = "moo" if self.moo else "soo"
         myFileManager('Save Parameters', f'{moo}_parameters', parameters)
     
-    def loadParameters(self):
+    def loadParameters(self): #! NEEDS FIX NOT SENDING LAST SIGNAL TO THE COMBOBOXES IN MAIN WINDOW
         """Load the parameters"""
         
         # Open file dialog to select the file to load
@@ -402,8 +402,8 @@ class EditTab(QFrame):
         args_dict = self.getArgsFromRow(table, row, **kwargs)
 
         if not isinstance(args_dict, Exception):
-            try:     
-                obj = self.get_function(class_name, **args_dict) #@IgnoreException
+            try:
+                obj = self.get_function(class_name, args_dict=args_dict, **kwargs) #@IgnoreException
             except Exception as e:
                 MyMessageBox(f"Error trying to get {class_name} from tab {self.key}:\n{e}"
                             "\nMake sure all arguments are correctly set for the respective class")

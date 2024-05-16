@@ -4,20 +4,12 @@ from utils.defines import SEEDS_KEY, TERM_KEY, PI_KEY, ALGO_KEY, PROB_KEY, CROSS
 import pickle
 
 
-INIT_FROM_FILE = False
-SHORTER = True
+OTHER_START = True
 RUN = False
 
-def MOOstartFromFile():
-
-    shorter = '_shorter' if SHORTER else ''
-    with open(f'others/moo_run_options{shorter}.pickle', 'rb') as file:
-        run_options_moo = pickle.load(file) #@IgnoreException
-
-    with open(f'others/moo_parameters.pickle', 'rb') as file:
-        parameters_moo = pickle.load(file) #@IgnoreException
-    
-    return run_options_moo, parameters_moo
+def otherStart():
+    from thesis.pso.start import start
+    return start()
 
 def defaultStart():
     run_options_moo = {
@@ -41,9 +33,9 @@ def main():
     
     app = QApplication([])
 
-    if INIT_FROM_FILE:
-        run_options_moo, parameters_moo = MOOstartFromFile()
-        main_window = MainWindow(run_options_moo=run_options_moo, parameters_moo=parameters_moo)
+    if OTHER_START:
+        run_options, parameters = otherStart()
+        main_window = MainWindow(run_options_soo=run_options, parameters_soo=parameters)
     else:
         run_options_moo, run_options_soo = defaultStart()
         main_window = MainWindow(run_options_soo, run_options_moo)
