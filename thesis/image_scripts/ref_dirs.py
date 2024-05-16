@@ -1,5 +1,5 @@
 import numpy as np
-from pymoo.factory import get_reference_directions
+from pymoo.util.ref_dirs import get_reference_directions
 from mpl_toolkits.mplot3d import Axes3D
 
 import matplotlib.pyplot as plt
