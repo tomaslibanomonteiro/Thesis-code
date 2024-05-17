@@ -473,7 +473,7 @@ class HistoryFrame(QFrame):
         if self.run_thread.canceled:
             return
         
-        self.tab = RunTab(self.run_thread, self.run_name)
+        self.tab = RunTab(self.run_thread, self.run_name, self.tabWidget.edit_window)
         self.progressBar.setValue(100)
         self.progress_label.setText("")
         self.save_run.setEnabled(True)

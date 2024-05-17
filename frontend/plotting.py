@@ -16,7 +16,7 @@ from backend.run import RunThread
 from backend.run import RunThread
 from utils.defines import PROB_KEY, ALGO_KEY, SEEDS_KEY, N_EVAL_KEY, PLOT_PROGRESS_KEY, PLOT_PS_KEY, PLOT_PC_KEY, PLOT_FL_KEY
 from utils.utils import MyMessageBox
-                
+
 class MyFitnessLandscape(Plot):
     def __init__(self,
                  problem,
@@ -54,11 +54,12 @@ class MyFitnessLandscape(Plot):
         problem, sets_of_points = self.problem, self.sets_of_points
 
         # find the min and max values of the decision variable between the sets of points
-        if sets_of_points == []:
-            x_min, x_max = problem.xl[0], problem.xu[0]
-        else:
-            x_min = min([min(points[:, 0]) for points in sets_of_points])
-            x_max = max([max(points[:, 0]) for points in sets_of_points])
+        x_min, x_max = problem.xl[0], problem.xu[0] #!
+        # if sets_of_points == []:
+        #     x_min, x_max = problem.xl[0], problem.xu[0]
+        # else:
+        #     x_min = min([min(points[:, 0]) for points in sets_of_points])
+        #     x_max = max([max(points[:, 0]) for points in sets_of_points])
 
         if problem.n_var == 1 and problem.n_obj == 1:
 
@@ -73,11 +74,13 @@ class MyFitnessLandscape(Plot):
 
         elif problem.n_var == 2 and problem.n_obj == 1:
             n_samples = self.n_samples_3D
-            if sets_of_points == []:
-                y_min, y_max = problem.xl[1], problem.xu[1]
-            else:
-                y_min = min([min(points[:, 1]) for points in sets_of_points])
-                y_max = max([max(points[:, 1]) for points in sets_of_points])
+
+            y_min, y_max = problem.xl[1], problem.xu[1] #!
+            # if sets_of_points == []:
+            #     y_min, y_max = problem.xl[1], problem.xu[1]
+            # else:
+            #     y_min = min([min(points[:, 1]) for points in sets_of_points])
+            #     y_max = max([max(points[:, 1]) for points in sets_of_points])
             
             A = np.linspace(x_min, x_max, n_samples)
             B = np.linspace(y_min, y_max, n_samples)
@@ -143,44 +146,44 @@ class MplCanvas(FigureCanvasQTAgg):
     
 class Plotter(QWidget):
     """
-    Used to create different types of plots based on the provided plot_type.
+        Used to create different types of plots based on the provided plot_type.
 
-    plot_type can be:
-    ----------------
-    
-    - PLOT_PROGRESS_KEY: plot the progress of the checked algorithms for the given problem 
-    and checked performance indicators     
-    
-    Only for MOO problems:
-    - PLOT_PS_KEY: plot the Pareto front of the checked algorithms for the given problem and checked seeds
-    - PLOT_PC_KEY: plot the Parallel Coordinates of the checked algorithms for the given problem and checked seeds
-    
-    Only for SOO problems:
-    - PLOT_FL_KEY: plot the fitness landscape of the checked algorithms for the given problem and checked seeds
+        plot_type can be:
+        ----------------
+        
+        - PLOT_PROGRESS_KEY: plot the progress of the checked algorithms for the given problem 
+        and checked performance indicators     
+        
+        Only for MOO problems:
+        - PLOT_PS_KEY: plot the Pareto front of the checked algorithms for the given problem and checked seeds
+        - PLOT_PC_KEY: plot the Parallel Coordinates of the checked algorithms for the given problem and checked seeds
+        
+        Only for SOO problems:
+        - PLOT_FL_KEY: plot the fitness landscape of the checked algorithms for the given problem and checked seeds
 
 
-    Attributes
-    ----------
-    
-    plot_type: The type of the plot to be created.
-    sc: The matplotlib canvas.
-    run_thread: The thread in which the run is happening.
-    prob_id: The ID of the problem.
-    prob_object: The object of the problem.
-    algo_ids: The list of algorithm IDs.
-    other_ids: The list of other IDs.
-    title: The title of the plot.
+        Attributes
+        ----------
+        
+        plot_type: The type of the plot to be created.
+        sc: The matplotlib canvas.
+        run_thread: The thread in which the run is happening.
+        prob_id: The ID of the problem.
+        prob_object: The object of the problem.
+        algo_ids: The list of algorithm IDs.
+        other_ids: The list of other IDs.
+        title: The title of the plot.
 
-    Methods
-    -------
-    
-    __init__(self, plot_type, prob_id, prob_object, run_thread, algo_ids, other_ids, title): Initializes the Plotter object with the provided parameters.
-    plotRespectivetype(self): Checks the plot_type and calls the respective plotting method.
-    plotProgress(self): Plots the progress of the checked algorithms for the given problem and checked performance indicators.
-    plotPCP(self): Plots the Parallel Coordinates of the checked algorithms for the given problem and checked seeds.
-    plotParetoSets(self): Plots the Pareto front of the checked algorithms for the given problem and checked seeds.
-    plotFitnessLandscape(self): Plots the fitness landscape of the checked algorithms for the given problem and checked seeds.
-    plotSolutions(self, plot): Plots the best solution for each run_id.
+        Methods
+        -------
+        
+        __init__(self, plot_type, prob_id, prob_object, run_thread, algo_ids, other_ids, title): Initializes the Plotter object with the provided parameters.
+        plotRespectivetype(self): Checks the plot_type and calls the respective plotting method.
+        plotProgress(self): Plots the progress of the checked algorithms for the given problem and checked performance indicators.
+        plotPCP(self): Plots the Parallel Coordinates of the checked algorithms for the given problem and checked seeds.
+        plotParetoSets(self): Plots the Pareto front of the checked algorithms for the given problem and checked seeds.
+        plotFitnessLandscape(self): Plots the fitness landscape of the checked algorithms for the given problem and checked seeds.
+        plotSolutions(self, plot): Plots the best solution for each run_id.
     """
     def __init__(self, plot_type, title, run_thread:RunThread, stats_seeds_df:pd.DataFrame, 
                  pi_id, prob_id, prob_object, algo_ids, runs_to_plot):

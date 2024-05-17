@@ -8,7 +8,7 @@ OTHER_START = True
 RUN = False
 
 def otherStart():
-    from thesis.pso.start import start
+    from thesis.results_pso.start import start
     return start()
 
 def defaultStart():

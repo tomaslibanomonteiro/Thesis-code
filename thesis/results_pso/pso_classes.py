@@ -18,6 +18,7 @@ def getGoal(prob_id):
         raise ValueError('Invalid prob_id')
     
     return goal
+
 class EvalsOnGoalPSO(EvalsOnGoal):
     def __init__(self, **kwargs):
         prob_id = kwargs.get('prob_id', 'None')

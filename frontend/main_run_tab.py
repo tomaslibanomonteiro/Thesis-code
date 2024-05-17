@@ -7,11 +7,11 @@ import numpy as np
 import pandas as pd
 
 from backend.run import RunThread
-from backend.run import RunThread
 from utils.defines import (DESIGNER_RUN_TAB, PROB_KEY, ALGO_KEY, SEEDS_KEY, N_GEN_KEY, N_EVAL_KEY, VOTING_KEY, PI_KEY,
                            CLASS_KEY, TERM_KEY, PLOT_PROGRESS_KEY, PLOT_PS_KEY, PLOT_PC_KEY, PLOT_FL_KEY, MEDIAN_KEY,
                            BEST_KEY, WORST_KEY, AVG_KEY, VALUE_KEY)
 from frontend.plotting import Plotter
+from frontend.edit_window import EditWindow
 from utils.utils import myFileManager, setBold, MyMessageBox, setCombobox, numberPresentation
 class RunTab(QFrame):
     """
@@ -36,13 +36,14 @@ class RunTab(QFrame):
         saveRun(): Saves the run thread object.
         saveResult(): Saves the result of the run in a csv.
     """
-    def __init__(self, run_thread: RunThread, label: str):
+    def __init__(self, run_thread: RunThread, label: str, edit_window: EditWindow):
         super().__init__()
         loadUi(DESIGNER_RUN_TAB, self)
                 
         # get the class variables
         self.run_thread = run_thread        
         self.pi_ids = run_thread.run_args_list[0].pi_ids
+        self.edit_window = edit_window
 
         # get the final generation for each seed
         self.term_df = self.run_thread.data.groupby([PROB_KEY, ALGO_KEY, SEEDS_KEY]).last().reset_index()
@@ -171,6 +172,8 @@ class RunTab(QFrame):
 
         # set the checkboxes for the algorithms in the first column
         if set_algos:
+            row_count = len(self.algo_ids)
+            self.checkBox_table.setRowCount(row_count)
             for i, algo_id in enumerate(self.algo_ids):
                 checkbox = QCheckBox(algo_id)
                 self.checkBox_table.setCellWidget(i, 0, checkbox)
@@ -193,7 +196,7 @@ class RunTab(QFrame):
             self.checkBox_table.setHorizontalHeaderItem(1, QTableWidgetItem(header))
         
             # put the ids checkboxes in self.checkBox_table second column
-            row_count = len(ids)
+            row_count = max(len(ids), len(self.algo_ids))
             self.checkBox_table.setRowCount(row_count)
             for i, id in enumerate(ids):
                 checkbox = QCheckBox(str(id))
@@ -378,7 +381,7 @@ class RunTab(QFrame):
         # get algo ids from the checkboxes on the first column
         table = self.checkBox_table
         algo_ids = [table.cellWidget(i, 0).text() for i in range(len(self.algo_ids)) 
-                    if table.cellWidget(i, 0).isChecked()] #! if table.cellWidget(i, 0).isChecked()] AttributeError: 'NoneType' object has no attribute 'isChecked'
+                    if table.cellWidget(i, 0).isChecked()] 
         
         # get runs to plot from the checkboxes on the second column if it exists+
         if table.columnCount() > 1:

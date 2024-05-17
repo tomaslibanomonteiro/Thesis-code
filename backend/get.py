@@ -171,7 +171,7 @@ def get_termination(name, *args, **kwargs):
     from pymoo.termination.max_gen import MaximumGenerationTermination
     from pymoo.termination.max_time import TimeBasedTermination
     from utils.useful_classes import MinFitnessTermination, StaledBestTermination
-    from thesis.pso.pso_classes import PSOTermination
+    from thesis.results_pso.pso_classes import PSOTermination
     
     TERMINATION_SINGLE = {
         "n_eval": MaximumFunctionCallTermination,
@@ -386,7 +386,7 @@ def get_performance_indicator(name, *args, **kwargs):
     from pymoo.indicators.igd_plus import IGDPlus
     from pymoo.indicators.rmetric import RMetric
     from utils.useful_classes import BestFitness, minusHypervolume, AvgPopFitness, MinusGoalAchieved, EvalsOnGoal
-    from thesis.pso.pso_classes import EvalsOnGoalPSO, MinusGoalAchievedPSO
+    from thesis.results_pso.pso_classes import EvalsOnGoalPSO, MinusGoalAchievedPSO
                  
     PERFORMANCE_INDICATOR_SINGLE = {
         "best": BestFitness,

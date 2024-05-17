@@ -120,7 +120,7 @@ from pymoo.operators.selection.tournament import TournamentSelection
 
 class TournamentByCVAndFitness(TournamentSelection):
     def __init__(self, pressure=2, **kwargs):
-        super().__init__(func_comp=comp_by_cv_and_fitness, **kwargs)
+        super().__init__(func_comp=comp_by_cv_and_fitness, **kwargs) #@IgnoreException
     
 class RestrictedMatingCTAEA(RestrictedMating):
     def __init__(self, pressure=2, **kwargs):
