@@ -14,6 +14,7 @@ def setCombobox(combobox, items=None, center_items=False, index_changed_function
     from PyQt5.QtCore import Qt
     
     if items is not None:
+        items = sorted(items)
         combobox.addItems(items)
     if center_items:
         combobox.lineEdit().setAlignment(Qt.AlignCenter)

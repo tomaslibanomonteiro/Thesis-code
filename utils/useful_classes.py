@@ -1,6 +1,5 @@
 import numpy as np
 
-
 ################################################################################################################################
 #####################################################    PROBLEMS    ###########################################################
 ################################################################################################################################
@@ -55,14 +54,14 @@ class ScaledDTLZ(ScaledProblem):
         else:
             raise ValueError("dtlz must be between 1 and 7")
         
-        super().__init__(problem, scale_factor=scale_factor)
+        super().__init__(problem, scale_factor=scale_factor, **kwargs)
 
 import pymoo.gradient.toolbox as anp
 from pymoo.problems.single import Problem
 
 class Rastrigin(Problem):
-    def __init__(self, n_var=2, A=10.0, xl=-5, xu=5):
-        super().__init__(n_var=n_var, n_obj=1, xl=xl, xu=xu, vtype=float)
+    def __init__(self, n_var=2, A=10.0, xl=-5, xu=5, **kwargs):
+        super().__init__(n_var=n_var, n_obj=1, xl=xl, xu=xu, vtype=float, **kwargs)
         self.A = A
 
     def _evaluate(self, x, out, *args, **kwargs):
@@ -76,8 +75,8 @@ class Rastrigin(Problem):
         return np.full(self.n_var, 0)
 
 class Rosenbrock(Problem):
-    def __init__(self, n_var=2, xl=-2.048, xu=2.048):
-        super().__init__(n_var=n_var, n_obj=1, n_ieq_constr=0, xl=xl, xu=xu, vtype=float)
+    def __init__(self, n_var=2, xl=-2.048, xu=2.048, **kwargs):
+        super().__init__(n_var=n_var, n_obj=1, n_ieq_constr=0, xl=xl, xu=xu, vtype=float, **kwargs)
 
     def _evaluate(self, x, out, *args, **kwargs):
         l = []
@@ -93,8 +92,8 @@ class Rosenbrock(Problem):
         return np.full(self.n_var, 1.0)
     
 class Griewank(Problem):
-    def __init__(self, n_var=2, xl=-600, xu=600):
-        super().__init__(n_var=n_var, n_obj=1, xl=xl, xu=xu, vtype=float)
+    def __init__(self, n_var=2, xl=-600, xu=600, **kwargs):
+        super().__init__(n_var=n_var, n_obj=1, xl=xl, xu=xu, vtype=float, **kwargs)
 
     def _evaluate(self, x, out, *args, **kwargs):
         out["F"] = 1 + 1 / 4000 * anp.sum(anp.power(x, 2), axis=1) \
@@ -120,23 +119,23 @@ from pymoo.operators.selection.tournament import TournamentSelection
 
 class TournamentByCVAndFitness(TournamentSelection):
     def __init__(self, pressure=2, **kwargs):
-        super().__init__(func_comp=comp_by_cv_and_fitness, **kwargs) #@IgnoreException
+        super().__init__(func_comp=comp_by_cv_and_fitness, pressure=pressure, **kwargs) 
     
 class RestrictedMatingCTAEA(RestrictedMating):
     def __init__(self, pressure=2, **kwargs):
-        super().__init__(func_comp=comp_by_cv_dom_then_random, **kwargs) #@IgnoreException
+        super().__init__(func_comp=comp_by_cv_dom_then_random, pressure=pressure, **kwargs)
         
 class BinaryTournament(TournamentSelection):
     def __init__(self, pressure=2, **kwargs):
-        super().__init__(func_comp=binary_tournament, **kwargs) #@IgnoreException
+        super().__init__(func_comp=binary_tournament, pressure=pressure, **kwargs) 
 
 class TournamentByCVThenRandom(TournamentSelection):
     def __init__(self, pressure=2, **kwargs):
-        super().__init__(func_comp=comp_by_cv_then_random, **kwargs) #@IgnoreException
+        super().__init__(func_comp=comp_by_cv_then_random, pressure=pressure, **kwargs) 
         
 class TournamentByRankAndRefLineDist(TournamentSelection):
     def __init__(self, pressure=2, **kwargs):
-        super().__init__(func_comp=comp_by_rank_and_ref_line_dist, **kwargs)
+        super().__init__(func_comp=comp_by_rank_and_ref_line_dist, pressure=pressure, **kwargs) 
 
 ################################################################################################################################
 #####################################################   INDICATORS   ###########################################################
@@ -147,32 +146,32 @@ class TournamentByRankAndRefLineDist(TournamentSelection):
 class BestFitness():
         """used in the case of single-objective optimization,just for code compatibility. 
         Only returns the input, because it should consist of only the best solution"""
-        def __init__(self, *args, **kwargs):
+        def __init__(self):
             pass
         
-        def do(self, opt_feas, *args, **kwargs):
+        def do(self, opt_feas, **kwargs):
             return opt_feas[0][0]
 class AvgPopFitness():
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         pass
     
-    def do(self, opt_feas, pop, *args, **kwargs):
+    def do(self, opt_feas, pop, **kwargs):
         return np.mean(pop) if len(pop) > 0 else np.nan
 
 class MinusGoalAchieved():
-    def __init__(self, goal=1.1, *args, **kwargs):
+    def __init__(self, goal=1.1):
         self.goal = goal
     
-    def do(self, opt_feas, *args, **kwargs):
+    def do(self, opt_feas):
         return -1 if len(opt_feas) > 0 and opt_feas[0][0] <= self.goal else 0
         
 class EvalsOnGoal():
-    def __init__(self, goal=1.1, *args, **kwargs):
+    def __init__(self, goal=1.1):
         self.goal = goal
         self.n_eval = 0
         self.evals_on_goal = np.nan
         
-    def do(self, opt_feas, n_eval, pop, *args, **kwargs):
+    def do(self, opt_feas, n_eval, **kwargs):
         
         # if it is next seed, n_evals will be lower, so evals_on_goal is set to nan again
         if n_eval <= self.n_eval:
@@ -186,6 +185,7 @@ class EvalsOnGoal():
 ### Multi-objective indicators
 
 from pymoo.indicators.hv import Hypervolume
+
 class minusHypervolume(Hypervolume):
     def _do(self, F):
         return - super()._do(F)

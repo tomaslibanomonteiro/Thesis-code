@@ -312,7 +312,8 @@ class MyComboBox(QComboBox):
 
         tab.edit_window.operatorUpdates.connect(self.receiveSignal) if key is not None else None
         self.widgets_frame.copyStyleAndSizePolicy(self, copy_style) if copy_style is not None else None  
-        self.addItems(sorted(items))
+        items = sorted(items)
+        self.addItems(items)
         self.setCurrentIndex(self.findText(initial_item))
         self.setEnabled(enabled)
 
@@ -404,7 +405,8 @@ class MyComboBox(QComboBox):
         # Clear the current items
         self.clear()
         # Add the new items
-        self.addItems(sorted(items))
+        items = sorted(items)
+        self.addItems(items)
         self.setCurrentIndex(self.findText(curr_text))
 
     def copy(self):

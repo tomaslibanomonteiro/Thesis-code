@@ -269,7 +269,7 @@ class EditTab(QFrame):
         # add a MyComboBox in the new row and set it to the class name
         combo_box = MyComboBox(self.classes, table=self.table, col=ID_COL+1, row=row, copy_style="variant_class", widgets_frame=widgets_frame)
         self.table.setCellWidget(row, ID_COL+1, combo_box)
-        self.table.cellWidget(row, ID_COL+1).setCurrentIndex(self.classes.index(class_name))
+        combo_box.setCurrentIndex(combo_box.findText(class_name))
 
         # functionalities if the call was not made from the "Add Variant" button
         if args_dict is not None: 
@@ -366,36 +366,36 @@ class EditTab(QFrame):
                 continue
             
             row_id = self.table.cellWidget(row, ID_COL).text()
-            row_dict = self.getArgsFromRow(self.table, row, convert=False)
+            row_dict = self.getArgsFromRow(self.table, row, convert_dict=None) # args not converted
             table_dict[row_id] = row_dict
             class_name = widget.text() if isinstance(widget, MyLineEdit) else widget.currentText()
             table_dict[row_id][CLASS_KEY] = class_name
             
         return table_dict
 
-    def getObjectFromID(self, object_id, **kwargs):
+    def getObjectFromID(self, object_id, convert_dict = None):
         # get the object from a table
         for row in range(self.table.rowCount()):
             if self.table.cellWidget(row, ID_COL) is None:
                 continue
             if self.table.cellWidget(row, ID_COL).text() == object_id:
-                return self.getObjectFromRow(self.table, row, **kwargs)
+                return self.getObjectFromRow(self.table, row, convert_dict)
             
         MyMessageBox(f"Object ID '{object_id}' not found in table from tab {self.name}")
         
         return Exception("Object ID '", object_id, "' not found in table from tab ", self.name) 
             
-    def getObjectFromRow(self, table: QTableWidget, row, **kwargs):
+    def getObjectFromRow(self, table: QTableWidget, row, convert_dict = None):
         # get the object from the table
         if isinstance(table.cellWidget(row, ID_COL+1), MyLineEdit):
             class_name = table.cellWidget(row, ID_COL+1).text()
         else:
             class_name = table.cellWidget(row, ID_COL+1).currentText()
-        args_dict = self.getArgsFromRow(table, row, **kwargs)
+        args_dict = self.getArgsFromRow(table, row, convert_dict)
 
         if not isinstance(args_dict, Exception):
             try:
-                obj = self.get_function(class_name, args_dict=args_dict, **kwargs) #@IgnoreException
+                obj = self.get_function(class_name, **args_dict) #@IgnoreException
             except Exception as e:
                 MyMessageBox(f"Error trying to get {class_name} from tab {self.key}:\n{e}"
                             "\nMake sure all arguments are correctly set for the respective class")
@@ -405,7 +405,7 @@ class EditTab(QFrame):
                                 
         return obj
                     
-    def getArgsFromRow(self, table: QTableWidget, row: int, convert=True, **kwargs) -> dict:
+    def getArgsFromRow(self, table: QTableWidget, row: int, convert_dict=None) -> dict:
         # get the args from the table
         args_dict = {}
         for col in range(ID_COL+2, table.columnCount(), 2):
@@ -418,8 +418,8 @@ class EditTab(QFrame):
             widget = table.cellWidget(row, col+1)
             
             # OPERATOR
-            if arg in OPERATORS and self.key == ALGO_KEY and convert:
-                value = self.getOperator(arg, widget.currentText(), **kwargs)
+            if arg in OPERATORS and self.key == ALGO_KEY and convert_dict is not None:
+                value = self.edit_window.tabs[arg].getObjectFromID(widget.currentText(), convert_dict)
             # COMBO BOX STRING
             elif isinstance(widget, MyComboBox):
                 value = widget.currentText()
@@ -441,11 +441,11 @@ class EditTab(QFrame):
                 elif value == NO_DEFAULT:
                     value = NO_DEFAULT
                 # IDENTIFY CONVERTIBLE STRING IF EXPORTING
-                elif not convert:
+                elif convert_dict is None:
                     value = widget.text() + CONVERT_KEY if widget.convert else widget.text()
                 # CONVERT STRING
                 elif widget.convert: 
-                    value = self.convertString(arg, value, **kwargs)
+                    value = self.convertString(arg, value, convert_dict)
             else:
                 raise Exception("Unknown widget type ", type(widget), " for arg ", arg, " in row ", row, " of tab ", self.name)
             
@@ -456,9 +456,9 @@ class EditTab(QFrame):
 
         return args_dict    
     
-    def convertString(self, arg, string: str, **kwargs):
+    def convertString(self, arg, string: str, convert_dict: dict):
     
-        for key, value in kwargs.items():
+        for key, value in convert_dict.items():
             if string == key:
                 return value
             elif key in string:
@@ -469,12 +469,4 @@ class EditTab(QFrame):
             MyMessageBox(f"Invalid expression \'{string}\'in argument \'{arg}\', please use a valid mathematical expression with the convertibles if needed: {CONVERTIBLES}")
             result = None
             
-        return result
-    
-    def getOperator(self, op_name: str, op_id: str, **kwargs):
-        
-        if op_name not in OPERATORS:
-            raise Exception("Operator " + op_name + " not found, with id " + op_id)
-        else:
-            return self.edit_window.tabs[op_name].getObjectFromID(op_id, **kwargs)
-    
+        return result    

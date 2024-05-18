@@ -1,4 +1,3 @@
-
 def returnObjectOrOptions(name, single_dict, multi_dict, *args, **kwargs):
     name = name.lower()
 
@@ -11,14 +10,7 @@ def returnObjectOrOptions(name, single_dict, multi_dict, *args, **kwargs):
     elif name == "moo_options":
         return multi_dict    
     elif name in merged_dict:
-        # try to instantiate the object with kwargs, if it fails, try with args_dict
-        args_dict = kwargs.pop('args_dict', None)
-        try:
-            kwargs.update(args_dict) if args_dict is not None else None
-            obj = merged_dict[name](*args, **kwargs) #@IgnoreException
-        except:
-            obj = merged_dict[name](*args, **args_dict) if args_dict is not None else merged_dict[name](*args)
-        return obj
+        return merged_dict[name](*args, **kwargs)
     else:
         raise Exception("Object '%s' for not found in %s. If you want options, call with 'all_options', 'all_soo_options' or 'all_moo_options'" % (name, list(merged_dict.keys())))
     
@@ -383,8 +375,7 @@ def get_performance_indicator(name, *args, **kwargs):
     from pymoo.indicators.gd import GD
     from pymoo.indicators.gd_plus import GDPlus
     from pymoo.indicators.igd import IGD
-    from pymoo.indicators.igd_plus import IGDPlus
-    from pymoo.indicators.rmetric import RMetric
+    from pymoo.indicators.igd_plus import IGDPlus # rmetric removed, needs ref points
     from utils.useful_classes import BestFitness, minusHypervolume, AvgPopFitness, MinusGoalAchieved, EvalsOnGoal
     from thesis.results_pso.pso_classes import EvalsOnGoalPSO, MinusGoalAchievedPSO
                  
@@ -403,7 +394,6 @@ def get_performance_indicator(name, *args, **kwargs):
         "igd": IGD,
         "igd+": IGDPlus,
         "-hv": minusHypervolume,
-        "rmetric": RMetric
     }
     
     return returnObjectOrOptions(name, PERFORMANCE_INDICATOR_SINGLE, PERFORMANCE_INDICATOR_MULTI, *args, **kwargs)

@@ -190,9 +190,9 @@ class RunTab(QFrame):
         """Change the table widget to display the results for the selected performance indicator"""
                 
         if self.table_of.currentText() == "Performance Indicator":
-            selected_items = self.pi_ids
+            selected_items = sorted(self.pi_ids)
         elif self.table_of.currentText() == "Problem":
-            selected_items = self.prob_ids
+            selected_items = sorted(self.prob_ids)
         else:
             raise ValueError("Voting by can only be Performance Indicator or Problem")
         
