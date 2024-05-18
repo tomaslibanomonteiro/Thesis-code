@@ -37,7 +37,7 @@
      <rect>
       <x>5</x>
       <y>0</y>
-      <width>1121</width>
+      <width>1158</width>
       <height>641</height>
      </rect>
     </property>
@@ -254,14 +254,14 @@
            <attribute name="horizontalHeaderVisible">
             <bool>true</bool>
            </attribute>
+           <attribute name="horizontalHeaderMinimumSectionSize">
+            <number>90</number>
+           </attribute>
            <attribute name="horizontalHeaderDefaultSectionSize">
             <number>185</number>
            </attribute>
            <attribute name="horizontalHeaderHighlightSections">
             <bool>false</bool>
-           </attribute>
-           <attribute name="horizontalHeaderMinimumSectionSize">
-            <number>90</number>
            </attribute>
            <attribute name="horizontalHeaderStretchLastSection">
             <bool>false</bool>
@@ -379,14 +379,14 @@
            <attribute name="horizontalHeaderVisible">
             <bool>true</bool>
            </attribute>
+           <attribute name="horizontalHeaderMinimumSectionSize">
+            <number>90</number>
+           </attribute>
            <attribute name="horizontalHeaderDefaultSectionSize">
             <number>185</number>
            </attribute>
            <attribute name="horizontalHeaderHighlightSections">
             <bool>false</bool>
-           </attribute>
-           <attribute name="horizontalHeaderMinimumSectionSize">
-            <number>90</number>
            </attribute>
            <attribute name="horizontalHeaderStretchLastSection">
             <bool>false</bool>
@@ -507,14 +507,14 @@
            <attribute name="horizontalHeaderVisible">
             <bool>true</bool>
            </attribute>
+           <attribute name="horizontalHeaderMinimumSectionSize">
+            <number>90</number>
+           </attribute>
            <attribute name="horizontalHeaderDefaultSectionSize">
             <number>185</number>
            </attribute>
            <attribute name="horizontalHeaderHighlightSections">
             <bool>false</bool>
-           </attribute>
-           <attribute name="horizontalHeaderMinimumSectionSize">
-            <number>90</number>
            </attribute>
            <attribute name="horizontalHeaderStretchLastSection">
             <bool>false</bool>
@@ -620,14 +620,14 @@
            <attribute name="horizontalHeaderVisible">
             <bool>true</bool>
            </attribute>
+           <attribute name="horizontalHeaderMinimumSectionSize">
+            <number>90</number>
+           </attribute>
            <attribute name="horizontalHeaderDefaultSectionSize">
             <number>185</number>
            </attribute>
            <attribute name="horizontalHeaderHighlightSections">
             <bool>false</bool>
-           </attribute>
-           <attribute name="horizontalHeaderMinimumSectionSize">
-            <number>90</number>
            </attribute>
            <attribute name="horizontalHeaderStretchLastSection">
             <bool>false</bool>
@@ -723,14 +723,14 @@
              <attribute name="horizontalHeaderVisible">
               <bool>true</bool>
              </attribute>
+             <attribute name="horizontalHeaderMinimumSectionSize">
+              <number>90</number>
+             </attribute>
              <attribute name="horizontalHeaderDefaultSectionSize">
               <number>185</number>
              </attribute>
              <attribute name="horizontalHeaderHighlightSections">
               <bool>false</bool>
-             </attribute>
-             <attribute name="horizontalHeaderMinimumSectionSize">
-              <number>90</number>
              </attribute>
              <attribute name="horizontalHeaderStretchLastSection">
               <bool>false</bool>
@@ -1003,6 +1003,15 @@
             </color>
            </brush>
           </colorrole>
+          <colorrole role="PlaceholderText">
+           <brush brushstyle="NoBrush">
+            <color alpha="128">
+             <red>0</red>
+             <green>0</green>
+             <blue>0</blue>
+            </color>
+           </brush>
+          </colorrole>
          </active>
          <inactive>
           <colorrole role="WindowText">
@@ -1140,6 +1149,15 @@
             </color>
            </brush>
           </colorrole>
+          <colorrole role="PlaceholderText">
+           <brush brushstyle="NoBrush">
+            <color alpha="128">
+             <red>0</red>
+             <green>0</green>
+             <blue>0</blue>
+            </color>
+           </brush>
+          </colorrole>
          </inactive>
          <disabled>
           <colorrole role="WindowText">
@@ -1271,6 +1289,15 @@
           <colorrole role="ToolTipText">
            <brush brushstyle="SolidPattern">
             <color alpha="255">
+             <red>0</red>
+             <green>0</green>
+             <blue>0</blue>
+            </color>
+           </brush>
+          </colorrole>
+          <colorrole role="PlaceholderText">
+           <brush brushstyle="NoBrush">
+            <color alpha="128">
              <red>0</red>
              <green>0</green>
              <blue>0</blue>

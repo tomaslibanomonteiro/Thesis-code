@@ -9,32 +9,33 @@ import pandas as pd
 from backend.run import RunThread
 from utils.defines import (DESIGNER_RUN_TAB, PROB_KEY, ALGO_KEY, SEEDS_KEY, N_GEN_KEY, N_EVAL_KEY, VOTING_KEY, PI_KEY,
                            CLASS_KEY, TERM_KEY, PLOT_PROGRESS_KEY, PLOT_PS_KEY, PLOT_PC_KEY, PLOT_FL_KEY, MEDIAN_KEY,
-                           BEST_KEY, WORST_KEY, AVG_KEY, VALUE_KEY)
+                           BEST_KEY, WORST_KEY, AVG_KEY, VALUE_KEY, PLOT_TYPES_KEY)
 from frontend.plotting import Plotter
 from frontend.edit_window import EditWindow
-from utils.utils import myFileManager, setBold, MyMessageBox, setCombobox, numberPresentation
+from utils.utils import myFileManager, setBold, MyMessageBox, setCombobox, numberPresentation, showAndRaise
+from frontend.small_widgets import MyComboBox
 class RunTab(QFrame):
     """
-    Represents the tab in the GUI that is responsible for 
-    managing and displaying the results of a run 
+        Represents the tab in the GUI that is responsible for 
+        managing and displaying the results of a run 
 
-    Attributes
-    ----------
-        run_thread (RunThread): The thread from which the algorithm will or has run.
-        pi_ids (list): List of performance indicator ids.
-        term_data (DataFrame): The final generation data, averaged across seeds.
-        prob_ids (list): List of problem ids.
-        algo_ids (list): List of algorithm ids.
-        plot_widgets (list): List of plot widgets to prevent them from being garbage collected.
-        
-    Important Methods
-    -------
-        setPlotOptionsTable(event=None, set_algos=False): Sets the checkboxes for the given ids in the tables, when the plotting
-        mode changes, so the user chooses the seeds or the performance indicators to plot.
-        changeTable(): Updates the table based on the selected item id.
-        plot(): Calls the Plotter class to plot the results in the respective plot mode.
-        saveRun(): Saves the run thread object.
-        saveResult(): Saves the result of the run in a csv.
+        Attributes
+        ----------
+            run_thread (RunThread): The thread from which the algorithm will or has run.
+            pi_ids (list): List of performance indicator ids.
+            term_data (DataFrame): The final generation data, averaged across seeds.
+            prob_ids (list): List of problem ids.
+            algo_ids (list): List of algorithm ids.
+            plot_widgets (list): List of plot widgets to prevent them from being garbage collected.
+            
+        Important Methods
+        -------
+            setPlotOptionsTable(event=None, set_algos=False): Sets the checkboxes for the given ids in the tables, when the plotting
+            mode changes, so the user chooses the seeds or the performance indicators to plot.
+            changeTable(): Updates the table based on the selected item id.
+            plot(): Calls the Plotter class to plot the results in the respective plot mode.
+            saveRun(): Saves the run thread object.
+            saveResult(): Saves the result of the run in a csv.
     """
     def __init__(self, run_thread: RunThread, label: str, edit_window: EditWindow):
         super().__init__()
@@ -140,14 +141,29 @@ class RunTab(QFrame):
         self.table.horizontalHeader().sectionDoubleClicked.connect(lambda col: self.headerClick(col, "horizontal"))
         self.table.verticalHeader().sectionDoubleClicked.connect(lambda row: self.headerClick(row, "vertical"))
         self.table.itemDoubleClicked.connect(self.tableItemClick)
-        setCombobox(self.values_comboBox, center_items=True, index_changed_function=self.tableOptionsChanged)
+        setCombobox(self.table_of, center_items=True, index_changed_function=self.tableOptionsChanged)
         setCombobox(self.selected_id, center_items=True, index_changed_function=self.changeTable)
         setCombobox(self.showing_values, center_items=True, index_changed_function=self.changeTable)
 
-        # plot section
+        ## plot section
+        
+        # buttons
         self.plot_button.clicked.connect(self.plot)
-        items = [PLOT_PROGRESS_KEY, PLOT_PS_KEY, PLOT_PC_KEY] if self.run_thread.moo else [PLOT_FL_KEY, PLOT_PROGRESS_KEY]
-        setCombobox(self.plot_comboBox, items, True, self.setPlotOptionsTable)
+        self.edit_param_button.clicked.connect(self.editPlotParameters)
+        # delete the plot type combobox
+        width = self.plot_type_delete.width()
+        self.plot_layout.removeWidget(self.plot_type_delete)
+        self.plot_type_delete.deleteLater()
+        # add new combobox connected to the EditWindow
+        tab=self.edit_window.tabs[PLOT_TYPES_KEY]
+        items = tab.tableToDict().keys()
+        self.plot_type = MyComboBox(items, list(items)[0], tab=tab, key=PLOT_TYPES_KEY, copy_style='plot_type_combobox', widgets_frame=self.edit_window.widgets_frame)
+        self.plot_type.setEditable(True)
+        setCombobox(self.plot_type, None, True, self.setPlotOptionsTable)
+        self.plot_type.setFixedWidth(width)
+        self.plot_layout.insertWidget(2, self.plot_type)
+        self.plot_layout.setAlignment(self.plot_type, Qt.AlignCenter)
+        # set the other comboboxes
         setCombobox(self.plot_prob, self.prob_ids, True)
         setCombobox(self.plot_pi, self.pi_ids, True)
 
@@ -156,7 +172,7 @@ class RunTab(QFrame):
         seed_str = "seed" if self.run_thread.n_seeds == 1 else "different seeds"
         self.n_seeds_label.setText(f"Run on <b>{self.run_thread.n_seeds}</b> {seed_str}")
         self.n_seeds_label.setAlignment(Qt.AlignCenter)
-        self.term_label.setText(f"Termination criteria: <b>{self.run_thread.term_id}</b> <br>(Double click to see parameters)</font>")
+        self.term_label.setText(f"Termination criteria: <b>{self.run_thread.term_id}</b></font>")
         self.term_label.setAlignment(Qt.AlignCenter)
         self.term_label.mouseDoubleClickEvent = self.seeTermination
 
@@ -165,50 +181,17 @@ class RunTab(QFrame):
         
         # set the table
         self.tableOptionsChanged()
+        
         self.setPlotOptionsTable(set_algos=True)
 
-    def setPlotOptionsTable(self, event=None, set_algos=False):
-        """set the checkboxes for the given ids in the tables"""
-
-        # set the checkboxes for the algorithms in the first column
-        if set_algos:
-            row_count = len(self.algo_ids)
-            self.checkBox_table.setRowCount(row_count)
-            for i, algo_id in enumerate(self.algo_ids):
-                checkbox = QCheckBox(algo_id)
-                self.checkBox_table.setCellWidget(i, 0, checkbox)
-                checkbox.setChecked(i == 0)
-
-        # if plot mode is progress, only display one column with the algorithms
-        if self.plot_comboBox.currentText() == PLOT_PROGRESS_KEY:
-            self.checkBox_table.setColumnCount(1)
-        else:
-            # else add a column with the best median and worst runs
-            self.checkBox_table.setColumnCount(2)
-            ids = [BEST_KEY, MEDIAN_KEY, WORST_KEY]
-            header = "Run"
-            
-            # add the possibility to plot the problem if the plot mode is Pareto Set or Parallel Coordinates
-            if self.plot_comboBox.currentText() in [PLOT_PS_KEY, PLOT_PC_KEY]:
-                ids = [PROB_KEY] + ids
-                header = "Prob/Run" 
-            
-            self.checkBox_table.setHorizontalHeaderItem(1, QTableWidgetItem(header))
-        
-            # put the ids checkboxes in self.checkBox_table second column
-            row_count = max(len(ids), len(self.algo_ids))
-            self.checkBox_table.setRowCount(row_count)
-            for i, id in enumerate(ids):
-                checkbox = QCheckBox(str(id))
-                self.checkBox_table.setCellWidget(i, 1, checkbox)
-                checkbox.setChecked(i == 0)
+    # table section methods
                         
     def tableOptionsChanged(self):
         """Change the table widget to display the results for the selected performance indicator"""
                 
-        if self.values_comboBox.currentText() == "Performance Indicator":
+        if self.table_of.currentText() == "Performance Indicator":
             selected_items = self.pi_ids
-        elif self.values_comboBox.currentText() == "Problem":
+        elif self.table_of.currentText() == "Problem":
             selected_items = self.prob_ids
         else:
             raise ValueError("Voting by can only be Performance Indicator or Problem")
@@ -234,9 +217,9 @@ class RunTab(QFrame):
             avg = False
             
         selected_id = self.selected_id.currentText()
-        if self.values_comboBox.currentText() == "Performance Indicator":
+        if self.table_of.currentText() == "Performance Indicator":
             df = df.pivot(index=ALGO_KEY, columns=PROB_KEY, values=selected_id)
-        elif self.values_comboBox.currentText() == "Problem":
+        elif self.table_of.currentText() == "Problem":
             df = df[df[PROB_KEY] == selected_id]
             df.drop(columns=[PROB_KEY], inplace=True)
             df = df.set_index(df.columns[0])
@@ -299,7 +282,7 @@ class RunTab(QFrame):
         
         if orientation == "horizontal":
             item = self.table.horizontalHeaderItem(x)
-            key = PROB_KEY if self.values_comboBox.currentText() == "Performance Indicator" else PI_KEY
+            key = PROB_KEY if self.table_of.currentText() == "Performance Indicator" else PI_KEY
         else:
             item = self.table.verticalHeaderItem(x)
             key = ALGO_KEY
@@ -341,10 +324,10 @@ class RunTab(QFrame):
             lvl2 = BEST_KEY if row_header.endswith(BEST_KEY) else MEDIAN_KEY if row_header.endswith(MEDIAN_KEY) else WORST_KEY
         
         algo_id = row_header
-        if self.values_comboBox.currentText() == "Performance Indicator":
+        if self.table_of.currentText() == "Performance Indicator":
             prob_id = col_header
             pi_id = self.selected_id.currentText()
-        elif self.values_comboBox.currentText() == "Problem":
+        elif self.table_of.currentText() == "Problem":
             prob_id = self.selected_id.currentText()
             pi_id = col_header
         
@@ -361,7 +344,47 @@ class RunTab(QFrame):
         string = f"Parameters for {TERM_KEY} of class {clazz} with id \'{id}\': \n {args}"
         MyMessageBox(string, 'Parameters', warning_icon=False)
         
-    # buttons methods
+    # plot section methods
+    def editPlotParameters(self):
+        """Edit the parameters of the plot"""
+        self.edit_window.openTabsFromList([PLOT_TYPES_KEY])
+        showAndRaise(self.edit_window)
+        
+    def setPlotOptionsTable(self, event=None, set_algos=False):
+        """set the checkboxes for the given ids in the tables"""
+
+        # set the checkboxes for the algorithms in the first column
+        if set_algos:
+            row_count = len(self.algo_ids)
+            self.plot_table.setRowCount(row_count)
+            for i, algo_id in enumerate(self.algo_ids):
+                checkbox = QCheckBox(algo_id)
+                self.plot_table.setCellWidget(i, 0, checkbox)
+                checkbox.setChecked(i == 0)
+
+        # if plot mode is progress, only display one column with the algorithms
+        if self.plot_type.currentText() == PLOT_PROGRESS_KEY:
+            self.plot_table.setColumnCount(1)
+        else:
+            # else add a column with the best median and worst runs
+            self.plot_table.setColumnCount(2)
+            ids = [BEST_KEY, MEDIAN_KEY, WORST_KEY]
+            header = "Run"
+            
+            # add the possibility to plot the problem if the plot mode is Pareto Set or Parallel Coordinates
+            if self.plot_type.currentText() in [PLOT_PS_KEY, PLOT_PC_KEY]:
+                ids = [PROB_KEY] + ids
+                header = "Prob/Run" 
+            
+            self.plot_table.setHorizontalHeaderItem(1, QTableWidgetItem(header))
+        
+            # put the ids checkboxes in self.plot_table second column
+            row_count = max(len(ids), len(self.algo_ids))
+            self.plot_table.setRowCount(row_count)
+            for i, id in enumerate(ids):
+                checkbox = QCheckBox(str(id))
+                self.plot_table.setCellWidget(i, 1, checkbox)
+                checkbox.setChecked(i == 0)
     
     def plot(self):
         """Plot the results"""
@@ -379,7 +402,7 @@ class RunTab(QFrame):
         pi_id = self.plot_pi.currentText()
         
         # get algo ids from the checkboxes on the first column
-        table = self.checkBox_table
+        table = self.plot_table
         algo_ids = [table.cellWidget(i, 0).text() for i in range(len(self.algo_ids)) 
                     if table.cellWidget(i, 0).isChecked()] 
         
@@ -391,13 +414,14 @@ class RunTab(QFrame):
             runs_to_plot = None
         
         # get the plot mode
-        plot_mode = self.plot_comboBox.currentText()
+        plot_mode = self.plot_type.currentText()
         
         # create the plot
         plotter = Plotter(plot_mode, self.label.text(), self.run_thread, self.stats_seeds_df, 
                           pi_id, prob_id, prob_object, algo_ids, runs_to_plot)
         self.plot_widgets.append(plotter)
     
+    # buttons methods
     def saveRun(self):
         """Save the run thread object"""
         

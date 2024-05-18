@@ -124,15 +124,15 @@ class TournamentByCVAndFitness(TournamentSelection):
     
 class RestrictedMatingCTAEA(RestrictedMating):
     def __init__(self, pressure=2, **kwargs):
-        super().__init__(func_comp=comp_by_cv_dom_then_random, **kwargs)
+        super().__init__(func_comp=comp_by_cv_dom_then_random, **kwargs) #@IgnoreException
         
 class BinaryTournament(TournamentSelection):
     def __init__(self, pressure=2, **kwargs):
-        super().__init__(func_comp=binary_tournament, **kwargs)
+        super().__init__(func_comp=binary_tournament, **kwargs) #@IgnoreException
 
 class TournamentByCVThenRandom(TournamentSelection):
     def __init__(self, pressure=2, **kwargs):
-        super().__init__(func_comp=comp_by_cv_then_random, **kwargs)
+        super().__init__(func_comp=comp_by_cv_then_random, **kwargs) #@IgnoreException
         
 class TournamentByRankAndRefLineDist(TournamentSelection):
     def __init__(self, pressure=2, **kwargs):

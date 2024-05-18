@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1178</width>
-    <height>237</height>
+    <height>303</height>
    </rect>
   </property>
   <property name="font">
@@ -347,6 +347,59 @@
    </property>
    <property name="plainText">
     <string>font family and size are copied from the frame's default. Every widget here must have a styleSheet, even if it is empty, for the code to work properly</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="plot_type">
+   <property name="geometry">
+    <rect>
+     <x>440</x>
+     <y>250</y>
+     <width>181</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>181</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>181</width>
+     <height>16777215</height>
+    </size>
+   </property>
+   <property name="editable">
+    <bool>true</bool>
+   </property>
+   <property name="currentIndex">
+    <number>-1</number>
+   </property>
+   <property name="insertPolicy">
+    <enum>QComboBox::InsertAlphabetically</enum>
+   </property>
+   <property name="frame">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>480</x>
+     <y>230</y>
+     <width>121</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Plot type combobox</string>
    </property>
   </widget>
  </widget>

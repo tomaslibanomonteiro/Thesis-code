@@ -13,7 +13,7 @@ from frontend.main_run_tab import RunTab
 from utils.utils import myFileManager, showAndRaise, getAvailableName, MyMessageBox
 from utils.defines import (DESIGNER_HISTORY_FRAME,RUN_OPTIONS_KEYS, DEFAULT_ROW_NUMBERS, DESIGNER_FIXED_TABS,
                            HISTORY_LAYOUT_WIDGETS, MAX_HISTORY_FRAMES, ALGO_KEY, PROB_KEY, PI_KEY, TERM_KEY, 
-                           SEEDS_KEY, MOO_KEY, OPERATORS_ARGS_DICT, RUN_OPTIONS_ARGS_DICT)
+                           SEEDS_KEY, MOO_KEY, PARAMETERS_ARGS_DICT)
 
 class MainTabsWidget(QTabWidget):
     """
@@ -398,7 +398,7 @@ class MainTabsWidget(QTabWidget):
             if not (isinstance(loaded_data['run_options'], dict) and isinstance(loaded_data['parameters'], dict)):
                 MyMessageBox("The Run dictionary is not in the correct format. Must have 'parameters' and 'run_options' keys.")
                 return
-            param_keys = list(OPERATORS_ARGS_DICT.keys()) + list(RUN_OPTIONS_ARGS_DICT.keys()) + [MOO_KEY]
+            param_keys = list(PARAMETERS_ARGS_DICT.keys()) + [MOO_KEY]
             if set(loaded_data['parameters'].keys()) != set(param_keys):
                 MyMessageBox(f"The parameters must have the following keys: {param_keys}.")
                 return

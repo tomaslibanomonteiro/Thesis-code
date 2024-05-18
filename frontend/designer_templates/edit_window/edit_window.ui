@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1036</width>
-    <height>614</height>
+    <width>1032</width>
+    <height>605</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -162,9 +162,34 @@
         </item>
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_7">
-          <property name="topMargin">
-           <number>35</number>
+          <property name="spacing">
+           <number>0</number>
           </property>
+          <property name="topMargin">
+           <number>59</number>
+          </property>
+          <property name="bottomMargin">
+           <number>98</number>
+          </property>
+          <item>
+           <widget class="QPushButton" name="open_plot_types">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>103</width>
+              <height>28</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Edit Plot Types</string>
+            </property>
+           </widget>
+          </item>
           <item>
            <widget class="QPushButton" name="open_run_options">
             <property name="sizePolicy">
@@ -175,7 +200,7 @@
             </property>
             <property name="minimumSize">
              <size>
-              <width>93</width>
+              <width>103</width>
               <height>28</height>
              </size>
             </property>

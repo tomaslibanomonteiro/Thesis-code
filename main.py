@@ -4,8 +4,8 @@ from utils.defines import SEEDS_KEY, TERM_KEY, PI_KEY, ALGO_KEY, PROB_KEY, CROSS
 import pickle
 
 
-OTHER_START = True
-RUN = False
+OTHER_START = False
+RUN = True
 
 def otherStart():
     from thesis.results_pso.start import start

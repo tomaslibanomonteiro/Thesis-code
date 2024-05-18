@@ -43,7 +43,9 @@ REF_DIR_KEY = 'ref_dirs'
 OPERATORS = [MUT_KEY, CROSS_KEY, SEL_KEY, SAMP_KEY, DECOMP_KEY, REF_DIR_KEY]
 
 # PLOTTING
+PLOT_TYPES_KEY = 'plot_types'
 VOTING_KEY = 'Voting'
+
 PLOT_PROGRESS_KEY = 'Progress'
 PLOT_PS_KEY = 'Pareto Sets'
 PLOT_PC_KEY = 'Parallel Coordinates'
@@ -86,7 +88,7 @@ VARIANT = ' variant' # sufix for the variant of an object
 VALUE_TYPES = (int, float, str, bool, type(None), NO_DEFAULT) # to be put in ui table as respective widget 
 ID_COL = 1 # object id col number in the edit parameters tables
 
-from backend.get import (get_algorithm, get_performance_indicator, get_problem, get_termination, get_crossover, 
+from backend.get import (get_algorithm, get_performance_indicator, get_problem, get_termination, get_crossover, get_plot_types,
                          get_decomposition, get_mutation, get_reference_directions, get_sampling, get_selection)
 
 # for the creation of the tabs in the edit window: (key: (tab name, label, get_object, get_options)) 
@@ -102,5 +104,8 @@ RUN_OPTIONS_ARGS_DICT = {PROB_KEY: ('Problems', 'Edit Problems', get_problem),
                     PI_KEY: ('Perf. Ind.', 'Edit Performance Indicators', get_performance_indicator),
                     TERM_KEY: ('Terminations', 'Edit Termination Criteria', get_termination)}
 
-KEY_ARGS_DICT = {**OPERATORS_ARGS_DICT, **RUN_OPTIONS_ARGS_DICT}
+PLOT_TYPES_ARG_DICT = {PLOT_TYPES_KEY: ('Plot Types', 'Edit Plot Types', get_plot_types)}
+                    
+
+PARAMETERS_ARGS_DICT = {**OPERATORS_ARGS_DICT, **RUN_OPTIONS_ARGS_DICT, **PLOT_TYPES_ARG_DICT}
 

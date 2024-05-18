@@ -436,7 +436,7 @@ def get_decomposition(name, *args, **kwargs):
 # VISUALIZATION TECHNIQUES #!?
 # =========================================================================================================
 
-def get_visualization_options(name, *args, **kwargs):
+def get_plot_types(name, *args, **kwargs):
         
     from pymoo.visualization.fitness_landscape import FitnessLandscape
     from pymoo.visualization.heatmap import Heatmap
@@ -447,7 +447,12 @@ def get_visualization_options(name, *args, **kwargs):
     from pymoo.visualization.scatter import Scatter
     from pymoo.visualization.star_coordinate import StarCoordinate
 
-    VISUALIZATION = {
+    PLOT_TYPES_SINGLE = {
+        "fitness-landscape": FitnessLandscape,
+        "scatter": Scatter,
+    }
+
+    PLOT_TYPES_MULTI = {
         "scatter": Scatter,
         "heatmap": Heatmap,
         "pcp": PCP,
@@ -455,7 +460,6 @@ def get_visualization_options(name, *args, **kwargs):
         "radar": Radar,
         "radviz": Radviz,
         "star": StarCoordinate,
-        "fitness-landscape": FitnessLandscape
     }
-
-    return returnObjectOrOptions(name, VISUALIZATION, VISUALIZATION, *args, **kwargs)
+    
+    return returnObjectOrOptions(name, PLOT_TYPES_SINGLE, PLOT_TYPES_MULTI, *args, **kwargs)

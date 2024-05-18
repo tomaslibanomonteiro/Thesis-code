@@ -44,7 +44,11 @@ class MyCallback(Callback):
                 
         # get the performance indicators values
         for pi_id, pi_object in zip(self.pi_ids, self.pi_objects):
-            pi = pi_object.do(opt_feas, opt=opt, pop=pop, pop_feas=pop_feas, n_eval=n_eval) if opt_feas is not np.nan else np.nan
+            # try to instantiate giving all the kwargs in case the pi needs them
+            try:
+                pi = pi_object.do(opt_feas, opt=opt, pop=pop, pop_feas=pop_feas, n_eval=n_eval) if opt_feas is not np.nan else np.nan #@IgnoreException
+            except:
+                pi = pi_object.do(opt_feas) if opt_feas is not np.nan else np.nan
             # add the data to the data frame    
             self.data[pi_id].append(pi)
 

@@ -1,6 +1,6 @@
 import inspect
 
-from utils.defines import (NO_DEFAULT, OPERATORS, VALUE_TYPES, KEY_ARGS_DICT, MUT_KEY, CROSS_KEY, CLASS_KEY, MOO_KEY,
+from utils.defines import (NO_DEFAULT, OPERATORS, VALUE_TYPES, PARAMETERS_ARGS_DICT, MUT_KEY, CROSS_KEY, CLASS_KEY, MOO_KEY,
                            SEL_KEY, SAMP_KEY, DECOMP_KEY, REF_DIR_KEY, PROB_KEY, ALGO_KEY, PI_KEY, TERM_KEY, SEEDS_KEY, 
                            CONVERT_KEY)
 
@@ -28,7 +28,7 @@ class Defaults():
         self.parameters = {}
         self.parameters[MOO_KEY] = moo
         self.get_dict = {}
-        for key, (_, _, get_function) in KEY_ARGS_DICT.items():
+        for key, (_, _, get_function) in PARAMETERS_ARGS_DICT.items():
             self.parameters[key] = self.get_table_dict(get_function(self.get_str))
             self.get_dict[key] = get_function
                                       
