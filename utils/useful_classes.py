@@ -59,7 +59,7 @@ class ScaledDTLZ(ScaledProblem):
 import pymoo.gradient.toolbox as anp
 from pymoo.problems.single import Problem
 
-class Rastrigin(Problem):
+class RastriginExplicitLimits(Problem):
     def __init__(self, n_var=2, A=10.0, xl=-5, xu=5, **kwargs):
         super().__init__(n_var=n_var, n_obj=1, xl=xl, xu=xu, vtype=float, **kwargs)
         self.A = A
@@ -74,7 +74,7 @@ class Rastrigin(Problem):
     def _calc_pareto_set(self):
         return np.full(self.n_var, 0)
 
-class Rosenbrock(Problem):
+class RosenbrockExplicitLimits(Problem):
     def __init__(self, n_var=2, xl=-2.048, xu=2.048, **kwargs):
         super().__init__(n_var=n_var, n_obj=1, n_ieq_constr=0, xl=xl, xu=xu, vtype=float, **kwargs)
 
@@ -91,7 +91,7 @@ class Rosenbrock(Problem):
     def _calc_pareto_set(self):
         return np.full(self.n_var, 1.0)
     
-class Griewank(Problem):
+class GriewankExplicitLimits(Problem):
     def __init__(self, n_var=2, xl=-600, xu=600, **kwargs):
         super().__init__(n_var=n_var, n_obj=1, xl=xl, xu=xu, vtype=float, **kwargs)
 
@@ -225,3 +225,126 @@ class MinFitnessTermination(Termination):
         opt_feas = opt[opt_feas_idx]
         
         return 1 if len(opt_feas) > 0 and opt_feas[0][0] <= self.f_threshold else 0
+
+################################################################################################################################
+#######################################################    PLOTTING   ###########################################################
+################################################################################################################################
+
+from pymoo.visualization.scatter import Plot
+from pymoo.util.misc import all_combinations
+from utils.utils import MyMessageBox
+class MyFitnessLandscape(Plot):
+    def __init__(self,
+                 problem,
+                 n_samples_2D=500,
+                 n_samples_3D=30,
+                 colorbar=False,
+                 contour_levels=30,
+                 max_n_solutions=100,
+                 show_best_sol=True,
+                 labels=True,
+                 **kwargs):
+
+        super().__init__(**kwargs)
+        self.problem = problem
+        self.n_samples_2D = n_samples_2D
+        self.n_samples_3D = n_samples_3D
+        self.colorbar = colorbar
+        self.sets_of_points = []
+        self.sets_labels = []
+        self.contour_levels = contour_levels
+        self.max_n_solutions = max_n_solutions
+        self.show_best_sol = show_best_sol
+        self.labels = labels
+
+        self.kwargs_surface = dict(cmap="summer", rstride=1, cstride=1, alpha=0.2)
+        self.kwargs_contour = dict(linestyles="solid", offset=-1)
+        self.kwargs_contour_labels = None
+
+    def _do(self):
+
+        problem, sets_of_points = self.problem, self.sets_of_points
+
+        # find the min and max values of the decision variable between the sets of points
+        if self.zoom_on_solutions and sets_of_points != []:
+            x_min = min([min(points[:, 0]) for points in sets_of_points])
+            x_max = max([max(points[:, 0]) for points in sets_of_points])
+        else:
+            x_min, x_max = problem.xl[0], problem.xu[0]
+
+        if problem.n_var == 1 and problem.n_obj == 1:
+
+            self.init_figure()
+            X = np.linspace(x_min, x_max, self.n_samples_2D)[:, None]
+            Z = problem.evaluate(X, return_values_of=["F"])
+            self.ax.plot(X, Z, alpha=0.2)
+            self.ax.set_xlabel("x")
+            self.ax.set_ylabel("f(x)")
+            
+            self.plot_points()
+
+        elif problem.n_var == 2 and problem.n_obj == 1:
+            n_samples = self.n_samples_3D
+
+            if self.zoom_on_solutions and sets_of_points != []:
+                y_min = min([min(points[:, 1]) for points in sets_of_points])
+                y_max = max([max(points[:, 1]) for points in sets_of_points])
+            else:
+                y_min, y_max = problem.xl[1], problem.xu[1]
+            
+            A = np.linspace(x_min, x_max, n_samples)
+            B = np.linspace(y_min, y_max, n_samples)
+            X = all_combinations(A, B)
+
+            F = np.reshape(problem.evaluate(X, return_values_of=["F"]), (n_samples, n_samples))
+
+            _X = X[:, 0].reshape((n_samples, n_samples))
+            _Y = X[:, 1].reshape((n_samples, n_samples))
+            _Z = F.reshape((n_samples, n_samples))
+
+            self.init_figure(plot_3D=True)
+
+            surf = self.ax.plot_surface(_X, _Y, _Z, **self.kwargs_surface)
+            if self.colorbar:
+                self.fig.colorbar(surf)
+            
+            self.plot_points()
+        else:
+            raise Exception("Only landscapes of problems with one or two variables and one objective can be visualized.") #@IgnoreException
+
+    def plot_points(self):
+        
+        for points, (best_label, gen_label), in zip(self.sets_of_points, self.sets_labels):
+            # if points have 2 dimensions, add the third dimension with the fitness value
+            best_label, gen_label = best_label, gen_label if self.labels else None, None
+            if len(points[0]) in [2,3]:
+                x,y = points[1:, 0], points[1:, 1]
+                best_x, best_y = points[0, 0], points[0, 1]
+                if len(points[0]) == 2:
+                    self.ax.scatter(x, y, s=10, label=gen_label, alpha=0.5)
+                    self.ax.scatter(best_x, best_y, s=50, label=best_label, alpha=1) if self.show_best_sol else None
+                if len(points[0]) == 3:
+                    z, best_z = points[1:, 2], points[0, 2]
+                    self.ax.scatter(x, y, z, s=20, label=gen_label, alpha=0.5)
+                    self.ax.scatter(best_x, best_y, best_z, s=100, label=best_label, alpha=1) if self.show_best_sol else None
+            else:
+                self.sets_of_points = []
+                MyMessageBox(f"Solutions have {len(points[0])-1} dimensions in decision space, only 1 or 2 are supported")
+                    
+    def add(self, points, label):
+        
+        self.legend = True
+        
+        # get the points coordinates from the points arg
+        best_point = points[0, :]
+        
+        # if the number of points is greater than 10, get a random sample of 10 points
+        cutoff = 100
+        if len(points[:, 0]) > cutoff:
+            points = points[np.random.choice(len(points[1:, 0]), cutoff, replace=False), :]
+        gen_label = label
+        best_label = label + f" (Best sol)"
+        
+        points = np.concatenate((best_point[np.newaxis,:], points))
+        self.sets_of_points.append(points)  
+        self.sets_labels.append((best_label, gen_label))

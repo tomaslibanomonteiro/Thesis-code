@@ -46,11 +46,6 @@ OPERATORS = [MUT_KEY, CROSS_KEY, SEL_KEY, SAMP_KEY, DECOMP_KEY, REF_DIR_KEY]
 PLOT_TYPES_KEY = 'plot_types'
 VOTING_KEY = 'Voting'
 
-PLOT_PROGRESS_KEY = 'Progress'
-PLOT_PS_KEY = 'Pareto Sets'
-PLOT_PC_KEY = 'Parallel Coordinates'
-PLOT_FL_KEY = 'Fitness Landscape'
-
 # OTHERS
 CLASS_KEY = 'Class' # key from the class Default dictionary to get the class name 
 N_EVAL_KEY = 'n_eval' # for the dataframes

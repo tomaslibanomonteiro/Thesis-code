@@ -6,6 +6,7 @@ from pymoo.visualization.pcp import PCP
 from PyQt5.QtWidgets import QVBoxLayout, QWidget
 import pandas as pd
 import numpy as np
+from abc import abstractmethod
 
 import matplotlib
 matplotlib.use('Qt5Agg')
@@ -14,201 +15,59 @@ from matplotlib.figure import Figure
 
 from backend.run import RunThread
 from backend.run import RunThread
-from utils.defines import PROB_KEY, ALGO_KEY, SEEDS_KEY, N_EVAL_KEY, PLOT_PROGRESS_KEY, PLOT_PS_KEY, PLOT_PC_KEY, PLOT_FL_KEY
+from utils.defines import PROB_KEY, ALGO_KEY, SEEDS_KEY, N_EVAL_KEY, CONVERT_KEY
 from utils.utils import MyMessageBox
-
-class MyFitnessLandscape(Plot):
-    def __init__(self,
-                 problem,
-                 n_samples_2D=500,
-                 n_samples_3D=30,
-                 colorbar=False,
-                 contour_levels=30,
-                 kwargs_surface=None,
-                 kwargs_contour=None,
-                 kwargs_contour_labels=None,
-                 **kwargs):
-
-
-        super().__init__(**kwargs)
-        self.problem = problem
-        self.n_samples_2D = n_samples_2D
-        self.n_samples_3D = n_samples_3D
-        self.colorbar = colorbar
-        self.sets_of_points = []
-        self.sets_labels = []
-        self.contour_levels = contour_levels
-
-        self.kwargs_surface = kwargs_surface
-        if self.kwargs_surface is None:
-            self.kwargs_surface = dict(cmap="summer", rstride=1, cstride=1, alpha=0.2)
-
-        self.kwargs_contour = kwargs_contour
-        if self.kwargs_contour is None:
-            self.kwargs_contour = dict(linestyles="solid", offset=-1)
-
-        self.kwargs_contour_labels = kwargs_contour_labels
-
-    def _do(self):
-
-        problem, sets_of_points = self.problem, self.sets_of_points
-
-        # find the min and max values of the decision variable between the sets of points
-        x_min, x_max = problem.xl[0], problem.xu[0] #!
-        # if sets_of_points == []:
-        #     x_min, x_max = problem.xl[0], problem.xu[0]
-        # else:
-        #     x_min = min([min(points[:, 0]) for points in sets_of_points])
-        #     x_max = max([max(points[:, 0]) for points in sets_of_points])
-
-        if problem.n_var == 1 and problem.n_obj == 1:
-
-            self.init_figure()
-            X = np.linspace(x_min, x_max, self.n_samples_2D)[:, None]
-            Z = problem.evaluate(X, return_values_of=["F"])
-            self.ax.plot(X, Z, alpha=0.2)
-            self.ax.set_xlabel("x")
-            self.ax.set_ylabel("f(x)")
-            
-            self.plot_points()
-
-        elif problem.n_var == 2 and problem.n_obj == 1:
-            n_samples = self.n_samples_3D
-
-            y_min, y_max = problem.xl[1], problem.xu[1] #!
-            # if sets_of_points == []:
-            #     y_min, y_max = problem.xl[1], problem.xu[1]
-            # else:
-            #     y_min = min([min(points[:, 1]) for points in sets_of_points])
-            #     y_max = max([max(points[:, 1]) for points in sets_of_points])
-            
-            A = np.linspace(x_min, x_max, n_samples)
-            B = np.linspace(y_min, y_max, n_samples)
-            X = all_combinations(A, B)
-
-            F = np.reshape(problem.evaluate(X, return_values_of=["F"]), (n_samples, n_samples))
-
-            _X = X[:, 0].reshape((n_samples, n_samples))
-            _Y = X[:, 1].reshape((n_samples, n_samples))
-            _Z = F.reshape((n_samples, n_samples))
-
-            self.init_figure(plot_3D=True)
-
-            surf = self.ax.plot_surface(_X, _Y, _Z, **self.kwargs_surface)
-            if self.colorbar:
-                self.fig.colorbar(surf)
-            
-            self.plot_points()
-        else:
-            raise Exception("Only landscapes of problems with one or two variables and one objective can be visualized.") #@IgnoreException
-
-    def plot_points(self):
-        
-        for points, (best_label, gen_label), in zip(self.sets_of_points, self.sets_labels):
-            # if points have 2 dimensions, add the third dimension with the fitness value
-            if len(points[0]) in [2,3]:
-                x,y = points[1:, 0], points[1:, 1]
-                best_x, best_y = points[0, 0], points[0, 1]
-                if len(points[0]) == 2:
-                    self.ax.scatter(x, y, s=10, label=gen_label, alpha=0.5)
-                    self.ax.scatter(best_x, best_y, s=50, label=best_label, alpha=1)
-                if len(points[0]) == 3:
-                    z, best_z = points[1:, 2], points[0, 2]
-                    self.ax.scatter(x, y, z, s=20, label=gen_label, alpha=0.5)
-                    self.ax.scatter(best_x, best_y, best_z, s=100, label=best_label, alpha=1)
-            else:
-                self.sets_of_points = []
-                MyMessageBox(f"Solutions have {len(points[0])-1} dimensions in decision space, only 1 or 2 are supported")
-                    
-    def add(self, points, label):
-        
-        self.legend = True
-        
-        # get the points coordinates from the points arg
-        best_point = points[0, :]
-        
-        # if the number of points is greater than 10, get a random sample of 10 points
-        cutoff = 100
-        if len(points[:, 0]) > cutoff:
-            points = points[np.random.choice(len(points[1:, 0]), cutoff, replace=False), :]
-        gen_label = label
-        best_label = label + f" (Best sol)"
-        
-        points = np.concatenate((best_point[np.newaxis,:], points))
-        self.sets_of_points.append(points)  
-        self.sets_labels.append((best_label, gen_label))
+from utils.useful_classes import MyFitnessLandscape
+class PlotSectionOptions():
+    def __init__(self, pi: bool, exclusive_pi: bool, prob: bool, avg: bool):
+        self.pi = pi
+        self.exclusive_pi = exclusive_pi
+        self.prob = prob
+        self.avg = avg
         
 class MplCanvas(FigureCanvasQTAgg):
     def __init__(self, width=5, height=4, dpi=100, fig=None, axes=None):
         fig = Figure(figsize=(width, height), dpi=dpi) if fig is None else fig
         self.axes = fig.add_subplot(111) if axes is None else axes
         super(MplCanvas, self).__init__(fig)
-    
-class Plotter(QWidget):
+
+class QPlot(QWidget):
     """
-        Used to create different types of plots based on the provided plot_type.
-
-        plot_type can be:
-        ----------------
-        
-        - PLOT_PROGRESS_KEY: plot the progress of the checked algorithms for the given problem 
-        and checked performance indicators     
-        
-        Only for MOO problems:
-        - PLOT_PS_KEY: plot the Pareto front of the checked algorithms for the given problem and checked seeds
-        - PLOT_PC_KEY: plot the Parallel Coordinates of the checked algorithms for the given problem and checked seeds
-        
-        Only for SOO problems:
-        - PLOT_FL_KEY: plot the fitness landscape of the checked algorithms for the given problem and checked seeds
-
-
-        Attributes
-        ----------
-        
-        plot_type: The type of the plot to be created.
-        sc: The matplotlib canvas.
-        run_thread: The thread in which the run is happening.
-        prob_id: The ID of the problem.
-        prob_object: The object of the problem.
-        algo_ids: The list of algorithm IDs.
-        other_ids: The list of other IDs.
-        title: The title of the plot.
-
-        Methods
-        -------
-        
-        __init__(self, plot_type, prob_id, prob_object, run_thread, algo_ids, other_ids, title): Initializes the Plotter object with the provided parameters.
-        plotRespectivetype(self): Checks the plot_type and calls the respective plotting method.
-        plotProgress(self): Plots the progress of the checked algorithms for the given problem and checked performance indicators.
-        plotPCP(self): Plots the Parallel Coordinates of the checked algorithms for the given problem and checked seeds.
-        plotParetoSets(self): Plots the Pareto front of the checked algorithms for the given problem and checked seeds.
-        plotFitnessLandscape(self): Plots the fitness landscape of the checked algorithms for the given problem and checked seeds.
-        plotSolutions(self, plot): Plots the best solution for each run_id.
+        Abstract class for plotting in the GUI. It is a QWidget that contains a MplCanvas and a NavigationToolbar2QT.
+        The plot_id is the identifier of the plot, and the window_title is the title of the window.
+        Child classes must implement the sendPlotSectionOptions and _plot methods.
     """
-    def __init__(self, plot_type, title, run_thread:RunThread, stats_seeds_df:pd.DataFrame, 
-                 pi_id, prob_id, prob_object, algo_ids, runs_to_plot):
+    def __init__(self, plot_id, window_title, algo_ids, prob_id, pi_id, runs_to_plot, run_thread: RunThread):
         super().__init__()
-            
-        self.plot_type = plot_type
-        self.run_thread = run_thread
-        self.stats_seeds_df = stats_seeds_df
         
-        self.pi_id = pi_id
-        self.prob_id = prob_id
-        self.prob_object = prob_object
         self.algo_ids = algo_ids
+        self.prob_id = prob_id
+        self.pi_id = pi_id
         self.runs_to_plot = runs_to_plot
-
+        self.run_thread = run_thread
+        self.plot_id = plot_id
+        self.window_title = window_title
+        self.stats_seeds_df = None
         self.sc = None
 
+    @staticmethod
+    @abstractmethod
+    def sendPlotSectionOptions() -> PlotSectionOptions:
+        pass
+
+    @abstractmethod
+    def _plot(self) -> MplCanvas:
+        pass
+    
+    def plot(self):
         try:
-            self.plotRespectivetype() #@IgnoreException
+            self.sc = self._plot() #@IgnoreException
         except Exception as e: 
-            MyMessageBox(f"Could not plot in type {plot_type}. The following error occurred:\n{e}")
+            MyMessageBox(f"Could not plot '{self.plot_id}'. The following error occurred:\n{e}")
             return
         
         if self.sc is None:
-            MyMessageBox(f"Could not plot in type {plot_type}. No source was created")
+            MyMessageBox(f"Could not plot '{self.plot_id}'. No source was created")
             return
         
         # Create toolbar, passing canvas as first parament, parent (self, the CustomDialog) as second.
@@ -219,102 +78,9 @@ class Plotter(QWidget):
         layout.addWidget(self.sc)
 
         self.setLayout(layout)
-        self.setWindowTitle(title)
+        self.setWindowTitle(self.window_title)
         self.show()
 
-    def plotRespectivetype(self):
-        if self.plot_type == PLOT_PROGRESS_KEY:
-            self.plotProgress()
-        elif self.plot_type == PLOT_PS_KEY:
-            self.plotParetoSets()
-        elif self.plot_type == PLOT_PC_KEY:
-            self.plotPCP()
-        elif self.plot_type == PLOT_FL_KEY:
-            self.plotFitnessLandscape()
-        else:        
-            raise ValueError(f"Plot type can only be {PLOT_PROGRESS_KEY}, {PLOT_PC_KEY}, {PLOT_PS_KEY} or {PLOT_FL_KEY}") #@IgnoreException
-
-    def plotProgress(self):
-        """Plot the progress of the checked algorithms for the given problem and checked performance indicators"""
-        # get the data for the given problem
-        
-        if len(self.algo_ids) == 0:
-            raise Exception("No algorithms were selected") #@IgnoreException
-            
-        self.sc, pi_id, data = MplCanvas(), self.pi_id, self.run_thread.data
-        
-        df_prob = data[data[PROB_KEY] == self.prob_id]
-        
-        # get the data for the given algorithms
-        for algo_id in self.algo_ids:
-            df_algo = df_prob[df_prob[ALGO_KEY] == algo_id]
-            # get the data for the given performance indicator
-            df_pi = df_algo[[N_EVAL_KEY, pi_id]]
-            df_pi = df_pi.dropna(subset=[pi_id])  # Filter rows where pi_id has nan value
-            
-            # calculate mean and standard deviation
-            mean = df_pi.groupby(N_EVAL_KEY)[pi_id].mean()
-            std = df_pi.groupby(N_EVAL_KEY)[pi_id].std()
-
-            # plot the data
-            self.sc.axes.plot(mean.index, mean.values, label=f"{algo_id}")
-            self.sc.axes.fill_between(mean.index, (mean-std).values, (mean+std).values, alpha=0.2)
-                
-        # name the plot
-        self.sc.axes.set_title(f"'{pi_id}' progress on problem '{self.prob_id}'")
-        # add labels
-        self.sc.axes.set_xlabel('Number of evaluations')
-        self.sc.axes.set_ylabel('Performance Indicator')
-        # add legend
-        self.sc.axes.legend()
-
-    def plotPCP(self):
-        """Plot the Parallel Coordinates of the checked algorithms for the given problem and checked seeds"""
-        
-        if PROB_KEY not in self.runs_to_plot and len(self.algo_ids) == 0:
-            raise Exception("No algorithms or problem were selected to be plotted") #@IgnoreException
-        
-        plot = PCP(legend=True)
-        
-        # see if other ids contain PROB_KEY, if so, get it out of the list
-        if PROB_KEY in self.runs_to_plot:
-            pareto_front = self.prob_object.pareto_front()
-            if pareto_front is None:
-                raise Exception(f"Problem '{self.prob_id}' does not have a Pareto Front available") #@IgnoreException
-            else:
-                plot.add(pareto_front, label = self.prob_id)
-            self.runs_to_plot.remove(PROB_KEY)
-            
-        self.plotSolutions(plot)        
-        self.sc.axes.set_title(f"Parallel Coordinates on Problem: '{self.prob_id}'", y=1.05)
-
-    def plotParetoSets(self):
-        """Plot the Pareto front of the checked algorithms for the given problem and checked seeds"""
-        
-        if self.prob_object.n_obj not in [2,3]:
-            raise Exception("Pareto Sets can only be plotted for problems with 2 or 3 objectives") #@IgnoreException
-        
-        plot = Scatter(title=f"Scatter Plot on Problem: '{self.prob_id}'", legend=True)
-    
-        # see if other ids contain PROB_KEY, if so, get it out of the list
-        if PROB_KEY in self.runs_to_plot:
-            if self.prob_object.pareto_front() is None:
-                MyMessageBox(f"Problem '{self.prob_id}' does not have a Pareto Front available")
-            else:
-                plot.add(self.prob_object.pareto_front(), label = self.prob_id)
-            self.runs_to_plot.remove(PROB_KEY)
-            
-        self.plotSolutions(plot)
-        
-    def plotFitnessLandscape(self):
-        """Plot the fitness landscape of the checked algorithms for the given problem and checked seeds"""
-        
-        # raises its own exceptions
-        plot = MyFitnessLandscape(self.prob_object, title=f"Fitness Landscape on Problem: '{self.prob_id}'")
-        self.plotSolutions(plot)
-        if plot.sets_of_points == []:
-            plot.ax.get_legend().remove()
-        
     def plotSolutions(self, plot:Plot, **kwargs):
         
         stats, filtered_df = self.stats_seeds_df, pd.DataFrame()
@@ -346,4 +112,123 @@ class Plotter(QWidget):
             plot.ax.legend(by_label.values(), by_label.keys())
         
         self.sc = MplCanvas(fig = plot.fig, axes=plot.ax)   
+
+class QFitnessLandscape(QPlot):
+    def __init__(self,
+                 problem='prob_object' + CONVERT_KEY,
+                 n_samples_2D=500,
+                 n_samples_3D=30,
+                 colorbar=False,
+                 contour_levels=30,
+                 max_n_solutions=100,
+                 show_best_sol=True,
+                 labels=True,
+                 **kwargs):
+    
+        self.problem = problem
+        self.n_samples_2D = n_samples_2D
+        self.n_samples_3D = n_samples_3D
+        self.colorbar = colorbar
+        self.contour_levels = contour_levels
+        self.max_n_solutions = max_n_solutions
+        self.show_best_sol = show_best_sol
+        self.labels = labels
+        self.kwargs = kwargs
+        self.pymoo_plot = None
+            
+    def getPlotSectionArgs(self, algo_ids, prob_id, pi_id, runs_to_plot, run_thread):
+        super().__init__(self, "fitness_landscape", "Fitness Landscape", algo_ids, 
+                         prob_id, pi_id, runs_to_plot, run_thread)
+
+    def _plot(self):
+        self.pymoo_plot = MyFitnessLandscape(self.problem, n_samples_2D=self.n_samples_2D, n_samples_3D=self.n_samples_3D,
+                                             colorbar=self.colorbar, contour_levels=self.contour_levels,
+                                             max_n_solutions=self.max_n_solutions, show_best_sol=self.show_best_sol,
+                                             labels=self.labels, **self.kwargs)
+        self.plotSolutions(self.pymoo_plot)
+        
+    def sendPlotSectionOptions() -> PlotSectionOptions:
+        return PlotSectionOptions(pi=False, exclusive_pi=False, prob=False, avg=False)
+
+    # def plotProgress(self):
+    #     """Plot the progress of the checked algorithms for the given problem and checked performance indicators"""
+    #     # get the data for the given problem
+        
+    #     if len(self.algo_ids) == 0:
+    #         raise Exception("No algorithms were selected") #@IgnoreException
+            
+    #     self.sc, pi_id, data = MplCanvas(), self.pi_id, self.run_thread.data
+        
+    #     df_prob = data[data[PROB_KEY] == self.prob_id]
+        
+    #     # get the data for the given algorithms
+    #     for algo_id in self.algo_ids:
+    #         df_algo = df_prob[df_prob[ALGO_KEY] == algo_id]
+    #         # get the data for the given performance indicator
+    #         df_pi = df_algo[[N_EVAL_KEY, pi_id]]
+    #         df_pi = df_pi.dropna(subset=[pi_id])  # Filter rows where pi_id has nan value
+            
+    #         # calculate mean and standard deviation
+    #         mean = df_pi.groupby(N_EVAL_KEY)[pi_id].mean()
+    #         std = df_pi.groupby(N_EVAL_KEY)[pi_id].std()
+
+    #         # plot the data
+    #         self.sc.axes.plot(mean.index, mean.values, label=f"{algo_id}")
+    #         self.sc.axes.fill_between(mean.index, (mean-std).values, (mean+std).values, alpha=0.2)
+                
+    #     # name the plot
+    #     self.sc.axes.set_title(f"'{pi_id}' progress on problem '{self.prob_id}'")
+    #     # add labels
+    #     self.sc.axes.set_xlabel('Number of evaluations')
+    #     self.sc.axes.set_ylabel('Performance Indicator')
+    #     # add legend
+    #     self.sc.axes.legend()
+
+    # def plotPCP(self):
+    #     """Plot the Parallel Coordinates of the checked algorithms for the given problem and checked seeds"""
+        
+    #     if PROB_KEY not in self.runs_to_plot and len(self.algo_ids) == 0:
+    #         raise Exception("No algorithms or problem were selected to be plotted") #@IgnoreException
+        
+    #     plot = PCP(legend=True)
+        
+    #     # see if other ids contain PROB_KEY, if so, get it out of the list
+    #     if PROB_KEY in self.runs_to_plot:
+    #         pareto_front = self.prob_object.pareto_front()
+    #         if pareto_front is None:
+    #             raise Exception(f"Problem '{self.prob_id}' does not have a Pareto Front available") #@IgnoreException
+    #         else:
+    #             plot.add(pareto_front, label = self.prob_id)
+    #         self.runs_to_plot.remove(PROB_KEY)
+            
+    #     self.plotSolutions(plot)        
+    #     self.sc.axes.set_title(f"Parallel Coordinates on Problem: '{self.prob_id}'", y=1.05)
+
+    # def plotParetoSets(self):
+    #     """Plot the Pareto front of the checked algorithms for the given problem and checked seeds"""
+        
+    #     if self.prob_object.n_obj not in [2,3]:
+    #         raise Exception("Pareto Sets can only be plotted for problems with 2 or 3 objectives") #@IgnoreException
+        
+    #     plot = Scatter(title=f"Scatter Plot on Problem: '{self.prob_id}'", legend=True)
+    
+    #     # see if other ids contain PROB_KEY, if so, get it out of the list
+    #     if PROB_KEY in self.runs_to_plot:
+    #         if self.prob_object.pareto_front() is None:
+    #             MyMessageBox(f"Problem '{self.prob_id}' does not have a Pareto Front available")
+    #         else:
+    #             plot.add(self.prob_object.pareto_front(), label = self.prob_id)
+    #         self.runs_to_plot.remove(PROB_KEY)
+            
+    #     self.plotSolutions(plot)
+        
+    # def plotFitnessLandscape(self):
+    #     """Plot the fitness landscape of the checked algorithms for the given problem and checked seeds"""
+        
+    #     # raises its own exceptions
+    #     plot = MyFitnessLandscape(self.prob_object, title=f"Fitness Landscape on Problem: '{self.prob_id}'")
+    #     self.plotSolutions(plot)
+    #     if plot.sets_of_points == []:
+    #         plot.ax.get_legend().remove()
+        
     

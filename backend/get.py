@@ -215,7 +215,7 @@ def get_problem(name, *args, **kwargs):
                                        G19, G20, G21, G22, G23, G24, Ackley,
                                        CantileveredBeam, Himmelblau, PressureVessel,
                                        Schwefel, Sphere, Zakharov) # Griewank, Rastrigin, Rosenbrock overwritten to set xl and xu
-    from utils.useful_classes import RandomKnapsackMulti, RandomKnapsackSingle, ScaledDTLZ, Griewank, Rastrigin, Rosenbrock
+    from utils.useful_classes import RandomKnapsackMulti, RandomKnapsackSingle, ScaledDTLZ, GriewankExplicitLimits, RastriginExplicitLimits, RosenbrockExplicitLimits
     
     PROBLEM_SINGLE = {
         "ackley": Ackley,
@@ -244,12 +244,12 @@ def get_problem(name, *args, **kwargs):
         "g23": G23,
         "g24": G24,
         "cantilevered_beam": CantileveredBeam,
-        "griewank": Griewank,
+        "griewank": GriewankExplicitLimits,
         "himmelblau": Himmelblau,
         "soo_rnd_knp": RandomKnapsackSingle,
         "pressure_vessel": PressureVessel,
-        "rastrigin": Rastrigin,
-        "rosenbrock": Rosenbrock,
+        "rastrigin": RastriginExplicitLimits,
+        "rosenbrock": RosenbrockExplicitLimits,
         "schwefel": Schwefel,
         "sphere": Sphere,
         "zakharov": Zakharov,
@@ -428,7 +428,6 @@ def get_decomposition(name, *args, **kwargs):
 
 def get_plot_types(name, *args, **kwargs):
         
-    from pymoo.visualization.fitness_landscape import FitnessLandscape
     from pymoo.visualization.heatmap import Heatmap
     from pymoo.visualization.pcp import PCP
     from pymoo.visualization.petal import Petal
@@ -436,9 +435,10 @@ def get_plot_types(name, *args, **kwargs):
     from pymoo.visualization.radviz import Radviz
     from pymoo.visualization.scatter import Scatter
     from pymoo.visualization.star_coordinate import StarCoordinate
-
+    from frontend.plotting import QFitnessLandscape
+    
     PLOT_TYPES_SINGLE = {
-        "fitness-landscape": FitnessLandscape,
+        "fitness-landscape": QFitnessLandscape,
         "scatter": Scatter,
     }
 
