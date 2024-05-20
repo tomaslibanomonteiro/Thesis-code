@@ -18,6 +18,7 @@ from backend.run import RunThread
 from utils.defines import PROB_KEY, ALGO_KEY, SEEDS_KEY, N_EVAL_KEY, CONVERT_KEY
 from utils.utils import MyMessageBox
 from utils.useful_classes import MyFitnessLandscape
+
 class PlotSectionOptions():
     def __init__(self, pi: bool, exclusive_pi: bool, prob: bool, avg: bool):
         self.pi = pi
@@ -37,31 +38,34 @@ class QPlot(QWidget):
         The plot_id is the identifier of the plot, and the window_title is the title of the window.
         Child classes must implement the sendPlotSectionOptions and _plot methods.
     """
-    def __init__(self, plot_id, window_title, algo_ids, prob_id, pi_id, runs_to_plot, run_thread: RunThread):
+    def __init__(self, plot_id, window_title):
         super().__init__()
-        
+        self.plot_id = plot_id
+        self.window_title = window_title        
+        self.sc = None
+
+    def getPlotSectionArgs(self, algo_ids, prob_id, pi_id, runs_to_plot, run_thread, stats_seeds_df):
         self.algo_ids = algo_ids
         self.prob_id = prob_id
         self.pi_id = pi_id
         self.runs_to_plot = runs_to_plot
         self.run_thread = run_thread
-        self.plot_id = plot_id
-        self.window_title = window_title
-        self.stats_seeds_df = None
-        self.sc = None
+        self.stats_seeds_df = stats_seeds_df
 
     @staticmethod
     @abstractmethod
     def sendPlotSectionOptions() -> PlotSectionOptions:
+        """Return the options to set the plot section"""
         pass
-
+    
     @abstractmethod
-    def _plot(self) -> MplCanvas:
+    def createCanvas(self) -> MplCanvas:
+        """Create the source to be plotted"""
         pass
     
     def plot(self):
         try:
-            self.sc = self._plot() #@IgnoreException
+            self.sc = self.createCanvas() #@IgnoreException
         except Exception as e: 
             MyMessageBox(f"Could not plot '{self.plot_id}'. The following error occurred:\n{e}")
             return
@@ -81,7 +85,7 @@ class QPlot(QWidget):
         self.setWindowTitle(self.window_title)
         self.show()
 
-    def plotSolutions(self, plot:Plot, **kwargs):
+    def drawSolutionsOnPlot(self, plot:Plot, **kwargs):
         
         stats, filtered_df = self.stats_seeds_df, pd.DataFrame()
         
@@ -111,8 +115,7 @@ class QPlot(QWidget):
         if handles != {}:
             plot.ax.legend(by_label.values(), by_label.keys())
         
-        self.sc = MplCanvas(fig = plot.fig, axes=plot.ax)   
-
+    
 class QFitnessLandscape(QPlot):
     def __init__(self,
                  problem='prob_object' + CONVERT_KEY,
@@ -124,7 +127,8 @@ class QFitnessLandscape(QPlot):
                  show_best_sol=True,
                  labels=True,
                  **kwargs):
-    
+        super().__init__("fitness_landscape", "Fitness Landscape")
+        
         self.problem = problem
         self.n_samples_2D = n_samples_2D
         self.n_samples_3D = n_samples_3D
@@ -136,16 +140,14 @@ class QFitnessLandscape(QPlot):
         self.kwargs = kwargs
         self.pymoo_plot = None
             
-    def getPlotSectionArgs(self, algo_ids, prob_id, pi_id, runs_to_plot, run_thread):
-        super().__init__(self, "fitness_landscape", "Fitness Landscape", algo_ids, 
-                         prob_id, pi_id, runs_to_plot, run_thread)
-
-    def _plot(self):
-        self.pymoo_plot = MyFitnessLandscape(self.problem, n_samples_2D=self.n_samples_2D, n_samples_3D=self.n_samples_3D,
+    def createCanvas(self):
+        pymoo_plot = MyFitnessLandscape(self.problem, n_samples_2D=self.n_samples_2D, n_samples_3D=self.n_samples_3D,
                                              colorbar=self.colorbar, contour_levels=self.contour_levels,
                                              max_n_solutions=self.max_n_solutions, show_best_sol=self.show_best_sol,
                                              labels=self.labels, **self.kwargs)
-        self.plotSolutions(self.pymoo_plot)
+        
+        self.drawSolutionsOnPlot(pymoo_plot)
+        return MplCanvas(fig = pymoo_plot.fig, axes=pymoo_plot.ax)   
         
     def sendPlotSectionOptions() -> PlotSectionOptions:
         return PlotSectionOptions(pi=False, exclusive_pi=False, prob=False, avg=False)

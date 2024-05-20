@@ -397,31 +397,27 @@ class RunTab(QFrame):
             if run_args.prob_id == prob_id:
                 prob_object = run_args.prob_object
                 break
-        if prob_object == None:
-            raise ValueError(f'Prob Object not found with id {prob_id}')
         
         # get pi id from the combobox
         pi_id = self.plot_pi.currentText()
         
-        # get algo ids from the checkboxes on the first column
-        table = self.plot_table
-        algo_ids = [table.cellWidget(i, 0).text() for i in range(len(self.algo_ids)) 
-                    if table.cellWidget(i, 0).isChecked()] 
+        # get ids from the table
+        table, ids = self.plot_table, []
         
-        # get runs to plot from the checkboxes on the second column if it exists+
-        if table.columnCount() > 1:
-            runs_to_plot = [table.cellWidget(i, 1).text() for i in range(table.rowCount()) 
-                        if table.cellWidget(i, 1) is not None and table.cellWidget(i, 1).isChecked()]
-        else:
-            runs_to_plot = None
-        
+        for col in range(table.columnCount()):
+            col_ids = [table.cellWidget(i, col).text() for i in range(table.rowCount()) 
+                        if table.cellWidget(i, col) is not None and table.cellWidget(i, col).isChecked()]
+            ids.append(col_ids)
+            
         # get the plot mode
-        plot_mode = self.plot_type.currentText()
+        plot_id = self.plot_type.currentText()
         
+        convert_dict = {'prob_object': prob_object, 'prob_id': prob_id}
         # create the plot
-        # plotter = Plotter(plot_mode, self.label.text(), self.run_thread, self.stats_seeds_df, 
-        #                   pi_id, prob_id, prob_object, algo_ids, runs_to_plot)
-        # self.plot_widgets.append(plotter)
+        plotClass = self.edit_window.tabs[PLOT_TYPES_KEY].getObjectFromID(plot_id, convert_dict)
+        plotClass.getPlotSectionArgs(ids[0], prob_id, pi_id, ids[1], self.run_thread, self.stats_seeds_df)
+        plotClass.plot()
+        self.plot_widgets.append(plotClass)
     
     # buttons methods
     def saveRun(self):
