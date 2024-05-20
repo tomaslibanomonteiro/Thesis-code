@@ -57,11 +57,10 @@ class Defaults():
         else:
             self.parameters[ALGO_KEY]['ga']['selection'] = 'tournament_by_cv_and_fitness'
             
-        self.parameters[TERM_KEY]['n_eval']['n_max_evals'] = 200
+        self.parameters[TERM_KEY]['n_eval']['n_max_evals'] = 600
         self.parameters[TERM_KEY]['n_gen']['n_max_gen'] = 10
         self.parameters[TERM_KEY]['fmin']['fmin'] = 1
         self.parameters[TERM_KEY]['time']['max_time'] = 100
-        
     
     def get_table_dict(self, options_dict):
         return {name: self.get_class_dict(name, obj) for name, obj in options_dict.items()}

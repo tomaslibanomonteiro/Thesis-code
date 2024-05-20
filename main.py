@@ -5,7 +5,7 @@ import pickle
 
 
 OTHER_START = False
-RUN = True
+RUN = False
 
 def otherStart():
     from thesis.results_pso.start import start
@@ -13,11 +13,11 @@ def otherStart():
 
 def defaultStart():
     run_options_moo = {
-        PROB_KEY: ['dtlz2'],
-        ALGO_KEY: ['nsga3'],
-        PI_KEY: ['igd'],
-        TERM_KEY: ['n_gen'],
-        SEEDS_KEY: 1
+        PROB_KEY: ['dtlz1', 'dtlz2'],
+        ALGO_KEY: ['nsga2', 'nsga3'],
+        PI_KEY: ['gd', 'gd+', 'igd+', 'igd'],
+        TERM_KEY: ['n_eval'],
+        SEEDS_KEY: 3
     }
 
     run_options_soo = {

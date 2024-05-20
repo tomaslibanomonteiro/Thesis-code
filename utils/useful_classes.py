@@ -231,6 +231,7 @@ class MinFitnessTermination(Termination):
 ################################################################################################################################
 
 from pymoo.visualization.scatter import Plot
+from pymoo.visualization.fitness_landscape import FitnessLandscape
 from pymoo.util.misc import all_combinations
 from utils.utils import MyMessageBox
 class MyFitnessLandscape(Plot):
@@ -256,7 +257,6 @@ class MyFitnessLandscape(Plot):
         self.contour_levels = contour_levels
         self.max_n_solutions = max_n_solutions
         self.show_best_sol = show_best_sol
-        self.labels = labels
         self.zoom_on_solutions = zoom_on_solutions
 
         self.kwargs_surface = dict(cmap="summer", rstride=1, cstride=1, alpha=0.2)
@@ -318,7 +318,7 @@ class MyFitnessLandscape(Plot):
         
         for points, (best_label, gen_label), in zip(self.sets_of_points, self.sets_labels):
             # if points have 2 dimensions, add the third dimension with the fitness value
-            best_label, gen_label = (best_label, gen_label) if self.labels else (None, None)
+            best_label, gen_label = best_label, gen_label
             if len(points[0]) in [2,3]:
                 x,y = points[1:, 0], points[1:, 1]
                 best_x, best_y = points[0, 0], points[0, 1]

@@ -13,7 +13,6 @@ from utils.defines import (DESIGNER_RUN_TAB, PROB_KEY, ALGO_KEY, SEEDS_KEY, N_GE
 from frontend.edit_window import EditWindow
 from utils.utils import myFileManager, setBold, MyMessageBox, setCombobox, numberPresentation, showAndRaise
 from frontend.small_widgets import MyComboBox
-from frontend.plotting import PlotSectionOptions
 
 class RunTab(QFrame):
     """
@@ -160,7 +159,7 @@ class RunTab(QFrame):
         items = tab.tableToDict().keys()
         self.plot_type = MyComboBox(items, list(items)[0], tab=tab, key=PLOT_TYPES_KEY, copy_style='plot_type_combobox', widgets_frame=self.edit_window.widgets_frame)
         self.plot_type.setEditable(True)
-        setCombobox(self.plot_type, None, True, self.setPlotSection)
+        setCombobox(self.plot_type, None, True)
         self.plot_type.setFixedWidth(width)
         self.plot_layout.insertWidget(2, self.plot_type)
         self.plot_layout.setAlignment(self.plot_type, Qt.AlignCenter)
@@ -183,8 +182,25 @@ class RunTab(QFrame):
         # set the table
         self.tableOptionsChanged()
         
-        # set the plot section
-        self.setPlotSection()
+        # set the plot section        
+        run_types = [BEST_KEY, MEDIAN_KEY, WORST_KEY] 
+        
+        # set table size and headers
+        row_count = max(len(self.algo_ids), len(run_types))
+        self.plot_table.setRowCount(row_count)
+        self.plot_table.setColumnCount(2)
+        
+        # set first column
+        for i, id in enumerate(self.algo_ids):
+            checkbox = QCheckBox(id)
+            self.plot_table.setCellWidget(i, 0, checkbox)
+            checkbox.setChecked(i == 0)
+        
+        # set second column
+        for i, id in enumerate(run_types):
+            checkbox = QCheckBox(id)
+            self.plot_table.setCellWidget(i, 1, checkbox)
+            checkbox.setChecked(i == 0)
 
     # table section methods
                         
@@ -351,43 +367,7 @@ class RunTab(QFrame):
         """Edit the parameters of the plot"""
         self.edit_window.openTabsFromList([PLOT_TYPES_KEY])
         showAndRaise(self.edit_window)
-    
-    def getPlotSectionOptions(self) -> PlotSectionOptions:
-        """Get the options of the plot section"""
-        get_str = 'moo_options' if self.run_thread.moo else 'soo_options'
-        plot_types = get_plot_types(get_str)
-        
-        return plot_types[self.plot_type.currentText()].sendPlotSectionOptions()
-
-    def setPlotSection(self, event=None):
-        """set the checkboxes for the given ids in the tables"""
-
-        options = self.getPlotSectionOptions()
-        
-        first_col_ids = self.algo_ids + PROB_KEY if options.prob else self.algo_ids
-        first_col_header = "Algos/Prob" if options.prob else "Algos"
-        second_col_ids = [BEST_KEY, MEDIAN_KEY, WORST_KEY, AVG_KEY] if options.avg else [BEST_KEY, MEDIAN_KEY, WORST_KEY]
-        second_col_header = "Run"
-        
-        # set table size and headers
-        row_count = max(len(first_col_ids), len(second_col_ids))
-        self.plot_table.setRowCount(row_count)
-        self.plot_table.setColumnCount(2)
-        self.plot_table.setHorizontalHeaderItem(0, QTableWidgetItem(first_col_header))
-        self.plot_table.setHorizontalHeaderItem(1, QTableWidgetItem(second_col_header))
-        
-        # set first column
-        for i, id in enumerate(first_col_ids):
-            checkbox = QCheckBox(id)
-            self.plot_table.setCellWidget(i, 0, checkbox)
-            checkbox.setChecked(i == 0)
-        
-        # set second column
-        for i, id in enumerate(second_col_ids):
-            checkbox = QCheckBox(id)
-            self.plot_table.setCellWidget(i, 1, checkbox)
-            checkbox.setChecked(i == 0)
-                    
+                        
     def plot(self):
         """Plot the results"""
         # get prob id and prob object from the combobox
@@ -402,20 +382,18 @@ class RunTab(QFrame):
         pi_id = self.plot_pi.currentText()
         
         # get ids from the table
-        table, ids = self.plot_table, []
-        
-        for col in range(table.columnCount()):
-            col_ids = [table.cellWidget(i, col).text() for i in range(table.rowCount()) 
-                        if table.cellWidget(i, col) is not None and table.cellWidget(i, col).isChecked()]
-            ids.append(col_ids)
+        table, n_rows = self.plot_table, self.plot_table.rowCount()
+        algo_ids = [table.cellWidget(i, 0).text() for i in range(n_rows) 
+                    if table.cellWidget(i, 0) is not None and table.cellWidget(i, 0).isChecked()] 
+        run_types = [table.cellWidget(i, 1).text() for i in range(n_rows) 
+                        if table.cellWidget(i, 1) is not None and table.cellWidget(i, 1).isChecked()]
             
         # get the plot mode
         plot_id = self.plot_type.currentText()
-        
-        convert_dict = {'prob_object': prob_object, 'prob_id': prob_id}
+
         # create the plot
-        plotClass = self.edit_window.tabs[PLOT_TYPES_KEY].getObjectFromID(plot_id, convert_dict)
-        plotClass.getPlotSectionArgs(ids[0], prob_id, pi_id, ids[1], self.run_thread, self.stats_seeds_df)
+        plotClass = self.edit_window.tabs[PLOT_TYPES_KEY].getObjectFromID(plot_id)
+        plotClass.getPlotSectionArgs(plot_id, prob_id, prob_object, pi_id, algo_ids, run_types, self.run_thread, self.stats_seeds_df)
         plotClass.plot()
         self.plot_widgets.append(plotClass)
     

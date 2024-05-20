@@ -428,28 +428,17 @@ def get_decomposition(name, *args, **kwargs):
 
 def get_plot_types(name, *args, **kwargs):
         
-    from pymoo.visualization.heatmap import Heatmap
-    from pymoo.visualization.pcp import PCP
-    from pymoo.visualization.petal import Petal
-    from pymoo.visualization.radar import Radar
-    from pymoo.visualization.radviz import Radviz
-    from pymoo.visualization.scatter import Scatter
-    from pymoo.visualization.star_coordinate import StarCoordinate
-    from frontend.plotting import QFitnessLandscape
+    from frontend.plotting import QFitnessLandscape, QPCP, QParetoSets, QProgress
     
     PLOT_TYPES_SINGLE = {
-        "fitness-landscape": QFitnessLandscape,
-        "scatter": Scatter,
+        "fitness_landscape": QFitnessLandscape,
+        "progress": QProgress,
     }
 
     PLOT_TYPES_MULTI = {
-        "scatter": Scatter,
-        "heatmap": Heatmap,
-        "pcp": PCP,
-        "petal": Petal,
-        "radar": Radar,
-        "radviz": Radviz,
-        "star": StarCoordinate,
+        "pcp": QPCP,
+        "pareto_sets": QParetoSets,
+        "progress": QProgress,
     }
     
     return returnObjectOrOptions(name, PLOT_TYPES_SINGLE, PLOT_TYPES_MULTI, *args, **kwargs)

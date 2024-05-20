@@ -120,3 +120,7 @@ def numberPresentation(number, max_int_conversion=10, decimal_places=3):
         string = "{:.{}e}".format(number, decimal_places)
     
     return string
+
+def ordinal(n):
+    """Return the ordinal number of n"""
+    return str(n) + ("th" if 4 <= n % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th"))
