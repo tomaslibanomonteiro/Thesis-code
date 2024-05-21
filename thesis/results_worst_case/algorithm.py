@@ -19,7 +19,7 @@ def main():
     problem = RandomMultiMixedTSP()
 
     algorithm = NSGA2(
-        pop_size=20,
+        pop_size=15,
         sampling=PermutationRandomSampling(),
         selection=TournamentSelection(func_comp=binary_tournament),
         mutation=InversionMutation(),

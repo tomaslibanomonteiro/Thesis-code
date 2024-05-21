@@ -51,7 +51,7 @@ def mutateMatrix(original, percentage=10):
 
 class RandomMultiMixedTSP(MultiObjectiveMixedTSP):
     
-    def __init__(self, n_cities=20, trp1 = 'car', trp2 = 'train', trp2_factor=1.1, trp3 = 'plane', trp3_factor=1.3, grid_size=1000, seed=0, **kwargs):
+    def __init__(self, n_cities=22, trp1 = 'car', trp2 = 'train', trp2_factor=1.1, trp3 = 'plane', trp3_factor=1.3, grid_size=1000, seed=0, **kwargs):
     
         cities = np.random.uniform(0, grid_size, (n_cities, 2))
         

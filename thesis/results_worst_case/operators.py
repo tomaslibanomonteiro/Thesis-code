@@ -71,22 +71,41 @@ class OrderCrossover(Crossover):
         super().__init__(2, 2, **kwargs)
         self.shift = shift
 
-    def _do(self, problem, X, **kwargs):
-        _, n_matings, n_var, _ = X.shape
-        Y = np.full((self.n_offsprings, n_matings, n_var, 2), -1, dtype=int)
-    
-        for j in range(2):  # New loop to iterate over the last dimension of X
-            for i in range(n_matings):
-                a, b = X[:, i, :, j]
-                n = len(a)
-    
-                # define the sequence to be used for crossover
-                start, end = random_sequence(n)
-    
-                Y[0, i, :, j] = ox(a, b, seq=(start, end), shift=self.shift)
-                Y[1, i, :, j] = ox(b, a, seq=(start, end), shift=self.shift)
-    
-        return Y    
+class OrderCrossover(Crossover):
+
+    def __init__(self, shift=False, **kwargs):
+        super().__init__(2, 2, **kwargs)
+        self.shift = shift
+
+    def _do(self, problem, X_with_transp, **kwargs):
+        
+        X = X_with_transp[:,:,:,0]
+        
+        _, n_matings, n_var = X.shape
+        Y = np.full((self.n_offsprings, n_matings, n_var), -1, dtype=int)
+
+        for i in range(n_matings):
+            a, b = X[:, i, :]
+            n = len(a)
+
+            # define the sequence to be used for crossover
+            start, end = random_sequence(n)
+
+            Y[0, i, :] = ox(a, b, seq=(start, end), shift=self.shift)
+            Y[1, i, :] = ox(b, a, seq=(start, end), shift=self.shift)
+
+        new_X = np.full((self.n_offsprings, n_matings, n_var, 2), -1, dtype=int)
+                    
+        # find the correspondent transport for the new path, based on the transport of the parents
+        for i in range(self.n_offsprings):
+            for j in range(n_matings):
+                changed_cities = Y[i, j, :]
+                new_X[i, j, :, 0] = changed_cities
+                for k in range(n_var):
+                    same_trp_idx = np.where(X_with_transp[i, j, :, 0] == changed_cities[k])
+                    new_X[i, j, k, 1] = X_with_transp[i, j, same_trp_idx, 1]
+                        
+        return new_X
     
 if __name__ == '__main__':
     from algorithm import main
