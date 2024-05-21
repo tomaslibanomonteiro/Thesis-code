@@ -1,9 +1,7 @@
+from pymoo.problems.single.traveling_salesman import TravelingSalesman
+
 from pymoo.core.problem import ElementwiseProblem
 import numpy as np
-
-from pymoo.core.problem import ElementwiseProblem
-from pymoo.core.variable import Real, Integer, Choice, Binary
-
 class MultiObjectiveMixedTSP(ElementwiseProblem):
 
     def __init__(self, cities_coord, costMatrixDict, timeMatrixDict, **kwargs):
@@ -52,7 +50,7 @@ def mutateMatrix(original, percentage=10):
 
 class RandomMultiMixedTSP(MultiObjectiveMixedTSP):
     
-    def __init__(self, n_cities=22, trp1 = 'car', trp2 = 'train', trp2_factor=1.1, trp3 = 'plane', trp3_factor=1.3, grid_size=1000, seed=0, **kwargs):
+    def __init__(self, n_cities=15, trp1 = 'car', trp2 = 'train', trp2_factor=1.1, trp3 = 'plane', trp3_factor=1.3, grid_size=1000, **kwargs):
     
         cities = np.random.uniform(0, grid_size, (n_cities, 2))
         
@@ -68,3 +66,8 @@ class RandomMultiMixedTSP(MultiObjectiveMixedTSP):
         trp3_C = mutateMatrix(trp1_T * trp3_factor, percentage=10)
                 
         super().__init__(cities, {trp1: trp1_C, trp2: trp2_C, trp3: trp3_C}, {trp1: trp1_T, trp2: trp2_T, trp3: trp3_T}, **kwargs)
+        
+
+if __name__ == '__main__':
+    from main import main
+    main()

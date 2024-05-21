@@ -105,5 +105,5 @@ class InversionMutation(Mutation):
     
 
 if __name__ == '__main__':
-    from algorithm import main
+    from main import main
     main()
