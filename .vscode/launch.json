@@ -28,7 +28,7 @@
             "cwd": "${fileDirname}",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": true,
+            "justMyCode": false,
             "subProcess": true
         },
         {
