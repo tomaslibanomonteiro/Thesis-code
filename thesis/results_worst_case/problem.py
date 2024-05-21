@@ -20,12 +20,13 @@ class MultiObjectiveMixedTSP(ElementwiseProblem):
         self.Time = {k: v for k, v in timeMatrixDict.items()}
         self.Cost = {k: v for k, v in costMatrixDict.items()}
         self.transport_options = list(self.Time.keys())
-                
-        super().__init__(n_var=self.n_cities, n_obj=2, **kwargs)
+        
+        super().__init__(n_var=self.n_cities*2, n_obj=2, **kwargs)
         
     def _evaluate(self, x, out, *args, **kwargs):
         
-        n_cities, path, transport_idx = self.n_cities, x[:, 0], x[:, 1]
+        n_cities = self.n_cities
+        path, transport_idx = x[:n_cities], x[n_cities:]
         duration = 0
         cost = 0
         for k in range(n_cities - 1):

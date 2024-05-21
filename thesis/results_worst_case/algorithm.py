@@ -6,7 +6,7 @@ from pymoo.operators.mutation.inversion import InversionMutation
 from pymoo.termination.default import DefaultSingleObjectiveTermination
 
 # new imports
-from operators import PermutationRandomSampling, StartFromZeroRepair, MixedDuplicateElimination, OrderCrossover, InversionMutation
+from operators import PermutationRandomSampling, StartFromZeroRepair, OrderCrossover, InversionMutation
 
 import numpy as np
 from problem import RandomMultiMixedTSP
@@ -26,7 +26,7 @@ def main():
         survival=RankAndCrowding(),
         crossover=OrderCrossover(),
         repair=StartFromZeroRepair(),
-        eliminate_duplicates=MixedDuplicateElimination(),
+        eliminate_duplicates=True,
     )
 
     # if the algorithm did not improve the last 200 generations then it will terminate (and disable the max generations)
@@ -39,7 +39,10 @@ def main():
         seed=1,
     )
 
-    return res
+    print(f"Best solution found: \nX = {res.X}\nF = {res.F}")
 
+    
+    
+    
 if __name__ == '__main__':
     main()

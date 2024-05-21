@@ -5,40 +5,77 @@ from pymoo.core.repair import Repair
 import numpy as np
 from pymoo.core.duplicate import DuplicateElimination
 
+def setTransportsOnNewPath(new_paths, X):
+    
+    new_X = np.full((X.shape), -1, dtype=int)
+    pop_size, n_cities = X.shape[0], X.shape[1]//2
+
+    old_paths, old_trps = X[:,:n_cities], X[:,n_cities:]
+    
+    # loop over all individuals
+    for i, old_path, old_trp, new_path in zip(range(pop_size), old_paths, old_trps, new_paths):
+        if np.array_equal(new_path, old_path):
+            new_X[i] = X[i]
+        else:
+            # loop over all cities
+            for k in range(n_cities):
+                old_trp_idx = np.where(old_path == new_path[k])
+                new_X[i,k] = new_path[k]
+                new_X[i,k+n_cities] = old_trp[old_trp_idx]
+            
+    return new_X
 
 class PermutationRandomSampling(Sampling):
 
     def _do(self, problem, n_samples, **kwargs):
         
-        X = np.full((n_samples, problem.n_cities, 2), -1, dtype=int)
+        X = np.full((n_samples, problem.n_var), -1, dtype=int)
         for i in range(n_samples):
             path = np.random.permutation(problem.n_cities)
             transport = np.random.randint(0, len(problem.transport_options), problem.n_cities)
-            X[i] = np.column_stack([path, transport])
+            X[i, :] = np.concatenate([path, transport])
 
         return X
 
 class StartFromZeroRepair(Repair):
 
     def _do(self, problem, X, **kwargs):
-        # reorder X so that the first column starts with 0 and the rest of the columns are shifted accordingly
-        for i, x in enumerate(X):
-            I = np.where(x[:, 0] == 0)[0]
-            
-            if I.size > 0:
-                # Rotate the rows of X so that the row where the first column is 0 comes first
-                x = np.roll(x, -I[0], axis=0)
-            X[i] = x
-            
-        return X    
+        X_path = X[:,:problem.n_cities].copy()
+        I = np.where(X_path == 0)[1]
 
-class MixedDuplicateElimination(DuplicateElimination):
-    def is_equal(self, a, b):
-        print("a", a)
-        print("b", b)
+        for k in range(len(X_path)):
+            i = I[k]
+            X_path[k] = np.concatenate([X_path[k, i:], X_path[k, :i]])
+
+        return setTransportsOnNewPath(X_path, X)
         
-        return np.all(a[:, 0] == b[:, 0])
-    
+class OrderCrossover(Crossover):
+
+    def __init__(self, shift=False, **kwargs):
+        super().__init__(2, 2, **kwargs)
+        self.shift = shift
+
+    def _do(self, problem, X, **kwargs):
+        
+        X_path = X[:,:,:problem.n_cities].copy()
+        n_parents, n_matings, n_cities = X_path.shape
+        Y_path = np.full((self.n_offsprings, n_matings, n_cities), -1, dtype=int)
+
+        for i in range(n_matings):
+            a, b = X_path[:, i, :]
+            n = len(a)
+
+            # define the sequence to be used for crossover
+            start, end = random_sequence(n)
+
+            Y_path[0, i, :] = ox(a, b, seq=(start, end), shift=self.shift)
+            Y_path[1, i, :] = ox(b, a, seq=(start, end), shift=self.shift)
+
+        Y = np.full((self.n_offsprings, n_matings, n_cities*2), -1, dtype=int)
+        Y[0, :, :] = setTransportsOnNewPath(Y_path[0, :, :], X[0, :, :])
+        Y[1, :, :] = setTransportsOnNewPath(Y_path[1, :, :], X[1, :, :])
+        return Y
+
 class InversionMutation(Mutation):
 
     def __init__(self, prob=1.0):
@@ -57,56 +94,16 @@ class InversionMutation(Mutation):
         self.prob = prob
 
     def _do(self, problem, X, **kwargs):
-        Y = X.copy()
-        for i, y in enumerate(X):
+        X_path = X[:,:problem.n_cities]
+        Y_path = X_path.copy()
+        for i, y in enumerate(X_path):
             if np.random.random() < self.prob:
                 seq = random_sequence(len(y))
-                Y[i] = inversion_mutation(y, seq, inplace=True)
+                Y_path[i] = inversion_mutation(y, seq, inplace=True)
 
-        return Y
+        return setTransportsOnNewPath(Y_path, X)
     
-class OrderCrossover(Crossover):
 
-    def __init__(self, shift=False, **kwargs):
-        super().__init__(2, 2, **kwargs)
-        self.shift = shift
-
-class OrderCrossover(Crossover):
-
-    def __init__(self, shift=False, **kwargs):
-        super().__init__(2, 2, **kwargs)
-        self.shift = shift
-
-    def _do(self, problem, X_with_transp, **kwargs):
-        
-        X = X_with_transp[:,:,:,0]
-        
-        _, n_matings, n_var = X.shape
-        Y = np.full((self.n_offsprings, n_matings, n_var), -1, dtype=int)
-
-        for i in range(n_matings):
-            a, b = X[:, i, :]
-            n = len(a)
-
-            # define the sequence to be used for crossover
-            start, end = random_sequence(n)
-
-            Y[0, i, :] = ox(a, b, seq=(start, end), shift=self.shift)
-            Y[1, i, :] = ox(b, a, seq=(start, end), shift=self.shift)
-
-        new_X = np.full((self.n_offsprings, n_matings, n_var, 2), -1, dtype=int)
-                    
-        # find the correspondent transport for the new path, based on the transport of the parents
-        for i in range(self.n_offsprings):
-            for j in range(n_matings):
-                changed_cities = Y[i, j, :]
-                new_X[i, j, :, 0] = changed_cities
-                for k in range(n_var):
-                    same_trp_idx = np.where(X_with_transp[i, j, :, 0] == changed_cities[k])
-                    new_X[i, j, k, 1] = X_with_transp[i, j, same_trp_idx, 1]
-                        
-        return new_X
-    
 if __name__ == '__main__':
     from algorithm import main
     main()
