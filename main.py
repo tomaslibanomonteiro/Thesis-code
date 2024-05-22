@@ -5,7 +5,7 @@ import pickle
 
 
 OTHER_START = False
-RUN = False
+RUN = True
 
 def otherStart():
     from thesis.results_pso.start import start
@@ -13,19 +13,25 @@ def otherStart():
 
 def defaultStart():
     run_options_moo = {
-        PROB_KEY: ['dtlz1', 'dtlz2'],
-        ALGO_KEY: ['nsga2', 'nsga3'],
-        PI_KEY: ['gd', 'gd+', 'igd+', 'igd'],
+        # PROB_KEY: ['dtlz1', 'dtlz2'],
+        # ALGO_KEY: ['nsga2', 'nsga3'],
+        # PI_KEY: ['gd', 'gd+', 'igd+', 'igd'],
+        # TERM_KEY: ['n_eval'],
+        # SEEDS_KEY: 3
+        PROB_KEY: ['moo_mixed_tsp'],
+        ALGO_KEY: ['permutation_nsga2'],
+        PI_KEY: ['-hv'],
         TERM_KEY: ['n_eval'],
         SEEDS_KEY: 3
+
     }
 
     run_options_soo = {
-        PROB_KEY: ['ackley', 'griewank', 'rastrigin'],
-        ALGO_KEY: ['ga', 'pso'],
-        PI_KEY: ['best', 'avg_fitness', '-goal_achieved', 'evals_on_goal'],
-        TERM_KEY: ['n_eval'],
-        SEEDS_KEY: 3
+        # PROB_KEY: ['ackley', 'griewank', 'rastrigin'],
+        # ALGO_KEY: ['ga', 'pso'],
+        # PI_KEY: ['best', 'avg_fitness', '-goal_achieved', 'evals_on_goal'],
+        # TERM_KEY: ['n_eval'],
+        # SEEDS_KEY: 3
     }    
     return run_options_moo, run_options_soo
 

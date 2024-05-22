@@ -529,7 +529,7 @@ class HistoryFrame(QFrame):
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
         if reply == QMessageBox.Yes:
-            self.tabWidget.edit_window.dictToTabs(self.run_thread.parameters)
+            self.tabWidget.edit_window.dictToabs(self.run_thread.parameters)
             self.tabWidget.dictToTables(self.run_thread.run_options, self.run_thread.parameters)
             self.tabWidget.setCurrentIndex(0)
 

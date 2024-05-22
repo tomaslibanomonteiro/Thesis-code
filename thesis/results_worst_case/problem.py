@@ -1,7 +1,8 @@
-from pymoo.problems.single.traveling_salesman import TravelingSalesman
+# from pymoo.problems.single.traveling_salesman import TravelingSalesman
 
 from pymoo.core.problem import ElementwiseProblem
 import numpy as np
+
 class MultiObjectiveMixedTSP(ElementwiseProblem):
 
     def __init__(self, cities_coord, costMatrixDict, timeMatrixDict, **kwargs):
@@ -19,27 +20,34 @@ class MultiObjectiveMixedTSP(ElementwiseProblem):
         self.Cost = {k: v for k, v in costMatrixDict.items()}
         self.transport_options = list(self.Time.keys())
         
-        super().__init__(n_var=self.n_cities*2, n_obj=2, **kwargs)
+        max_time = np.max([np.max(v) for v in self.Time.values()])*self.n_cities
+        max_cost = np.max([np.max(v) for v in self.Cost.values()])*self.n_cities
+        self.pf = np.array(((max_time, 0), (0, max_cost)))
         
+        super().__init__(n_var=self.n_cities*2, n_obj=2, **kwargs)
+    
+    def _calc_pareto_front(self, *args, **kwargs):
+        return self.pf
+    
     def _evaluate(self, x, out, *args, **kwargs):
         
         n_cities = self.n_cities
         path, transport_idx = x[:n_cities], x[n_cities:]
-        duration = 0
+        time = 0
         cost = 0
         for k in range(n_cities - 1):
             i, j = path[k], path[k + 1]
             transport_k = self.transport_options[transport_idx[k]]
-            duration += self.Time[transport_k][i, j]
+            time += self.Time[transport_k][i, j]
             cost += self.Cost[transport_k][i, j]
             
         # back to the initial city
         last, first = path[-1], path[0]
         transport_last = self.transport_options[transport_idx[-1]]
-        duration += self.Time[transport_last][last, first]  
+        time += self.Time[transport_last][last, first]  
         cost += self.Cost[transport_last][last, first]
         
-        out['F'] = np.array([duration, cost])
+        out['F'] = np.array([time, cost])
 
 def mutateMatrix(original, percentage=10):
     # Create a matrix of the same shape as the original matrix with random values between 1 - percentage and 1 + percentage
@@ -50,7 +58,7 @@ def mutateMatrix(original, percentage=10):
 
 class RandomMultiMixedTSP(MultiObjectiveMixedTSP):
     
-    def __init__(self, n_cities=15, trp1 = 'car', trp2 = 'train', trp2_factor=1.1, trp3 = 'plane', trp3_factor=1.3, grid_size=1000, **kwargs):
+    def __init__(self, n_cities=15, trp1 = 'car', trp2 = 'train', trp2_factor=5, trp3 = 'plane', trp3_factor=10, grid_size=1000, **kwargs):
     
         cities = np.random.uniform(0, grid_size, (n_cities, 2))
         

@@ -58,7 +58,7 @@ class Test():
 ############################################################################################################
 
 soo_algos_list = list(get_algorithm('soo_options').keys())
-soo_algos_list.remove('brkga') # 'brkga' is combinatorial algo, has to be run with a comb problem 'soo_rnd_knp'
+soo_algos_list.remove('brkga') # 'brkga' is combinatorial algo, has to be run with a comb problem 'soo_knp'
 soo_algos_list.remove('cmaes') # 'cmaes' not giving consistent results - not setting the seed correctly?
 
 soo_algos = { 
@@ -102,7 +102,7 @@ moo_algos = {
 }
 
 moo_probs_list = list(get_problem('moo_options').keys())
-moo_probs_list.remove('moo_rnd_knp') # knp is a combinatorial problem, nsga2 is not set for them
+moo_probs_list.remove('moo_knp') # knp is a combinatorial problem, nsga2 is not set for them
 
 moo_probs = {
     MOO_KEY: True,

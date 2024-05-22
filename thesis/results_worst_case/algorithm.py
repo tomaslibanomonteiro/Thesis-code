@@ -1,30 +1,28 @@
 
 # original imports
-from pymoo.operators.sampling.rnd import PermutationRandomSampling
+# from pymoo.operators.sampling.rnd import PermutationRandomSampling
 from pymoo.operators.crossover.ox import OrderCrossover
-from pymoo.operators.mutation.inversion import InversionMutation
-from pymoo.termination.default import DefaultSingleObjectiveTermination
+# from pymoo.operators.mutation.inversion import InversionMutation
+# from pymoo.operators.mutation.bitflip import BitflipMutation
 
 # new imports
-from operators import PermutationRandomSampling, StartFromZeroRepair, OrderCrossover, InversionMutation
+from thesis.results_worst_case.operators import PermutationRandomSampling, StartFromZeroRepair, OrderCrossover, InversionFlipMutation
 
-import numpy as np
-from problem import RandomMultiMixedTSP
 from pymoo.algorithms.moo.nsga2 import NSGA2, binary_tournament, TournamentSelection, RankAndCrowding
-from pymoo.core.mixed import MixedVariableGA
-from pymoo.optimize import minimize
 
-algorithm = NSGA2(
-    pop_size=3,
-    sampling=PermutationRandomSampling(),
-    selection=TournamentSelection(func_comp=binary_tournament),
-    mutation=InversionMutation(),
-    survival=RankAndCrowding(),
-    crossover=OrderCrossover(),
-    repair=StartFromZeroRepair(),
-    eliminate_duplicates=True,
-)
-    
+class PermutationNSGA2(NSGA2):
+    def __init__(self, pop_size=20):
+        super().__init__(
+            pop_size=pop_size,
+            sampling=PermutationRandomSampling(),
+            selection=TournamentSelection(func_comp=binary_tournament),
+            mutation=InversionFlipMutation(),
+            survival=RankAndCrowding(),
+            crossover=OrderCrossover(),
+            repair=StartFromZeroRepair(),
+            eliminate_duplicates=True,
+        )
+        
 if __name__ == '__main__':
     from main import main
     main()

@@ -118,9 +118,8 @@ class RunThread(QThread):
         self.canceled = True    
 
     def run(self):
-        #!
-        import debugpy
-        debugpy.debug_this_thread()
+        # import debugpy
+        # debugpy.debug_this_thread()
         seeds = np.arange(self.n_seeds) if self.fixed_seeds else np.random.choice(100000, size=self.n_seeds, replace=False)
         for run_args in self.run_args_list:
             for seed in seeds:

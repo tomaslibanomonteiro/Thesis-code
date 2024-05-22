@@ -179,8 +179,9 @@ class EditTab(QFrame):
                     
     ###### EDIT TABLES ######
     
-    def dictToTable(self, table_dict: dict):
+    def dictToTable(self, original_table_dict: dict):
         
+        table_dict = original_table_dict.copy()
         # add a customable arg in the end
         for key in table_dict.keys():
             table_dict[key]["(Custom Arg)" + WRITABLE_ARG_KEY] = ""

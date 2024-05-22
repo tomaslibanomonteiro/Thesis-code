@@ -34,6 +34,8 @@ def get_algorithm(name, *args, **kwargs):
     from pymoo.algorithms.soo.nonconvex.pattern import PatternSearch
     from pymoo.algorithms.soo.nonconvex.pso import PSO
     from pymoo.algorithms.soo.nonconvex.brkga import BRKGA
+    
+    from thesis.results_worst_case.algorithm import PermutationNSGA2
 
     ALGORITHMS_SINGLE = {
         "ga": GA,
@@ -51,6 +53,7 @@ def get_algorithm(name, *args, **kwargs):
         "unsga3": UNSGA3,
         "moead": MOEAD,
         "ctaea": CTAEA,
+        "permutation_nsga2": PermutationNSGA2 #!
     }
 
     return returnObjectOrOptions(name, ALGORITHMS_SINGLE, ALGORITHMS_MULTI, *args, **kwargs)
@@ -217,6 +220,8 @@ def get_problem(name, *args, **kwargs):
                                        Schwefel, Sphere, Zakharov) # Griewank, Rastrigin, Rosenbrock overwritten to set xl and xu
     from utils.useful_classes import RandomKnapsackMulti, RandomKnapsackSingle, ScaledDTLZ, GriewankExplicitLimits, RastriginExplicitLimits, RosenbrockExplicitLimits
     
+    from thesis.results_worst_case.problem import RandomMultiMixedTSP
+    
     PROBLEM_SINGLE = {
         "ackley": Ackley,
         "g1": G1,
@@ -246,7 +251,7 @@ def get_problem(name, *args, **kwargs):
         "cantilevered_beam": CantileveredBeam,
         "griewank": GriewankExplicitLimits,
         "himmelblau": Himmelblau,
-        "soo_rnd_knp": RandomKnapsackSingle,
+        "soo_knp": RandomKnapsackSingle,
         "pressure_vessel": PressureVessel,
         "rastrigin": RastriginExplicitLimits,
         "rosenbrock": RosenbrockExplicitLimits,
@@ -257,7 +262,7 @@ def get_problem(name, *args, **kwargs):
 
     PROBLEM_MULTI = {
         "bnh": BNH,
-        "moo_rnd_knp": RandomKnapsackMulti,
+        "moo_knp": RandomKnapsackMulti,
         "carside": Carside,
         "ctp1": CTP1,
         "ctp2": CTP2,
@@ -335,6 +340,7 @@ def get_problem(name, *args, **kwargs):
         "zdt4": ZDT4,
         "zdt5": ZDT5,
         "zdt6": ZDT6,
+        "moo_mixed_tsp": RandomMultiMixedTSP #!
     }
 
     return returnObjectOrOptions(name, PROBLEM_SINGLE, PROBLEM_MULTI, *args, **kwargs)
@@ -423,12 +429,13 @@ def get_decomposition(name, *args, **kwargs):
     return returnObjectOrOptions(name, {}, DECOMPOSITION_MULTI, *args, **kwargs)
 
 # =========================================================================================================
-# VISUALIZATION TECHNIQUES #!?
+# PLOTTING TYPES
 # =========================================================================================================
 
 def get_plot_types(name, *args, **kwargs):
         
     from frontend.plotting import QFitnessLandscape, QPCP, QParetoSets, QProgress
+    from thesis.results_worst_case.plot import TSPplot
     
     PLOT_TYPES_SINGLE = {
         "fitness_landscape": QFitnessLandscape,
@@ -439,6 +446,7 @@ def get_plot_types(name, *args, **kwargs):
         "pcp": QPCP,
         "pareto_sets": QParetoSets,
         "progress": QProgress,
+        "tsp": TSPplot #! 
     }
     
     return returnObjectOrOptions(name, PLOT_TYPES_SINGLE, PLOT_TYPES_MULTI, *args, **kwargs)

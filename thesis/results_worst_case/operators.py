@@ -5,7 +5,7 @@ from pymoo.core.repair import Repair
 import numpy as np
 from pymoo.core.duplicate import DuplicateElimination
 
-def setTransportsOnNewPath(new_paths, X):
+def setTransportsOnNewPaths(new_paths, X):
     
     new_X = np.full((X.shape), -1, dtype=int)
     pop_size, n_cities = X.shape[0], X.shape[1]//2
@@ -47,7 +47,7 @@ class StartFromZeroRepair(Repair):
             i = I[k]
             X_path[k] = np.concatenate([X_path[k, i:], X_path[k, :i]])
 
-        return setTransportsOnNewPath(X_path, X)
+        return setTransportsOnNewPaths(X_path, X)
         
 class OrderCrossover(Crossover):
 
@@ -72,13 +72,13 @@ class OrderCrossover(Crossover):
             Y_path[1, i, :] = ox(b, a, seq=(start, end), shift=self.shift)
 
         Y = np.full((self.n_offsprings, n_matings, n_cities*2), -1, dtype=int)
-        Y[0, :, :] = setTransportsOnNewPath(Y_path[0, :, :], X[0, :, :])
-        Y[1, :, :] = setTransportsOnNewPath(Y_path[1, :, :], X[1, :, :])
+        Y[0, :, :] = setTransportsOnNewPaths(Y_path[0, :, :], X[0, :, :])
+        Y[1, :, :] = setTransportsOnNewPaths(Y_path[1, :, :], X[1, :, :])
         return Y
 
-class InversionMutation(Mutation):
+class InversionFlipMutation(Mutation):
 
-    def __init__(self, prob=1.0):
+    def __init__(self, prob=1.0, prob_var=0.7, **kwargs):
         """
 
         This mutation is applied to permutations. It randomly selects a segment of a chromosome and reverse its order.
@@ -90,10 +90,12 @@ class InversionMutation(Mutation):
             Probability to apply the mutation to the individual
             
         """
-        super().__init__()
+        super().__init__(prob_var=prob_var, **kwargs)
         self.prob = prob
 
     def _do(self, problem, X, **kwargs):
+        
+        # inversion part
         X_path = X[:,:problem.n_cities]
         Y_path = X_path.copy()
         for i, y in enumerate(X_path):
@@ -101,8 +103,17 @@ class InversionMutation(Mutation):
                 seq = random_sequence(len(y))
                 Y_path[i] = inversion_mutation(y, seq, inplace=True)
 
-        return setTransportsOnNewPath(Y_path, X)
-    
+        Y = setTransportsOnNewPaths(Y_path, X)
+        
+        Y_trp = Y[:,problem.n_cities:]
+        # bitflip part
+        prob_var = self.get_prob_var(problem)
+        flip = np.random.random(Y_trp.shape) < prob_var
+        flip_values = np.random.randint(0, len(problem.transport_options), Y_trp.shape)
+        Y_trp[flip] = flip_values[flip]
+        
+        Y = np.concatenate([Y_path, Y_trp], axis=1)
+        return Y        
 
 if __name__ == '__main__':
     from main import main
