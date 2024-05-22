@@ -245,9 +245,9 @@ class MainTabsWidget(QTabWidget):
         tabs = self.edit_window.tabs
         
         term_id = self.getIDsFromTable(self.term_table)
-        prob_ids = self.getIDsFromTable(self.prob_table)
-        algo_ids = self.getIDsFromTable(self.algo_table)
-        pi_ids = self.getIDsFromTable(self.pi_table)
+        prob_ids = self.getIDsFromTable(self.prob_table) if term_id != [] else []
+        algo_ids = self.getIDsFromTable(self.algo_table) if prob_ids != [] else []
+        pi_ids = self.getIDsFromTable(self.pi_table) if algo_ids != [] else []
         run_args = []
         
         if term_id == [] or prob_ids == [] or algo_ids == [] or pi_ids == []:

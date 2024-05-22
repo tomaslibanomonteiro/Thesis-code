@@ -169,34 +169,19 @@ class RunThread(QThread):
         else:
             self.data = pd.concat([self.data, pd.DataFrame(single_run_data)])
         
-        feas = np.where(res.algorithm.opt.get("feasible"))[0]
-        optimal_pareto = res.algorithm.opt.get("F")[feas]
+        
+        if self.moo:
+            feas = np.where(res.algorithm.opt.get("feasible"))[0]
+            F = res.algorithm.opt.get("F")[feas] if len(feas) > 0 else np.nan
+            X = res.algorithm.opt.get("X")[feas] if len(feas) > 0 else np.nan
+        elif self.moo:
+            feas = np.where(res.algorithm.pop.get("feasible"))[0]
+            F = res.algorithm.pop.get("F")[feas] if len(feas) > 0 else np.nan
+            X = res.algorithm.pop.get("X")[feas] if len(feas) > 0 else np.nan
+            
         key = (run_args.prob_id, run_args.algo_id, seed)
         
-        if len(optimal_pareto) == 0: #! change to X and F stored?
-            # no feasible solution found
-            self.best_gen[key] = np.nan
-        elif self.moo:
-            # store best pareto set
-            self.best_gen[key] = optimal_pareto
-        else:
-            # for SOO, record the best value coordinates in decision space followed by the value in objective space
-            best_sol = np.concatenate((res.algorithm.opt.get("X")[0], optimal_pareto[0]))
-
-            # Get all the solutions from the last generation
-            last_generation = res.algorithm.pop
-
-            # Get the decision variables and objective values for each solution
-            decision_variables = np.array([indiv.get("X") for indiv in last_generation])
-            objective_values = np.array([indiv.get("F") for indiv in last_generation])
-
-            solutions = np.array([np.concatenate((x, f)) for x, f in zip(decision_variables, objective_values)])
-
-            # concatenate the best solution to the solutions array
-            solutions = np.vstack((best_sol, solutions))
-            
-            # Sort the solutions by objective value
-            solutions = solutions[solutions[:, -1].argsort()]
-
-            # Store the solutions
-            self.best_gen[key] = solutions
+        self.best_gen[key] = {}
+        self.best_gen[key]["X"] = X
+        self.best_gen[key]["F"] = F
+        

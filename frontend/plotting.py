@@ -4,6 +4,7 @@ from pymoo.visualization.pcp import PCP
 
 from PyQt5.QtWidgets import QVBoxLayout, QWidget
 import pandas as pd
+import numpy as np
 from abc import abstractmethod
 
 import matplotlib
@@ -89,7 +90,7 @@ class QPlot(QWidget):
         stats = self.stats_seeds_df
         seed = stats[(stats[ALGO_KEY] == algo_id) & (stats[PROB_KEY] == prob_id)][self.pi_id, run_type, SEEDS_KEY].values[0]
         return seed
-    
+            
     def drawSolutionsOnPlot(self, plot:Plot, **kwargs):
         
         stats, filtered_df = self.stats_seeds_df, pd.DataFrame()
@@ -110,8 +111,14 @@ class QPlot(QWidget):
         for prob_id, algo_id, seed, run_type in filtered_df.values:
             # get the best solution for each run_id
             best_gen = self.run_thread.best_gen[(prob_id, algo_id, seed)]
-            # plot the best solution
-            plot.add(best_gen, label = f"Algo '{algo_id}'{run_type}", **kwargs)
+            if self.prob_object.n_obj > 1:
+                points = best_gen['F']
+                # plot the best solution
+            else:
+                x , f = best_gen['X'], best_gen['F']
+                points = np.concatenate((x, f))
+                points = points[points[:, -1].argsort()] # sort the solutions by objective value
+            plot.add(points, label = f"Algo '{algo_id}'{run_type}", **kwargs)
         
         plot.do()
         handles, labels = plot.ax.get_legend_handles_labels()

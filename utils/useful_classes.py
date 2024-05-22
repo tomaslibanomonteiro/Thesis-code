@@ -247,7 +247,6 @@ class MyFitnessLandscape(Plot):
                  max_n_solutions=100,
                  show_best_sol=True,
                  zoom_on_solutions=False,
-                 labels=True,
                  **kwargs):
 
         super().__init__(**kwargs)

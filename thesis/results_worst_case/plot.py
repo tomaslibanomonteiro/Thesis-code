@@ -5,16 +5,21 @@ import numpy as np
 from frontend.plotting import QPlot, MplCanvas
 from utils.utils import MyMessageBox
 class TSPplot(QPlot):
-    def __init__(self, f1_over_f2=1, plot_best='cost'):
+    def __init__(self, f1_over_f2=1, plot_best='cost', labels=True):
         super().__init__("TSP Plot", True)
         self.f1_over_f2 = f1_over_f2
         self.plot_best = plot_best
+        self.label = labels
     
     def createCanvas(self):
-        if len(self.algos_dict) != 1:
-            MyMessageBox("Only one algorithm can be selected for this plot. Plotting the first algorithm selected.")
-        algo_object = self.algos_dict[list(self.algos_dict.keys())[0]]
-        X, F = algo_object.pop.get('X'), algo_object.pop.get('F')
+        if len(self.algos_dict) != 1 or len(self.run_types) != 1:
+            MyMessageBox("Only one algorithm and run type can be selected for this plot. Plotting the ones selected first.")
+        algo_id = list(self.algos_dict.keys())[0]
+        run_type = list(self.run_types)[0]
+        seed = self.getSeedFromIds(self.prob_id, algo_id, run_type)
+        best_gen = self.run_thread.best_gen[(self.prob_id, algo_id, seed)]
+        X, F = best_gen['X'], best_gen['F']
+        
         fig, ax = plotTSP(self.prob_object, X, F, self.label, self.plot_best, self.f1_over_f2, ret=True)
         
         return MplCanvas(fig = fig, axes=ax)   
