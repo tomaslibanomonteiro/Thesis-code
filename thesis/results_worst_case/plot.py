@@ -84,5 +84,5 @@ def plotTSP(prob: MultiObjectiveMixedTSP, X, F, label=True, plot_best='cost', f1
     plt.show()
     
 if __name__ == '__main__':
-    from main import main
+    from thesis.results_worst_case.main import main
     main()

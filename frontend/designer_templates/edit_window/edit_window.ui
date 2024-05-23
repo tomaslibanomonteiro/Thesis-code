@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1032</width>
-    <height>605</height>
+    <width>1028</width>
+    <height>596</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -166,7 +166,7 @@
            <number>0</number>
           </property>
           <property name="topMargin">
-           <number>59</number>
+           <number>42</number>
           </property>
           <property name="bottomMargin">
            <number>98</number>
@@ -409,7 +409,7 @@ p, li { white-space: pre-wrap; }
            <number>90</number>
           </property>
           <item>
-           <widget class="QPushButton" name="open_mutations">
+           <widget class="QPushButton" name="open_samplings">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -423,12 +423,12 @@ p, li { white-space: pre-wrap; }
              </size>
             </property>
             <property name="text">
-             <string>Mutations</string>
+             <string>Samplings</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="open_crossovers">
+           <widget class="QPushButton" name="open_survivals">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -442,7 +442,7 @@ p, li { white-space: pre-wrap; }
              </size>
             </property>
             <property name="text">
-             <string>Crossovers</string>
+             <string>Survivals</string>
             </property>
            </widget>
           </item>
@@ -466,7 +466,7 @@ p, li { white-space: pre-wrap; }
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="open_samplings">
+           <widget class="QPushButton" name="open_crossovers">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -480,7 +480,26 @@ p, li { white-space: pre-wrap; }
              </size>
             </property>
             <property name="text">
-             <string>Samplings</string>
+             <string>Crossovers</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="open_mutations">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>112</width>
+              <height>28</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Mutations</string>
             </property>
            </widget>
           </item>

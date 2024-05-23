@@ -2,6 +2,7 @@
 
 from pymoo.core.problem import ElementwiseProblem
 import numpy as np
+from scipy.spatial.distance import cdist
 
 class MultiObjectiveMixedTSP(ElementwiseProblem):
 
@@ -15,6 +16,8 @@ class MultiObjectiveMixedTSP(ElementwiseProblem):
             assert matrix.shape[0] == cities_coord.shape[0]        
             
         self.n_cities, _ = cities_coord.shape
+        self.D = cdist(cities_coord, cities_coord)
+        self.norm_D = self.D / self.D.max()
         self.cities_coord = cities_coord
         self.Time = {k: v for k, v in timeMatrixDict.items()}
         self.Cost = {k: v for k, v in costMatrixDict.items()}
@@ -58,12 +61,11 @@ def mutateMatrix(original, percentage=10):
 
 class RandomMultiMixedTSP(MultiObjectiveMixedTSP):
     
-    def __init__(self, n_cities=15, trp1 = 'car', trp2 = 'train', trp2_factor=5, trp3 = 'plane', trp3_factor=10, grid_size=1000, **kwargs):
+    def __init__(self, n_cities=20, trp1 = 'car', trp2 = 'train', trp2_factor=5, trp3 = 'plane', trp3_factor=10, grid_size=1000, **kwargs):
     
         cities = np.random.uniform(0, grid_size, (n_cities, 2))
         
         # calculate the distance matrix
-        from scipy.spatial.distance import cdist
         trp1_T = cdist(cities, cities)
         trp2_T = 1/trp2_factor * trp1_T 
         trp3_T = 1/trp3_factor * trp1_T

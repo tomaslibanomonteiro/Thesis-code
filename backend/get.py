@@ -17,6 +17,7 @@ def returnObjectOrOptions(name, single_dict, multi_dict, *args, **kwargs):
 # =========================================================================================================
 # Algorithms
 # =========================================================================================================
+from pymoo.core.survival import Survival
 
 def get_algorithm(name, *args, **kwargs):
         
@@ -35,7 +36,7 @@ def get_algorithm(name, *args, **kwargs):
     from pymoo.algorithms.soo.nonconvex.pso import PSO
     from pymoo.algorithms.soo.nonconvex.brkga import BRKGA
     
-    from thesis.results_worst_case.algorithm import PermutationNSGA2
+    from thesis.results_worst_case.algorithm import PermutationNSGA2, ACO_NSGA2
 
     ALGORITHMS_SINGLE = {
         "ga": GA,
@@ -53,7 +54,8 @@ def get_algorithm(name, *args, **kwargs):
         "unsga3": UNSGA3,
         "moead": MOEAD,
         "ctaea": CTAEA,
-        "permutation_nsga2": PermutationNSGA2 #!
+        "permutation_nsga2": PermutationNSGA2, #!
+        "aco_nsga2": ACO_NSGA2 #!
     }
 
     return returnObjectOrOptions(name, ALGORITHMS_SINGLE, ALGORITHMS_MULTI, *args, **kwargs)
@@ -79,6 +81,27 @@ def get_sampling(name, *args, **kwargs):
     return returnObjectOrOptions(name, SAMPLING, SAMPLING, *args, **kwargs)
 
 # =========================================================================================================
+# Survival
+# =========================================================================================================
+
+def get_survival(name, *args, **kwargs):
+    
+    from pymoo.algorithms.moo.nsga2 import RankAndCrowding
+    from pymoo.algorithms.soo.nonconvex.ga import FitnessSurvival
+    
+    from thesis.results_worst_case.algorithm import RankAndCrowdingACO
+    
+    SURVIVAL_SINGLE = {
+        "fitness_survival": FitnessSurvival, # ga
+    }
+    SURVIVAL_MULTI = {
+        "rank_and_crowding": RankAndCrowding, # nsga2
+        "rank_and_crowding_aco": RankAndCrowdingACO, # aco_nsga2
+    }
+
+    return returnObjectOrOptions(name, SURVIVAL_SINGLE, SURVIVAL_MULTI, *args, **kwargs)
+
+# =========================================================================================================
 # Selection
 # =========================================================================================================
 
@@ -87,6 +110,7 @@ def get_selection(name, *args, **kwargs):
     from pymoo.operators.selection.rnd import RandomSelection
     from utils.useful_classes import (TournamentByCVAndFitness, RestrictedMatingCTAEA, BinaryTournament, 
                                         TournamentByCVThenRandom, TournamentByRankAndRefLineDist)
+    
     SELECTION_SINGLE = {
         "random": RandomSelection,
         "tournament_by_cv_and_fitness": TournamentByCVAndFitness  # ga
@@ -96,7 +120,7 @@ def get_selection(name, *args, **kwargs):
         "restricted_mating_ctaea": RestrictedMatingCTAEA,  # ctaea
         "binary_tournament": BinaryTournament,  # nsga2
         "tournament_by_cv_then_random": TournamentByCVThenRandom,  # nsga3
-        "tournament_by_rank_and_ref_line_dist": TournamentByRankAndRefLineDist  # unsga3
+        "tournament_by_rank_and_ref_line_dist": TournamentByRankAndRefLineDist,  # unsga3
     }
 
     return returnObjectOrOptions(name, SELECTION_SINGLE, SELECTION_MULTI, *args, **kwargs)
@@ -142,12 +166,14 @@ def get_mutation(name, *args, **kwargs):
     from pymoo.operators.mutation.inversion import InversionMutation
     from pymoo.operators.mutation.nom import NoMutation
     from pymoo.operators.mutation.pm import PM
-
+    from thesis.results_worst_case.algorithm import InversionFlipMutation 
+    
     MUTATION = {
         "none": NoMutation,
         "real_pm": PM,
         "bitflip": BitflipMutation,
-        "perm_inv": InversionMutation
+        "perm_inv": InversionMutation,
+        "perm_inv_flip": InversionFlipMutation,
     }
 
     return returnObjectOrOptions(name, MUTATION, MUTATION, *args, **kwargs)
@@ -446,7 +472,7 @@ def get_plot_types(name, *args, **kwargs):
         "pcp": QPCP,
         "pareto_sets": QParetoSets,
         "progress": QProgress,
-        "tsp": TSPplot #! 
+        "tsp": TSPplot
     }
     
     return returnObjectOrOptions(name, PLOT_TYPES_SINGLE, PLOT_TYPES_MULTI, *args, **kwargs)

@@ -11,7 +11,7 @@ from PyQt5.QtCore import QThread
 
 from utils.utils import debug_print
 from utils.defines import SEEDS_KEY, ALGO_KEY, PROB_KEY, N_EVAL_KEY, N_GEN_KEY
-
+from utils.utils import DEBUG
 class MyCallback(Callback):
     def __init__(self, pi_ids:list, pi_objects:list):
         super().__init__()
@@ -118,8 +118,9 @@ class RunThread(QThread):
         self.canceled = True    
 
     def run(self):
-        # import debugpy
-        # debugpy.debug_this_thread()
+        if DEBUG:
+            import debugpy
+            debugpy.debug_this_thread()
         seeds = np.arange(self.n_seeds) if self.fixed_seeds else np.random.choice(100000, size=self.n_seeds, replace=False)
         for run_args in self.run_args_list:
             for seed in seeds:

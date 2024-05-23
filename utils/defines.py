@@ -33,14 +33,15 @@ SEEDS_KEY = 'seed'
 RUN_OPTIONS_KEYS = [PROB_KEY, ALGO_KEY, PI_KEY, TERM_KEY, SEEDS_KEY]
 
 # OPERATORS
-MUT_KEY = 'mutation'
-CROSS_KEY = 'crossover'
-SEL_KEY = 'selection'
 SAMP_KEY = 'sampling'
+SURV_KEY = 'survival'
+SEL_KEY = 'selection'
+CROSS_KEY = 'crossover'
+MUT_KEY = 'mutation'
 DECOMP_KEY = 'decomposition'
 REF_DIR_KEY = 'ref_dirs'
 
-OPERATORS = [MUT_KEY, CROSS_KEY, SEL_KEY, SAMP_KEY, DECOMP_KEY, REF_DIR_KEY]
+OPERATORS = [SAMP_KEY, SURV_KEY, SEL_KEY, CROSS_KEY, MUT_KEY, DECOMP_KEY, REF_DIR_KEY]
 
 # PLOTTING
 PLOT_TYPES_KEY = 'plot_types'
@@ -84,20 +85,21 @@ VALUE_TYPES = (int, float, str, bool, type(None), NO_DEFAULT) # to be put in ui 
 ID_COL = 1 # object id col number in the edit parameters tables
 
 from backend.get import (get_algorithm, get_performance_indicator, get_problem, get_termination, get_crossover, get_plot_types,
-                         get_decomposition, get_mutation, get_reference_directions, get_sampling, get_selection)
+                         get_decomposition, get_mutation, get_reference_directions, get_sampling, get_selection, get_survival)
 
 # for the creation of the tabs in the edit window: (key: (tab name, label, get_object, get_options)) 
-OPERATORS_ARGS_DICT = {  MUT_KEY: ('(op) Mutations', 'Edit Mutations', get_mutation),
-                    CROSS_KEY: ('(op) Crossovers', 'Edit Crossovers', get_crossover),
-                    SEL_KEY: ('(op) Selections', 'Edit Selections', get_selection),
-                    SAMP_KEY: ('(op) Samplings', 'Edit Samplings', get_sampling),
-                    DECOMP_KEY: ('(op) Decomposition', 'Edit Decompositions', get_decomposition),
-                    REF_DIR_KEY: ('(op) Ref. Dir.', 'Edit Ref_dirs', get_reference_directions)}
+OPERATORS_ARGS_DICT = {SAMP_KEY: ('(op) Samplings', 'Edit Samplings', get_sampling),
+                       SURV_KEY: ('(op) Survivals', 'Edit Survivals', get_survival),
+                       SEL_KEY: ('(op) Selections', 'Edit Selections', get_selection),
+                       CROSS_KEY: ('(op) Crossovers', 'Edit Crossovers', get_crossover),
+                       MUT_KEY: ('(op) Mutations', 'Edit Mutations', get_mutation),
+                       DECOMP_KEY: ('(op) Decomposition', 'Edit Decompositions', get_decomposition),
+                       REF_DIR_KEY: ('(op) Ref. Dir.', 'Edit Ref_dirs', get_reference_directions)}
 
 RUN_OPTIONS_ARGS_DICT = {PROB_KEY: ('Problems', 'Edit Problems', get_problem), 
-                    ALGO_KEY: ('Algorithms', 'Edit Algorithms', get_algorithm), 
-                    PI_KEY: ('Perf. Ind.', 'Edit Performance Indicators', get_performance_indicator),
-                    TERM_KEY: ('Terminations', 'Edit Termination Criteria', get_termination)}
+                         ALGO_KEY: ('Algorithms', 'Edit Algorithms', get_algorithm), 
+                         PI_KEY: ('Perf. Ind.', 'Edit Performance Indicators', get_performance_indicator),
+                         TERM_KEY: ('Terminations', 'Edit Termination Criteria', get_termination)}
 
 PLOT_TYPES_ARG_DICT = {PLOT_TYPES_KEY: ('Plot Types', 'Edit Plot Types', get_plot_types)}
                     

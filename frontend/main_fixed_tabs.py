@@ -4,7 +4,6 @@ from PyQt5.uic import loadUi
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QTabWidget, QTableWidget, QTabBar, QWidget, QSpinBox, QHBoxLayout, QMessageBox, QFrame
 
-from backend.run import RunThread
 from backend.run import RunThread, RunArgs
 
 from frontend.small_widgets import MyComboBox

@@ -140,7 +140,7 @@
               </font>
              </property>
              <property name="text">
-              <string>Single Objective Optimiation</string>
+              <string>Single Objective Optimization</string>
              </property>
              <property name="checked">
               <bool>true</bool>

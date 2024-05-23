@@ -1,11 +1,10 @@
 from PyQt5.QtWidgets import QApplication
 from frontend.main_window import MainWindow
 from utils.defines import SEEDS_KEY, TERM_KEY, PI_KEY, ALGO_KEY, PROB_KEY, CROSS_KEY, MUT_KEY
-import pickle
-
+from PyQt5.QtGui import QIcon
 
 OTHER_START = False
-RUN = True
+RUN = False
 
 def otherStart():
     from thesis.results_pso.start import start
@@ -19,7 +18,7 @@ def defaultStart():
         # TERM_KEY: ['n_eval'],
         # SEEDS_KEY: 3
         PROB_KEY: ['moo_mixed_tsp'],
-        ALGO_KEY: ['permutation_nsga2'],
+        ALGO_KEY: ['aco_nsga2'],
         PI_KEY: ['-hv'],
         TERM_KEY: ['n_eval'],
         SEEDS_KEY: 3
@@ -38,7 +37,8 @@ def defaultStart():
 def main():
     
     app = QApplication([])
-
+    app.setWindowIcon(QIcon('frontend/logo.png'))
+    
     if OTHER_START:
         run_options, parameters = otherStart()
         main_window = MainWindow(run_options_soo=run_options, parameters_soo=parameters)

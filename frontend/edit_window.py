@@ -10,7 +10,7 @@ from utils.utils import myFileManager, MyMessageBox
 from utils.defines import (DESIGNER_EDIT_WINDOW, DESIGNER_EDIT_TAB, NO_DEFAULT, OPERATORS, ID_COL, OPERATORS_ARGS_DICT, 
                            RUN_OPTIONS_ARGS_DICT, PROB_KEY, ALGO_KEY, TERM_KEY, PI_KEY, REF_DIR_KEY, CROSS_KEY, CLASS_KEY,
                            DECOMP_KEY, MUT_KEY, SAMP_KEY, SEL_KEY, VARIANT, MOO_KEY, CONVERT_KEY, CONVERTIBLES, 
-                           WRITABLE_ARG_KEY, PLOT_TYPES_ARG_DICT, PARAMETERS_ARGS_DICT, PLOT_TYPES_KEY)
+                           WRITABLE_ARG_KEY, PLOT_TYPES_ARG_DICT, PARAMETERS_ARGS_DICT, PLOT_TYPES_KEY, SURV_KEY)
 
 class EditWindow(QWidget):
     """
@@ -84,6 +84,7 @@ class EditWindow(QWidget):
         self.open_mutations.clicked.connect(lambda: self.openTab(MUT_KEY))
         self.open_samplings.clicked.connect(lambda: self.openTab(SAMP_KEY))
         self.open_selections.clicked.connect(lambda: self.openTab(SEL_KEY))
+        self.open_survivals.clicked.connect(lambda: self.openTab(SURV_KEY))
         self.open_plot_types.clicked.connect(lambda: self.openTab(PLOT_TYPES_KEY))
             
     def dictToTabs(self, parameters: dict):

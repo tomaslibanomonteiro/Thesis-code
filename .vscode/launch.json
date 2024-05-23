@@ -9,7 +9,7 @@
             "program": "tests/run_tests.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "subProcess": true
+            "subProcess": true,
         },
         {
             "name": "Framework Test",
@@ -19,7 +19,7 @@
             "program": "thesis/app_framework/main.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "subProcess": true
+            "subProcess": true,
         },
         {
             "name": "Current File",
@@ -29,7 +29,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "subProcess": true
+            "subProcess": true,
         },
         {
             "name": "App",
@@ -38,8 +38,8 @@
             "cwd": "${workspaceFolder}",
             "program": "main.py",
             "console": "integratedTerminal",
-            "justMyCode": true,
-            "subProcess": true
+            "justMyCode": false,
+            "subProcess": true,
         }
     ]
 }

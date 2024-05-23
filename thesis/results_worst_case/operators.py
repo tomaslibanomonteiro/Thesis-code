@@ -78,7 +78,7 @@ class OrderCrossover(Crossover):
 
 class InversionFlipMutation(Mutation):
 
-    def __init__(self, prob=1.0, prob_var=0.7, **kwargs):
+    def __init__(self, prob=1.0, prob_var=0.7, only_flip = False, **kwargs):
         """
 
         This mutation is applied to permutations. It randomly selects a segment of a chromosome and reverse its order.
@@ -92,19 +92,24 @@ class InversionFlipMutation(Mutation):
         """
         super().__init__(prob_var=prob_var, **kwargs)
         self.prob = prob
+        self.only_flip = only_flip
 
     def _do(self, problem, X, **kwargs):
         
-        # inversion part
-        X_path = X[:,:problem.n_cities]
-        Y_path = X_path.copy()
-        for i, y in enumerate(X_path):
-            if np.random.random() < self.prob:
-                seq = random_sequence(len(y))
-                Y_path[i] = inversion_mutation(y, seq, inplace=True)
+        if not self.only_flip:
+            # inversion part
+            X_path = X[:,:problem.n_cities]
+            Y_path = X_path.copy()
+            for i, y in enumerate(X_path):
+                if np.random.random() < self.prob:
+                    seq = random_sequence(len(y))
+                    Y_path[i] = inversion_mutation(y, seq, inplace=True)
 
-        Y = setTransportsOnNewPaths(Y_path, X)
-        
+            Y = setTransportsOnNewPaths(Y_path, X)
+        else:
+            Y = X.copy()
+            Y_path = Y[:,:problem.n_cities]
+                
         Y_trp = Y[:,problem.n_cities:]
         # bitflip part
         prob_var = self.get_prob_var(problem)

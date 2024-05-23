@@ -4,10 +4,10 @@ import numpy as np
 
 from utils.defines import MOO_KEY
 
-DEBUG_PRINT = False
+DEBUG = True
 
 def debug_print(*args):
-    if DEBUG_PRINT:
+    if DEBUG:
         print(*args)
         
 def setCombobox(combobox, items=None, center_items=False, index_changed_function=None):
