@@ -31,10 +31,10 @@ class Test():
         self.parameters[TERM_KEY]['n_eval']['n_max_evals'] = n_evals
         
         # get main window, and run object 
-        run_options_soo, parameters_soo = (self.options, self.parameters) if not self.moo else ({}, Defaults(False).parameters)
-        run_options_moo, parameters_moo = (self.options, self.parameters) if self.moo else ({}, Defaults(True).parameters)
+        run_options_soo, parameters_soo = (self.options, self.parameters) if not self.moo else ({}, {})
+        run_options_moo, parameters_moo = (self.options, self.parameters) if self.moo else ({}, {})
         
-        self.main_window = MainWindow(run_options_soo, run_options_moo, parameters_soo, parameters_moo)
+        self.main_window = MainWindow(run_options_soo, parameters_soo, run_options_moo, parameters_moo)
         self.run_thread = self.main_window.activeTabs().getRunThread()
         self.run_thread.finished.connect(self.afterRun) if self.run_thread is not None else None
     

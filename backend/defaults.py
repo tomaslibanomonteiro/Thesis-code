@@ -114,6 +114,7 @@ class Defaults():
                 # compare class names
                 if operator_obj.__class__.__name__ == op_class.__name__: 
                     return op_id
-            # debug_print(f'\n \n operator {operator_obj} not found in {operator_dict}. Returning the first operator.')
-            return list(operator_dict.keys())[0]
+            if arg == SEL_KEY:
+                return 'selection probably has a function as argument. Manualy set it.'
+            raise ValueError(f'Operator {operator_obj} not found in {operator_dict}. Returning the first operator.')
         

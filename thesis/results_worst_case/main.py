@@ -4,6 +4,21 @@ full_path = r"C:\Users\tomas\OneDrive - Universidade de Lisboa\Desktop\Tese\Thes
 ####################################################################################################
 ####################################################################################################
 
+
+def start(): 
+    import pickle
+    from utils.defines import ALGO_KEY, PROB_KEY, SAMP_KEY, CROSS_KEY
+    with open(f'thesis/results_worst_case/moo_run_options.pickle', 'rb') as file:
+        run_options = pickle.load(file) #@IgnoreException
+
+    with open(f'thesis/results_worst_case/moo_parameters.pickle', 'rb') as file:
+        parameters = pickle.load(file) #@IgnoreException
+    
+    from backend.defaults import Defaults
+    def_parameters = Defaults(moo=True).parameters
+    
+    return {}, {}, run_options, parameters
+
 def main():
 
     import sys
@@ -16,8 +31,14 @@ def main():
     from thesis.results_worst_case.algorithm import PermutationNSGA2, ACO_NSGA2
     from thesis.results_worst_case.plot import plotTSP
     from utils.useful_classes import minusHypervolume
-
-    algorithms = [PermutationNSGA2(), ACO_NSGA2(), ACO_NSGA2(crossover=Crossover(n_parents=2, n_offsprings=2, prob=0.0))]
+    
+    from thesis.results_worst_case.operators import InversionFlipMutation
+    from backend.get import get_crossover
+    crossover = get_crossover('none')
+    
+    algorithms = [ACO_NSGA2(crossover=crossover, mutation=InversionFlipMutation(only_flip=True)), 
+                #   ACO_NSGA2()
+                  ]
     # termination = DefaultMultiObjectiveTermination()
     termination = ("n_gen", 100)
     problem = RandomMultiMixedTSP()
@@ -30,6 +51,7 @@ def main():
                 algorithm,
                 termination,
                 seed=seed,
+                verbose=True,
             )
             
             hv = minusHypervolume(pf=problem.pareto_front())

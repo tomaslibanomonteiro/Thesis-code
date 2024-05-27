@@ -25,7 +25,8 @@ class TSPplot(QPlot):
         return MplCanvas(fig = fig, axes=ax)   
 
 def plotTSP(prob: MultiObjectiveMixedTSP, X, F, label=True, plot_best='cost', f1_over_f2=1, ret=False):
-        
+    
+    plot_best = plot_best.lower()
     if plot_best == 'cost':
         # get the path with the lowest cost
         best_idx = np.argmin(F[:, 1])

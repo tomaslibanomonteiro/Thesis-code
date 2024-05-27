@@ -25,8 +25,11 @@ class MainWindow(QMainWindow):
     - seeTutorial: displaying the tutorial.
     - about: displaying about information.
     """
-    def __init__(self, run_options_soo = {}, run_options_moo = {}, parameters_soo = Defaults(False).parameters, parameters_moo = Defaults(True).parameters) -> None:
+    def __init__(self, run_options_soo = {}, parameters_soo = {}, run_options_moo = {}, parameters_moo = {}):
         super().__init__()        
+        
+        parameters_moo = Defaults(True).parameters if parameters_moo == {} else parameters_moo
+        parameters_soo = Defaults(False).parameters if parameters_soo == {} else parameters_soo
         
         loadUi(DESIGNER_MAIN, self)
         

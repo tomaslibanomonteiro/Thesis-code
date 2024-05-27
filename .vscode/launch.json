@@ -38,7 +38,7 @@
             "cwd": "${workspaceFolder}",
             "program": "main.py",
             "console": "integratedTerminal",
-            "justMyCode": false,
+            "justMyCode": true,
             "subProcess": true,
         }
     ]

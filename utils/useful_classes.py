@@ -137,6 +137,20 @@ class TournamentByRankAndRefLineDist(TournamentSelection):
     def __init__(self, pressure=2, **kwargs):
         super().__init__(func_comp=comp_by_rank_and_ref_line_dist, pressure=pressure, **kwargs) 
 
+import numpy as np
+
+from pymoo.core.crossover import Crossover
+from pymoo.core.population import Population
+
+class MyNoCrossover(Crossover):
+
+    def __init__(self, n_parents=2, n_offsprings=2, **kwargs):
+        super().__init__(n_parents=n_parents, n_offsprings=n_offsprings, **kwargs)
+    
+    def _do(self, problem, X, **kwargs):
+        return X
+
+
 ################################################################################################################################
 #####################################################   INDICATORS   ###########################################################
 ################################################################################################################################

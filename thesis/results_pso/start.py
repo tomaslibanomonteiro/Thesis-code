@@ -20,4 +20,4 @@ def start():
     def_parameters[PROB_KEY]['rastrigin']['xu'] = 5.12
             
 
-    return run_options, def_parameters
+    return run_options, def_parameters, {}, {}

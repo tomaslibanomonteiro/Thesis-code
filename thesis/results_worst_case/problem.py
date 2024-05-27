@@ -61,7 +61,7 @@ def mutateMatrix(original, percentage=10):
 
 class RandomMultiMixedTSP(MultiObjectiveMixedTSP):
     
-    def __init__(self, n_cities=20, trp1 = 'car', trp2 = 'train', trp2_factor=5, trp3 = 'plane', trp3_factor=10, grid_size=1000, **kwargs):
+    def __init__(self, n_cities=20, trp1 = 'car', trp2 = 'train', trp2_factor=5, trp3 = 'plane', trp3_factor=10, grid_size=1000,cost_mutation_perc=10, **kwargs):
     
         cities = np.random.uniform(0, grid_size, (n_cities, 2))
         
@@ -71,9 +71,9 @@ class RandomMultiMixedTSP(MultiObjectiveMixedTSP):
         trp3_T = 1/trp3_factor * trp1_T
                 
         # integer distance matrix
-        trp1_C = mutateMatrix(trp1_T, percentage=10)
-        trp2_C = mutateMatrix(trp1_T * trp2_factor, percentage=10)
-        trp3_C = mutateMatrix(trp1_T * trp3_factor, percentage=10)
+        trp1_C = mutateMatrix(trp1_T, percentage=cost_mutation_perc)
+        trp2_C = mutateMatrix(trp1_T * trp2_factor, percentage=cost_mutation_perc)
+        trp3_C = mutateMatrix(trp1_T * trp3_factor, percentage=cost_mutation_perc)
                 
         super().__init__(cities, {trp1: trp1_C, trp2: trp2_C, trp3: trp3_C}, {trp1: trp1_T, trp2: trp2_T, trp3: trp3_T}, **kwargs)
         

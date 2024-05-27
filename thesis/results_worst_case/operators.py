@@ -3,7 +3,6 @@ from pymoo.operators.crossover.ox import ox, Crossover
 from pymoo.operators.mutation.inversion import random_sequence, inversion_mutation, Mutation
 from pymoo.core.repair import Repair
 import numpy as np
-from pymoo.core.duplicate import DuplicateElimination
 
 def setTransportsOnNewPaths(new_paths, X):
     
@@ -25,7 +24,7 @@ def setTransportsOnNewPaths(new_paths, X):
             
     return new_X
 
-class PermutationRandomSampling(Sampling):
+class MixedPermRandomSampling(Sampling):
 
     def _do(self, problem, n_samples, **kwargs):
         
@@ -37,7 +36,7 @@ class PermutationRandomSampling(Sampling):
 
         return X
 
-class StartFromZeroRepair(Repair):
+class MixedStartFromZeroRepair(Repair):
 
     def _do(self, problem, X, **kwargs):
         X_path = X[:,:problem.n_cities].copy()
@@ -49,7 +48,7 @@ class StartFromZeroRepair(Repair):
 
         return setTransportsOnNewPaths(X_path, X)
         
-class OrderCrossover(Crossover):
+class MixedOrderCrossover(Crossover):
 
     def __init__(self, shift=False, **kwargs):
         super().__init__(2, 2, **kwargs)

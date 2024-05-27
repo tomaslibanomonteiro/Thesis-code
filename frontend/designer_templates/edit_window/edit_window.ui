@@ -166,10 +166,10 @@
            <number>0</number>
           </property>
           <property name="topMargin">
-           <number>42</number>
+           <number>115</number>
           </property>
           <property name="bottomMargin">
-           <number>98</number>
+           <number>132</number>
           </property>
           <item>
            <widget class="QPushButton" name="open_plot_types">

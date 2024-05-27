@@ -11,4 +11,4 @@ def start(): #! save these and others files (falta survivals provavelmente)
     from backend.defaults import Defaults
     def_parameters = Defaults(moo=False).parameters
     
-    return run_options, parameters
+    return {},{},run_options, parameters

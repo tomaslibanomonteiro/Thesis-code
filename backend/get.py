@@ -67,15 +67,16 @@ def get_algorithm(name, *args, **kwargs):
 def get_sampling(name, *args, **kwargs):
         
     from pymoo.operators.sampling.lhs import LHS
-    from pymoo.operators.sampling.rnd import (BinaryRandomSampling,
-                                              FloatRandomSampling,
-                                              PermutationRandomSampling)
+    from pymoo.operators.sampling.rnd import BinaryRandomSampling, FloatRandomSampling, PermutationRandomSampling
+    
+    from thesis.results_worst_case.operators import MixedPermRandomSampling
     
     SAMPLING = {
         "real_random": FloatRandomSampling,
         "real_lhs": LHS,
         "bin_random": BinaryRandomSampling,
-        "perm_random": PermutationRandomSampling
+        "perm_random": PermutationRandomSampling,
+        "mixed_perm_random": MixedPermRandomSampling 
     }
 
     return returnObjectOrOptions(name, SAMPLING, SAMPLING, *args, **kwargs)
@@ -141,6 +142,8 @@ def get_crossover(name, *args, **kwargs):
     from pymoo.operators.crossover.pntx import PointCrossover
     from pymoo.operators.crossover.sbx import SBX
     from pymoo.operators.crossover.ux import UniformCrossover
+    from utils.useful_classes import MyNoCrossover
+    from thesis.results_worst_case.algorithm import MixedOrderCrossover
     
     CROSSOVER = {
         "real_sbx": SBX,
@@ -151,7 +154,9 @@ def get_crossover(name, *args, **kwargs):
         "(real|bin|int)_exp": ExponentialCrossover,
         "(real|bin|int)_k_point": PointCrossover,
         "perm_ox": OrderCrossover,
-        "perm_erx": EdgeRecombinationCrossover
+        "perm_erx": EdgeRecombinationCrossover,
+        "none": MyNoCrossover,
+        "mixed_perm_ox": MixedOrderCrossover
     }
 
     return returnObjectOrOptions(name, CROSSOVER, CROSSOVER, *args, **kwargs)
