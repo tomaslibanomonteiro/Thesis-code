@@ -276,7 +276,7 @@ class MainTabsWidget(QTabWidget):
                     pf = prob_object.pareto_front(ref_dirs=algo_object.ref_dirs) #@IgnoreException
                 except:
                     pf = prob_object.pareto_front() if prob_object.pareto_front else None
-                convert_dict.update({'get_problem_pf':pf,'algo_id':algo_id,'algo_object':algo_object})
+                convert_dict.update({'prob_pf':pf,'algo_id':algo_id,'algo_object':algo_object})
                 
                 # TERMINATIONS
                 term_object = tabs[TERM_KEY].getObjectFromID(term_id,convert_dict)

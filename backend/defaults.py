@@ -35,11 +35,11 @@ class Defaults():
         # manualy changed MOO defaults
         if self.parameters[MOO_KEY]:
             # get pf from the problem
-            self.parameters[PI_KEY]['gd']['pf'] = 'get_problem_pf' + CONVERT_KEY
-            self.parameters[PI_KEY]['igd']['pf'] = 'get_problem_pf' + CONVERT_KEY
-            self.parameters[PI_KEY]['igd+']['pf'] = 'get_problem_pf' + CONVERT_KEY
-            self.parameters[PI_KEY]['gd+']['pf'] = 'get_problem_pf' + CONVERT_KEY
-            self.parameters[PI_KEY]['-hv']['pf'] = 'get_problem_pf' + CONVERT_KEY
+            self.parameters[PI_KEY]['gd']['pf'] = 'prob_pf' + CONVERT_KEY
+            self.parameters[PI_KEY]['igd']['pf'] = 'prob_pf' + CONVERT_KEY
+            self.parameters[PI_KEY]['igd+']['pf'] = 'prob_pf' + CONVERT_KEY
+            self.parameters[PI_KEY]['gd+']['pf'] = 'prob_pf' + CONVERT_KEY
+            self.parameters[PI_KEY]['-hv']['pf'] = 'prob_pf' + CONVERT_KEY
             
             # set the reference directions according to the problem n_obj
             self.parameters[REF_DIR_KEY]['das-dennis']['n_dim'] = 'n_obj' + CONVERT_KEY

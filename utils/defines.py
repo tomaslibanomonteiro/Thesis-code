@@ -61,7 +61,7 @@ VALUE_KEY = 'value'
 
 # CONVERTING ARGS WITH STRING VALUES 
 CONVERT_KEY = '(convert)' # key to know if a given string value of an arg is to be converted before initialing the class
-CONVERTIBLES = ['n_var', 'n_obj', 'get_problem_pf']
+CONVERTIBLES = ['None','n_var', 'n_obj','prob_id','prob_object','prob_pf','algo_id','algo_object','term_id','term_object']
 
 ############################################################ 
 ########################### WINDOWS ########################

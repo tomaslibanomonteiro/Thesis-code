@@ -468,7 +468,7 @@ class EditTab(QFrame):
         try:
             result = simple_eval(string) #@IgnoreException
         except: 
-            MyMessageBox(f"Invalid expression \'{string}\'in argument \'{arg}\', please use a valid mathematical expression with the convertibles if needed: {CONVERTIBLES}")
+            MyMessageBox(f"Invalid expression \'{string}\'in argument \'{arg}\', please use a valid mathematical expression or convertible string from convertible options: {CONVERTIBLES}")
             result = None
             
         return result    

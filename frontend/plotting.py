@@ -116,7 +116,7 @@ class QPlot(QWidget):
                 # plot the best solution
             else:
                 x , f = best_gen['X'], best_gen['F']
-                points = np.concatenate((x, f))
+                points = np.concatenate((x, f), axis=1)
                 points = points[points[:, -1].argsort()] # sort the solutions by objective value
             plot.add(points, label = f"Algo '{algo_id}'{run_type}", **kwargs)
         

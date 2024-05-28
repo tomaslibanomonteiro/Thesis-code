@@ -175,7 +175,7 @@ class RunThread(QThread):
             feas = np.where(res.algorithm.opt.get("feasible"))[0]
             F = res.algorithm.opt.get("F")[feas] if len(feas) > 0 else np.nan
             X = res.algorithm.opt.get("X")[feas] if len(feas) > 0 else np.nan
-        elif self.moo:
+        else:
             feas = np.where(res.algorithm.pop.get("feasible"))[0]
             F = res.algorithm.pop.get("F")[feas] if len(feas) > 0 else np.nan
             X = res.algorithm.pop.get("X")[feas] if len(feas) > 0 else np.nan
