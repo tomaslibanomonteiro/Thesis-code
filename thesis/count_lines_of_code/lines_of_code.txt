@@ -1,0 +1,5 @@
+Total non-empty lines in .py files in directory backend and its subdirectories: 649
+Total non-empty lines in .py files in directory frontend and its subdirectories: 2180
+Total non-empty lines in .py files in directory tests and its subdirectories: 149
+Total non-empty lines in .py files in directory thesis and its subdirectories: 822
+Total non-empty lines in .py files in directory utils and its subdirectories: 475

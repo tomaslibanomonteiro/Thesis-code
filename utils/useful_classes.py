@@ -199,7 +199,6 @@ class EvalsOnGoal():
 ### Multi-objective indicators
 
 from pymoo.indicators.hv import Hypervolume
-from pymoo.util.normalization import ZeroToOneNormalization
 
 class minusHypervolume(Hypervolume):
     def __init__(self, zero_to_one = True, **kwargs):

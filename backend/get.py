@@ -54,8 +54,8 @@ def get_algorithm(name, *args, **kwargs):
         "unsga3": UNSGA3,
         "moead": MOEAD,
         "ctaea": CTAEA,
-        "permutation_nsga2": PermutationNSGA2, #!
-        "aco_nsga2": ACO_NSGA2 #!
+        "permutation_nsga2": PermutationNSGA2, 
+        "aco_nsga2": ACO_NSGA2 
     }
 
     return returnObjectOrOptions(name, ALGORITHMS_SINGLE, ALGORITHMS_MULTI, *args, **kwargs)
@@ -207,7 +207,7 @@ def get_termination(name, *args, **kwargs):
         "soo": DefaultSingleObjectiveTermination,
         "min_fitness": MinFitnessTermination,
         "staled_best": StaledBestTermination,
-        "pso_termination": PSOTermination #!
+        "pso_termination": PSOTermination
     }
 
     TERMINATION_MULTI = {
@@ -371,7 +371,7 @@ def get_problem(name, *args, **kwargs):
         "zdt4": ZDT4,
         "zdt5": ZDT5,
         "zdt6": ZDT6,
-        "moo_mixed_tsp": RandomMultiMixedTSP #!
+        "moo_mixed_tsp": RandomMultiMixedTSP
     }
 
     return returnObjectOrOptions(name, PROBLEM_SINGLE, PROBLEM_MULTI, *args, **kwargs)

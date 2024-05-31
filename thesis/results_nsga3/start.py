@@ -1,7 +1,7 @@
 import pickle
 from utils.defines import ALGO_KEY, PROB_KEY
 
-def start(): #! save these and others files (falta survivals provavelmente)
+def start():
     with open(f'thesis/results_nsga3/moo_run_options.pickle', 'rb') as file:
         run_options = pickle.load(file) #@IgnoreException
 
