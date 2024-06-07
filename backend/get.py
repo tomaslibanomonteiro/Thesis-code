@@ -10,7 +10,7 @@ def returnObjectOrOptions(name, single_dict, multi_dict, *args, **kwargs):
     elif name == "moo_options":
         return multi_dict    
     elif name in merged_dict:
-        return merged_dict[name](*args, **kwargs)
+         return merged_dict[name](*args, **kwargs) 
     else:
         raise Exception("Object '%s' for not found in %s. If you want options, call with 'all_options', 'all_soo_options' or 'all_moo_options'" % (name, list(merged_dict.keys())))
     

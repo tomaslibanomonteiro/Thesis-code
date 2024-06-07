@@ -36,7 +36,7 @@ class RandomKnapsackMulti(KnapsackMulti):
         super().__init__(n_vars, W, P, C)
 
 class ScaledDTLZ(ScaledProblem):
-    def __init__(self, dtlz=1, n_obj=10, n_var=3, scale_factor=10, **kwargs):
+    def __init__(self, dtlz=1, n_obj=3, n_var=10, scale_factor=10, **kwargs):
         if dtlz == 1:
             problem = DTLZ1(n_var=n_var, n_obj=n_obj)
         elif dtlz == 2:

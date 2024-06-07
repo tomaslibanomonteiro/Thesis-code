@@ -143,6 +143,7 @@ class RunThread(QThread):
             self.canceled = True
             error_message = (f"Error while running {run_args.algo_id} on {run_args.prob_id}, seed {seed}:\n{e}"
                              "\nPlease Make sure the algorithm is compatible with the problem.")
+            debug_print(error_message)
             self.progressSignal.emit(error_message, -1)
                 
         return res

@@ -4,7 +4,7 @@ import numpy as np
 
 from utils.defines import MOO_KEY
 
-DEBUG = True
+DEBUG = False #!!!! set to False before pushing
 
 def debug_print(*args):
     if DEBUG:

@@ -81,7 +81,7 @@ soo_probs = {
 
 soo_mixed = {
     MOO_KEY: False,
-    PI_KEY: ['best'],
+    PI_KEY: ['best','avg_fitness','-goal_achieved','evals_on_goal'],
     ALGO_KEY: ['ga', 'pso', 'de'],
     PROB_KEY: ['ackley','g1','griewank','rastrigin','rosenbrock'],
     TEST_NAME_KEY: 'soo_mixed'
@@ -92,6 +92,8 @@ soo_mixed = {
 ############################################################################################################
 
 moo_algos_list = list(get_algorithm('moo_options').keys())
+moo_algos_list.remove('permutation_nsga2') # tailored for moo_mixed_tsp problem
+moo_algos_list.remove('aco_nsga2') # tailored for moo_mixed_tsp problem
 
 moo_algos = {
     MOO_KEY: True,
@@ -102,7 +104,8 @@ moo_algos = {
 }
 
 moo_probs_list = list(get_problem('moo_options').keys())
-moo_probs_list.remove('moo_knp') # knp is a combinatorial problem, nsga2 is not set for them
+moo_probs_list.remove('moo_knp') # combinatorial problem, nsga2 is not set for them
+moo_probs_list.remove('moo_mixed_tsp') # combinatorial problem, nsga2 is not set for them
 
 moo_probs = {
     MOO_KEY: True,

@@ -21,8 +21,8 @@ from utils.defines import PROB_KEY, ALGO_KEY, PI_KEY, SEEDS_KEY, MOO_KEY, N_EVAL
 from backend.run import MyCallback
 from tests.tests_declaration import TEST_NAME_KEY, soo_algos, soo_probs, soo_mixed, moo_algos, moo_probs, moo_mixed
 
-RESULTS_FILE = 'thesis/app_framework/results/results.txt'
-RESULTS_FOLDER = 'thesis/app_framework/results'
+RESULTS_FILE = 'thesis/results_app_framework/results/results.txt'
+RESULTS_FOLDER = 'thesis/results_app_framework/results'
 # EXPECTED_RESULTS_FOLDER = 'thesis/app_framework/expected_results'
 
 from pymoo.problems.many.wfg import WFG1
@@ -66,6 +66,13 @@ def try_get_function(get_function, id):
         object = 'failed to get object'
     return object
 
+def try_get_performance_indicator(id, **kwargs):
+    try:
+        object = get_performance_indicator(id, **kwargs) #@IgnoreException
+    except:
+        object = get_performance_indicator(id)
+    return object
+
 class FrameworkTest(QThread):
     def __init__(self, options: dict, n_seeds:int=1, n_evals:int=500):
         super().__init__()
@@ -97,7 +104,8 @@ class FrameworkTest(QThread):
                 except:
                     pf = prob.pareto_front() if prob.pareto_front else None
 
-                self.pi_objects = [get_performance_indicator(pi_id, pf=pf) for pi_id in self.options[PI_KEY]]
+                self.pi_objects = [try_get_performance_indicator(pi_id, pf=pf) for pi_id in self.options[PI_KEY]]
+                    
                 for seed in range(self.options[SEEDS_KEY]):
                     res = minimize(algorithm=algo,
                                     problem=prob,

@@ -433,7 +433,7 @@ class EditTab(QFrame):
                 value = widget.isChecked()
             elif isinstance(widget, MyLineEdit):
                 value = widget.text() 
-                # IGNORE EMPTY STRING 
+                # IGNORE EMPTY STRING ARGS 
                 if value == '':
                     continue
                 # NONE
