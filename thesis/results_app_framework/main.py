@@ -2,6 +2,9 @@
 ################################## CHANGE THIS TO YOUR PATH  ######################################
 PATH_TO_REPO_FOLDER = r"C:\Users\tomas\OneDrive - Universidade de Lisboa\Desktop\Tese\Thesis-code"
 ###################################################################################################
+# SET TERMINAL TO WORKSPACE FOLDER AND RUN THE COMMAND BELOW
+# python thesis/results_app_framework/main.py
+###################################################################################################
 
 
 import sys
@@ -24,8 +27,6 @@ from tests.tests_declaration import TEST_NAME_KEY, soo_algos, soo_probs, soo_mix
 RESULTS_FILE = 'thesis/results_app_framework/results/results.txt'
 RESULTS_FOLDER = 'thesis/results_app_framework/results'
 # EXPECTED_RESULTS_FOLDER = 'thesis/app_framework/expected_results'
-
-from pymoo.problems.many.wfg import WFG1
 
 def correctProbs(probs:dict):
     for key in probs.keys():    
@@ -171,6 +172,8 @@ def main():
                 test_result = ' passed!' if filecmp.cmp(RESULTS_FOLDER + '/' + file, EXPECTED_RESULTS_FOLDER + '/' + file) else ' failed!'
                 string = date_time + ' Test ' + file + test_result + '\n'
             print(string)
+            from time import sleep
+            sleep(1)
             f.write(string)
 
 if __name__ == '__main__':

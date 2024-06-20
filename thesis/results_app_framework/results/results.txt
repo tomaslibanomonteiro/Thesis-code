@@ -4,3 +4,15 @@
 07/06/2024 17:26:20 Test soo_algos.csv passed!
 07/06/2024 17:26:20 Test soo_mixed.csv passed!
 07/06/2024 17:26:20 Test soo_probs.csv passed!
+20/06/2024 11:54:51 Test moo_algos.csv passed!
+20/06/2024 11:54:52 Test moo_mixed.csv passed!
+20/06/2024 11:54:53 Test moo_probs.csv passed!
+20/06/2024 11:54:54 Test soo_algos.csv passed!
+20/06/2024 11:54:55 Test soo_mixed.csv passed!
+20/06/2024 11:54:56 Test soo_probs.csv passed!
+20/06/2024 11:55:57 Test moo_algos.csv passed!
+20/06/2024 11:55:58 Test moo_mixed.csv passed!
+20/06/2024 11:55:59 Test moo_probs.csv passed!
+20/06/2024 11:56:01 Test soo_algos.csv passed!
+20/06/2024 11:56:02 Test soo_mixed.csv passed!
+20/06/2024 11:56:03 Test soo_probs.csv passed!

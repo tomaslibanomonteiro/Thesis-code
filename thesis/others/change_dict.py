@@ -1,13 +1,16 @@
 import pickle
 
 # Load the pickle file
-with open('soo_parameters.pickle', 'rb') as file:
-    data = pickle.load(file)
+with open('moo_parameters.pickle', 'rb') as file:
+    param = pickle.load(file)
 
 from backend.defaults import Defaults
 
-def_dict = Defaults(moo=False).parameters
+def_param = Defaults(moo=False).parameters
+param['plot_types'] = def_param['plot_types']
+param['survival'] = def_param['survival']
 
 # Save the modified data back to a pickle file
-with open('soo_parameters_new.pickle', 'wb') as file:
-    pickle.dump(data, file)
+with open('moo_parameters.pickle', 'wb') as file:
+    pickle.dump(param, file)
+
