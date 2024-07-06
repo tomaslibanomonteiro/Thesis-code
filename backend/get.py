@@ -17,7 +17,6 @@ def returnObjectOrOptions(name, single_dict, multi_dict, *args, **kwargs):
 # =========================================================================================================
 # Algorithms
 # =========================================================================================================
-from pymoo.core.survival import Survival
 
 def get_algorithm(name, *args, **kwargs):
         
